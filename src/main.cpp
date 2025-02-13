@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <U8g2lib.h>
-
+#include <icons.h>
 // Screen setup
 U8G2_SSD1309_128X64_NONAME2_1_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/18, /* data=*/23, /* cs=*/15, /* dc=*/17, /* reset=*/16);
 #define SCREEN_WIDTH 128
@@ -34,11 +34,7 @@ char menu_items[NUM_ITEMS][MAX_ITEM_LENGTH] = { // array with item names
     {"Park Sensor"},
     {"Turbo Gauge"}};
 
-const unsigned char Square[] PROGMEM = {
-    0x00, 0x00, 0x3f, 0xfc, 0x5f, 0xfa, 0x6f, 0xf6, 0x77, 0xee, 0x7b, 0xde, 0x7c, 0x3e, 0x7c, 0x3e,
-    0x7c, 0x3e, 0x7c, 0x3e, 0x7b, 0xde, 0x77, 0xee, 0x6f, 0xf6, 0x5f, 0xfa, 0x3f, 0xfc, 0x00, 0x00};
-
-void drawUI(char *title, char *description)
+void drawUI(char *description)
 {
   // Drawing "Simple UI" text
   u8g2.setFont(u8g_font_baby);
@@ -52,13 +48,38 @@ void drawUI(char *title, char *description)
   u8g2.drawStr(0, SCREEN_HEIGHT - 2, description);
 }
 
+// If its stupid but it works it ain't stupid ~ Robert Fulghum
+void drawItem(int y, char* label)
+{
+  int textY = y;
+  int iconY = y;
+
+  if (textY == 1) {
+    textY = 13;
+  } else if (textY == 2) {
+    textY = 33;
+  } else if (textY == 3) {
+    textY = 49;
+  }
+
+  if (iconY == 1) {
+    iconY = 2;
+  } else if (iconY == 2) {
+    iconY = 20;
+  } else if (iconY == 3) {
+    iconY = 38;
+  }
+  u8g2.drawStr(25, textY, label);
+  u8g2.drawBitmap(4, iconY, 16 / 8, 16, Square);
+}
+
 /* draw something on the display with the `firstPage()`/`nextPage()` loop*/
 void updateDisplay()
 {
   u8g2.firstPage();
   do
   {
-    drawUI("Simple UI", "This is a simple user interface.");
+    drawUI("This is a simple user interface.");
 
     if (current_screen == 0)
     { // MENU SCREEN
@@ -66,66 +87,62 @@ void updateDisplay()
       // up and down buttons only work for the menu screen
       if ((digitalRead(BUTTON_UP_PIN) == LOW) && (button_up_clicked == 0))
       {                                    // up button clicked - jump to previous menu item
-        item_selected = item_selected - 1; // select previous item
-        button_up_clicked = 1;             // set button to clicked to only perform the action once
+        --item_selected;
+        button_up_clicked = 1;
+
+        // Wrap
         if (item_selected < 0)
-        { // if first item was selected, jump to last item
+        {
           item_selected = NUM_ITEMS - 1;
         }
       }
       else if ((digitalRead(BUTTON_DOWN_PIN) == LOW) && (button_down_clicked == 0))
-      {                                    // down button clicked - jump to next menu item
-        item_selected = item_selected + 1; // select next item
-        button_down_clicked = 1;           // set button to clicked to only perform the action once
+      {
+        ++item_selected;
+        button_down_clicked = 1;
+
+        // Wrap
         if (item_selected >= NUM_ITEMS)
         { // last item was selected, jump to first menu item
           item_selected = 0;
         }
       }
 
+      // Reset the button lock
       if ((digitalRead(BUTTON_UP_PIN) == HIGH) && (button_up_clicked == 1))
-      { // unclick
+      {
         button_up_clicked = 0;
       }
       if ((digitalRead(BUTTON_DOWN_PIN) == HIGH) && (button_down_clicked == 1))
-      { // unclick
+      {
         button_down_clicked = 0;
       }
 
+      // update previous and next item selection
       item_sel_previous = item_selected - 1;
-      // if (item_sel_previous < 0)
-      // {
-      //   item_sel_previous = NUM_ITEMS - 1;
-      // } // previous item would be below first = make it the last
       item_sel_next = item_selected + 1;
-      // if (item_sel_next >= NUM_ITEMS)
-      // {
-      //   item_sel_next = 0;
-      // } // next item would be after last = make it the first
     }
 
-    // display menu items TODO!!!
-    			// draw previous item as icon + label
+    // display menu items
       if (item_sel_previous >= 0) {
       u8g2.setFont(u8g_font_5x8);
-			u8g2.drawStr(25, 13, menu_items[item_sel_previous]);
-			u8g2.drawBitmap(4, 2, 16 / 8, 16, Square);
+			drawItem(1, menu_items[item_sel_previous]);
       }
 			// draw selected item as icon + label in bold font
       u8g2.setFont(u8g_font_7x13B);
-			u8g2.drawStr(25, 33, menu_items[item_selected]);
-			u8g2.drawBitmap(4, 20, 16 / 8, 16, Square);
+      drawItem(2, menu_items[item_selected]);
 
-			// draw next item as icon + label
+      // draw next item as icon + label
       if (item_selected < NUM_ITEMS - 1)
       {
         u8g2.setFont(u8g_font_5x8);
-        u8g2.drawStr(25, 49, menu_items[item_sel_next]);
-        u8g2.drawBitmap(4, 38, 16 / 8, 16, Square);
+        drawItem(3, menu_items[item_sel_next]);
       }
     // u8g2.drawStr(60, 30, menu_items[item_sel_previous]);
   } while (u8g2.nextPage());
 }
+
+
 
 void loop(void)
 {
@@ -133,7 +150,7 @@ void loop(void)
 }
 
 /* u8g2.begin() is required and will sent the setup/init sequence to the display */
-void setup(void)
+void setup()
 {
   u8g2.begin();
   pinMode(BUTTON_DOWN_PIN, INPUT_PULLUP);
