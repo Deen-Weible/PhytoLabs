@@ -3,7 +3,7 @@
 #include <U8g2lib.h>
 
 // Screen setup
-U8G2_SSD1309_128X64_NONAME2_1_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/18, /* data=*/23, /* cs=*/15, /* dc=*/4, /* reset=*/2);
+U8G2_SSD1309_128X64_NONAME2_1_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/18, /* data=*/23, /* cs=*/15, /* dc=*/17, /* reset=*/16);
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define CLOCK_SPEED 400000
@@ -33,6 +33,10 @@ char menu_items[NUM_ITEMS][MAX_ITEM_LENGTH] = { // array with item names
     {"Big Knob"},
     {"Park Sensor"},
     {"Turbo Gauge"}};
+
+const unsigned char Square[] PROGMEM = {
+    0x00, 0x00, 0x3f, 0xfc, 0x5f, 0xfa, 0x6f, 0xf6, 0x77, 0xee, 0x7b, 0xde, 0x7c, 0x3e, 0x7c, 0x3e,
+    0x7c, 0x3e, 0x7c, 0x3e, 0x7b, 0xde, 0x77, 0xee, 0x6f, 0xf6, 0x5f, 0xfa, 0x3f, 0xfc, 0x00, 0x00};
 
 void drawUI(char *title, char *description)
 {
@@ -89,17 +93,37 @@ void updateDisplay()
       }
 
       item_sel_previous = item_selected - 1;
-      if (item_sel_previous < 0)
-      {
-        item_sel_previous = NUM_ITEMS - 1;
-      } // previous item would be below first = make it the last
+      // if (item_sel_previous < 0)
+      // {
+      //   item_sel_previous = NUM_ITEMS - 1;
+      // } // previous item would be below first = make it the last
       item_sel_next = item_selected + 1;
-      if (item_sel_next >= NUM_ITEMS)
-      {
-        item_sel_next = 0;
-      } // next item would be after last = make it the first
+      // if (item_sel_next >= NUM_ITEMS)
+      // {
+      //   item_sel_next = 0;
+      // } // next item would be after last = make it the first
     }
-    u8g2.drawStr(60, 30, menu_items[item_sel_previous]);
+
+    // display menu items TODO!!!
+    			// draw previous item as icon + label
+      if (item_sel_previous >= 0) {
+      u8g2.setFont(u8g_font_5x8);
+			u8g2.drawStr(25, 13, menu_items[item_sel_previous]);
+			u8g2.drawBitmap(4, 2, 16 / 8, 16, Square);
+      }
+			// draw selected item as icon + label in bold font
+      u8g2.setFont(u8g_font_7x13B);
+			u8g2.drawStr(25, 33, menu_items[item_selected]);
+			u8g2.drawBitmap(4, 20, 16 / 8, 16, Square);
+
+			// draw next item as icon + label
+      if (item_selected < NUM_ITEMS - 1)
+      {
+        u8g2.setFont(u8g_font_5x8);
+        u8g2.drawStr(25, 49, menu_items[item_sel_next]);
+        u8g2.drawBitmap(4, 38, 16 / 8, 16, Square);
+      }
+    // u8g2.drawStr(60, 30, menu_items[item_sel_previous]);
   } while (u8g2.nextPage());
 }
 
