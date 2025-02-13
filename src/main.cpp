@@ -34,40 +34,47 @@ char menu_items[NUM_ITEMS][MAX_ITEM_LENGTH] = { // array with item names
     {"Park Sensor"},
     {"Turbo Gauge"}};
 
-void drawUI(char *description)
+char item_descriptions[NUM_ITEMS][MAX_ITEM_LENGTH] = { // array with item names
+  {"desc 1"},
+  {"desc 2"},
+  {"desc 3"},
+  {"desc 4"},
+  {"desc 5"},
+  {"desc 6"},
+  {"desc 7"},
+  {"desc 8"}};
+
+void drawUI(char *description, char *title)
 {
   // Drawing "Simple UI" text
+  u8g2.setFontMode(1);
+  u8g2.drawBox(0, 0, SCREEN_WIDTH, 10);
+  u8g2.setDrawColor(2);
   u8g2.setFont(u8g_font_baby);
-  // u8g2.drawStr(0, 15, title);
+  u8g2.drawStr(0, 7, title);
 
   // Activating transparent font mode and drawing a line
-  u8g2.setFontMode(1);
   u8g2.drawLine(0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, SCREEN_HEIGHT - 10);
   // u8g2.drawBox(0, SCREEN_HEIGHT -10, SCREEN_WIDTH, SCREEN_HEIGHT);
-  u8g2.setDrawColor(2);
   u8g2.drawStr(0, SCREEN_HEIGHT - 2, description);
 }
 
 // If its stupid but it works it ain't stupid ~ Robert Fulghum
-void drawItem(int y, char* label)
+void drawItem(int list_height, char* label)
 {
-  int textY = y;
-  int iconY = y;
+  int textY = list_height;
+  int iconY = list_height;
 
   if (textY == 1) {
-    textY = 13;
+    textY = 28;
   } else if (textY == 2) {
-    textY = 33;
-  } else if (textY == 3) {
-    textY = 49;
+    textY = 44;
   }
 
-  if (iconY == 1) {
-    iconY = 2;
+   if (iconY == 1) {
+    iconY = 15;
   } else if (iconY == 2) {
-    iconY = 20;
-  } else if (iconY == 3) {
-    iconY = 38;
+    iconY = 33;
   }
   u8g2.drawStr(25, textY, label);
   u8g2.drawBitmap(4, iconY, 16 / 8, 16, Square);
@@ -79,7 +86,7 @@ void updateDisplay()
   u8g2.firstPage();
   do
   {
-    drawUI("This is a simple user interface.");
+    drawUI(item_descriptions[item_selected], "Settings");
 
     if (current_screen == 0)
     { // MENU SCREEN
@@ -124,19 +131,19 @@ void updateDisplay()
     }
 
     // display menu items
-      if (item_sel_previous >= 0) {
-      u8g2.setFont(u8g_font_5x8);
-			drawItem(1, menu_items[item_sel_previous]);
-      }
+      // if (item_sel_previous >= 0) {
+      // u8g2.setFont(u8g_font_5x8);
+			// drawItem(1, menu_items[item_sel_previous]);
+      // }
 			// draw selected item as icon + label in bold font
       u8g2.setFont(u8g_font_7x13B);
-      drawItem(2, menu_items[item_selected]);
+      drawItem(1, menu_items[item_selected]);
 
       // draw next item as icon + label
       if (item_selected < NUM_ITEMS - 1)
       {
         u8g2.setFont(u8g_font_5x8);
-        drawItem(3, menu_items[item_sel_next]);
+        drawItem(2, menu_items[item_sel_next]);
       }
     // u8g2.drawStr(60, 30, menu_items[item_sel_previous]);
   } while (u8g2.nextPage());
