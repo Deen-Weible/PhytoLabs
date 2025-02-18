@@ -123,6 +123,8 @@ void drawTimeMenu() {
 	// Convert the second to a string
 	sprintf(seconds_str, "%02d", current_second);
 
+	u8g2.setFont(u8g_font_10x20r);
+
 	// Draw the indicator boxes
 	switch (current_time_unit) {
 		case 0:
@@ -133,7 +135,7 @@ void drawTimeMenu() {
 			break;
 	}
 
-	u8g2.drawStr(65, 17, time_str);
+	// u8g2.drawStr(65, 17, time_str);
 
 	// Draw the time and second
 	u8g2.drawStr(35, 32, time_str);
@@ -151,7 +153,7 @@ void drawTimeMenu() {
 			updated_minute = Wrap(updated_minute + 1, 0, 59);
 			break;
 		case 1:
-			updated_hour = Wrap(updated_hour + 1, 0, 59);
+			updated_hour = Wrap(updated_hour + 1, 0, 23);
 			break;
 	}
 	} else if (DOWN_CONDITION) {
@@ -164,7 +166,7 @@ void drawTimeMenu() {
 				updated_minute = Wrap(updated_minute - 1, 0, 59);
 				break;
 			case 1:
-				updated_hour = Wrap(updated_hour - 1, 0, 59);
+				updated_hour = Wrap(updated_hour - 1, 0, 23);
 				break;
 		}
 	} else if (SELECT_CONDITION) {
@@ -173,6 +175,8 @@ void drawTimeMenu() {
 
 		if (current_time_unit == 2) {
 			now = 0;
+			clock_settime(now, 0);
+			
 		}
 	}
 }
