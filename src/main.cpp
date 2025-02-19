@@ -19,6 +19,7 @@ String current_screen = "Settings";
 long offset_time = 0;
 int updated_hour = 0;
 int updated_minute = 0;
+int updated_offset = 0;
 
 int current_time_unit = 0; // keep track of the unit being changed from the menu (minutes/hours/done)
 
@@ -55,7 +56,7 @@ void drawMenuItem(int position, const char *label, const unsigned char* icon = k
 
 // Update the offset time and all derivative values
 void updateTimes() {
-	offset_time = time(&now) + updated_hour * 3600 + updated_minute * 60;
+	offset_time = time(&now) - updated_offset + updated_hour * 3600 + updated_minute * 60;
 	current_second = WrapSeconds(offset_time);
 	current_minute = SecondsToMinutes(offset_time);
 	current_hour = SecondsToHours(offset_time);
@@ -116,12 +117,12 @@ void drawTimeMenu() {
 	// Buffer appropriate time string to the screen (preview/actual)
 	if (current_time_unit < 2) {
 		sprintf(time_str, "%02d:%02d", updated_hour, updated_minute);
+		sprintf(seconds_str, "%02d", 00);
 	}
 	else {
 		sprintf(time_str, "%02d:%02d", current_hour, current_minute);
+		sprintf(seconds_str, "%02d", current_second);
 	}
-	// Convert the second to a string
-	sprintf(seconds_str, "%02d", current_second);
 
 	u8g2.setFont(u8g_font_10x20r);
 
@@ -134,8 +135,6 @@ void drawTimeMenu() {
 			u8g2.drawBox(35, 16, 20, 19);
 			break;
 	}
-
-	// u8g2.drawStr(65, 17, time_str);
 
 	// Draw the time and second
 	u8g2.drawStr(35, 32, time_str);
@@ -174,9 +173,7 @@ void drawTimeMenu() {
 		current_time_unit++;
 
 		if (current_time_unit == 2) {
-			now = 0;
-			clock_settime(now, 0);
-			
+			updated_offset = time(&now);
 		}
 	}
 }
