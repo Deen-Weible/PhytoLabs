@@ -95,6 +95,7 @@ void drawSettingsMenu() {
 		button_select_clicked = 1;
 		current_screen = menu_items[selected_menu_item];
 	}
+	selected_menu_item = Wrap(selected_menu_item, 0, kMenuNumItems - 1);
 
 	// Draw the menu items
 	u8g2.setFont(u8g_font_7x13B);
