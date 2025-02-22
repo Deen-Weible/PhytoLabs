@@ -1,0 +1,7 @@
+{
+	"files.associations": {
+		"*.drift": "sql",
+		"cstring": "cpp",
+		"typeinfo": "cpp"
+	}
+}

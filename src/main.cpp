@@ -40,6 +40,9 @@ void drawUI(const char *title, const char *description)
   u8g2.setDrawColor(2);
   u8g2.setFont(u8g_font_baby);
   u8g2.drawStr(0, 7, title);
+	char time_str[20];
+	sprintf(time_str, "%02d:%02d", current_hour, current_minute);
+	u8g2.drawStr(103, 7, time_str);
 
   u8g2.drawLine(0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, SCREEN_HEIGHT - 10);
   u8g2.drawStr(0, SCREEN_HEIGHT - 2, description);
@@ -86,15 +89,21 @@ void drawSettingsMenu() {
 	if (UP_CONDITION) {
 		++selected_menu_item;
 		button_up_clicked = 1;
-		preferences.putUInt("selected_menu_item", selected_menu_item);
+		preferences.putUInt("smi", selected_menu_item);
 	} else if (DOWN_CONDITION) {
 		--selected_menu_item;
 		button_down_clicked = 1;
-		preferences.putUInt("selected_menu_item", selected_menu_item);
+		preferences.putUInt("smi", selected_menu_item);
 	} else if (SELECT_CONDITION) {
 		button_select_clicked = 1;
 		current_screen = menu_items[selected_menu_item];
-	}
+
+		// Reset the time settings if the user selects the Time menu item
+		if (strcmp(menu_items[selected_menu_item], "Time") == 0) {
+			current_time_unit = 0;
+			updated_hour = 0;
+			updated_minute = 0;
+	}}
 	selected_menu_item = Wrap(selected_menu_item, 0, kMenuNumItems - 1);
 
 	// Draw the menu items
@@ -175,8 +184,15 @@ void drawTimeMenu() {
 
 		if (current_time_unit == 2) {
 			updated_offset = time(&now);
+		} else if (current_time_unit == 3) {
+			current_screen = "Settings";
 		}
+
 	}
+}
+
+void drawSliderTestMenu() {
+
 }
 
 // Setup the screen, time and buttons
@@ -189,7 +205,7 @@ void setup() {
 
 	// Load the persistent storage and set selected item
 	preferences.begin("settings", false);
-  selected_menu_item = preferences.getUInt("selected_menu_item");
+  selected_menu_item = preferences.getUInt("smi");
 
 	// Pull up buttons so they can be read
 	pinMode(BUTTON_DOWN_PIN, INPUT_PULLUP);
@@ -212,7 +228,11 @@ void loop() {
 		} else if (current_screen == "Time")
 		{
 			drawTimeMenu();
+		} else if (current_screen = "Slider Test")
+		{
+			drawSliderTestMenu();
 		}
+
 
 	} while (u8g2.nextPage());
 }

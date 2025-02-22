@@ -33,10 +33,10 @@ const unsigned char kSquareIcon[] PROGMEM = {
 
 // Menu items and descriptions
 char menu_items[kMenuNumItems][KMenuMaxTitleLength] = {
-	{"Time"}, {"Battery"}, {"Dashboard"}, {"Fireworks"}, {"GPS Speed"}, {"Big Knob"}, {"Park Sensor"}, {"Turbo Gauge"}};
+	{"Time"}, {"Slider Test"}, {"Dashboard"}, {"Fireworks"}, {"GPS Speed"}, {"Big Knob"}, {"Park Sensor"}, {"Turbo Gauge"}};
 
 char menu_item_descriptions[kMenuNumItems][KMenuMaxTitleLength] = {
-	{"Current Time"}, {"desc 2"}, {"desc 3"}, {"desc 4"}, {"desc 5"}, {"desc 6"}, {"desc 7"}, {"desc 8"}};
+	{"Current Time"}, {"Test ui slider"}, {"desc 3"}, {"desc 4"}, {"desc 5"}, {"desc 6"}, {"desc 7"}, {"desc 8"}};
 
 // Functions
 // Function to wrap a number within a given range [kLowerBound, kUpperBound]
