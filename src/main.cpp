@@ -21,7 +21,7 @@ int updated_hour = 0;
 int updated_minute = 0;
 int updated_offset = 0;
 
-int current_time_unit = 0; // keep track of the unit being changed from the menu (minutes/hours/done)
+int current_setting_unit = 0; // keep track of the unit being changed from the menu (minutes/hours/done)
 
 // Current realtime clock values
 int current_second = 0;
@@ -100,7 +100,7 @@ void drawSettingsMenu() {
 
 		// Reset the time settings if the user selects the Time menu item
 		if (strcmp(menu_items[selected_menu_item], "Time") == 0) {
-			current_time_unit = 0;
+			current_setting_unit = 0;
 			updated_hour = 0;
 			updated_minute = 0;
 	}}
@@ -125,7 +125,7 @@ void drawTimeMenu() {
 	char seconds_str[4];
 
 	// Buffer appropriate time string to the screen (preview/actual)
-	if (current_time_unit < 2) {
+	if (current_setting_unit < 2) {
 		sprintf(time_str, "%02d:%02d", updated_hour, updated_minute);
 		sprintf(seconds_str, "%02d", 00);
 	}
@@ -137,7 +137,7 @@ void drawTimeMenu() {
 	u8g2.setFont(u8g_font_10x20r);
 
 	// Draw the indicator boxes
-	switch (current_time_unit) {
+	switch (current_setting_unit) {
 		case 0:
 			u8g2.drawBox(65, 16, 20, 19);
 			break;
@@ -156,7 +156,7 @@ void drawTimeMenu() {
 		button_up_clicked = 1;
 
 	// Add to the minute/hour
-	switch (current_time_unit)
+	switch (current_setting_unit)
 	{
 		case 0:
 			updated_minute = Wrap(updated_minute + 1, 0, 59);
@@ -169,7 +169,7 @@ void drawTimeMenu() {
 		button_down_clicked = 1;
 
 		// Subtract from the minute/hour
-		switch (current_time_unit)
+		switch (current_setting_unit)
 		{
 			case 0:
 				updated_minute = Wrap(updated_minute - 1, 0, 59);
@@ -180,18 +180,18 @@ void drawTimeMenu() {
 		}
 	} else if (SELECT_CONDITION) {
 		button_select_clicked = 1;
-		current_time_unit++;
+		current_setting_unit++;
 
-		if (current_time_unit == 2) {
+		if (current_setting_unit == 2) {
 			updated_offset = time(&now);
-		} else if (current_time_unit == 3) {
+		} else if (current_setting_unit == 3) {
 			current_screen = "Settings";
 		}
-
 	}
 }
 
 void drawSliderTestMenu() {
+	drawUI("Slider Test", "Test of slider... yeah.");
 
 }
 
@@ -232,7 +232,5 @@ void loop() {
 		{
 			drawSliderTestMenu();
 		}
-
-
 	} while (u8g2.nextPage());
 }
