@@ -65,19 +65,33 @@ void updateTimes() {
 	current_hour = SecondsToHours(offset_time);
 }
 
+int loopTick = 0;
+bool firstTick = true;
 // Reset the button pressed values for the conditions
 void resetButtons() {
-	if ((digitalRead(BUTTON_UP_PIN) == HIGH))
-	{
+	if ((digitalRead(BUTTON_UP_PIN) == HIGH))	{
 		button_up_clicked = 0;
 	}
-	if ((digitalRead(BUTTON_DOWN_PIN) == HIGH))
-	{
+	if ((digitalRead(BUTTON_DOWN_PIN) == HIGH))	{
 		button_down_clicked = 0;
 	}
-	if ((digitalRead(BUTTON_SELECT_PIN) == HIGH))
-	{
+	if ((digitalRead(BUTTON_SELECT_PIN) == HIGH)) {
 		button_select_clicked = 0;
+	}
+
+	// If any of the buttons are pressed start counting the loop
+	if ((digitalRead(BUTTON_UP_PIN) == LOW) || ((digitalRead(BUTTON_DOWN_PIN) == LOW)) || ((digitalRead(BUTTON_SELECT_PIN) == LOW))) {
+		loopTick++;
+		if ((loopTick > 85 && firstTick) || (loopTick > 25 && !firstTick)) {
+			loopTick = 0;
+			firstTick = false;
+			button_up_clicked = 0;
+			button_down_clicked = 0;
+			button_select_clicked = 0;
+		}
+	} else {
+		loopTick = 0;
+		firstTick = true;
 	}
 }
 
@@ -99,8 +113,8 @@ void drawSettingsMenu() {
 		current_screen = menu_items[selected_menu_item];
 
 		// Reset the time settings if the user selects the Time menu item
+		current_setting_unit = 0;
 		if (strcmp(menu_items[selected_menu_item], "Time") == 0) {
-			current_setting_unit = 0;
 			updated_hour = 0;
 			updated_minute = 0;
 	}}
@@ -190,8 +204,38 @@ void drawTimeMenu() {
 	}
 }
 
+// Vars for slider test menu
+int sliderMin = 0;
+int sliderMax = 100;
+int smallSliderValue = 30; // Initial value of the slider
+int bigSliderValue = 70; // Initial value of the slider
+
 void drawSliderTestMenu() {
 	drawUI("Slider Test", "Test of slider... yeah.");
+
+	// Super simple, add and subtract from the values from user info
+	if (UP_CONDITION) {
+		button_up_clicked = 1;
+		if (current_setting_unit == 0 && smallSliderValue < sliderMax) {
+			smallSliderValue++;
+		} else if (current_setting_unit == 1 && bigSliderValue < sliderMax) {
+			bigSliderValue++;
+		}
+	} else if (DOWN_CONDITION) {
+		button_down_clicked = 1;
+		if (current_setting_unit == 0 && smallSliderValue > sliderMin) {
+			smallSliderValue--;
+		} else if (current_setting_unit == 1 && bigSliderValue > sliderMin) {
+			bigSliderValue--;
+		}
+	} else if (SELECT_CONDITION) {
+		button_select_clicked = 1;
+		current_setting_unit++;
+	}
+
+	char sliderText[30];
+	sprintf(sliderText, "Small: %d, Big: %d, Unit: %d", smallSliderValue, bigSliderValue, current_setting_unit);
+	u8g2.drawStr(0, 40, sliderText);
 
 }
 
