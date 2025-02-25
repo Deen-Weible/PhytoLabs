@@ -20,3 +20,12 @@ int SecondsToHours(int seconds) {
 int WrapSeconds (int seconds) {
     return Wrap(seconds, 0, 59);
 }
+
+int Clamp(int value, int lower_bound, int upper_bound) {
+    if(value > upper_bound)
+        return upper_bound;
+    else if(value < lower_bound)
+        return lower_bound;
+    else
+        return value;
+}

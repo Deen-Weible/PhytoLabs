@@ -50,4 +50,7 @@ int SecondsToHours(int seconds);
 
 // Wraps seconds within [0, 59]
 int WrapSeconds(int seconds);
+
+// Clamps a value within a given range [kLowerBound, kUpperBound]
+int Clamp(int value, int lower_bound, int upper_bound);
 #endif

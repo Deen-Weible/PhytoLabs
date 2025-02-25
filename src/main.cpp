@@ -70,6 +70,24 @@ void drawSlider(int smallSliderValue, int bigSliderValue) {
 
 	u8g2.drawLine(smallIndicatorX, SCREEN_HEIGHT - 23, smallIndicatorX, SCREEN_HEIGHT - 17);
 	u8g2.drawLine(bigIndicatorX, SCREEN_HEIGHT - 23, bigIndicatorX, SCREEN_HEIGHT - 17);
+
+	// Convert ints into char
+	char smallSliderValueChar[12];
+	char bigSliderValueChar[3];
+
+	// Draw the text (above indicators)
+	if ((bigSliderValue - smallSliderValue) > 11) {
+		sprintf(smallSliderValueChar, "%d", smallSliderValue);
+		sprintf(bigSliderValueChar, "%d", bigSliderValue);
+
+		u8g2.drawStr(smallIndicatorX - 4, SCREEN_HEIGHT - 25, smallSliderValueChar);
+		u8g2.drawStr(bigIndicatorX - 4, SCREEN_HEIGHT - 25, bigSliderValueChar);
+	} else {
+		// Use the same variable to keep memory use low
+		sprintf(smallSliderValueChar, "%d - %d", smallSliderValue, bigSliderValue);
+
+		u8g2.drawStr(Clamp(smallIndicatorX - 4, 10, 95), 38, smallSliderValueChar);
+	}
 }
 // Update the offset time and all derivative values
 void updateTimes() {
@@ -230,7 +248,7 @@ void drawSliderTestMenu() {
 	// Super simple, add and subtract from the values from user info
 	if (UP_CONDITION) {
 		button_up_clicked = 1;
-		if (current_setting_unit == 0 && smallSliderValue < sliderMax) {
+		if (current_setting_unit == 0 && smallSliderValue < sliderMax - 1) {
 			smallSliderValue++;
 		} else if (current_setting_unit == 1 && bigSliderValue < sliderMax) {
 			bigSliderValue++;
@@ -239,7 +257,7 @@ void drawSliderTestMenu() {
 		button_down_clicked = 1;
 		if (current_setting_unit == 0 && smallSliderValue > sliderMin) {
 			smallSliderValue--;
-		} else if (current_setting_unit == 1 && bigSliderValue > sliderMin) {
+		} else if (current_setting_unit == 1 && bigSliderValue > sliderMin + 1) {
 			bigSliderValue--;
 		}
 	} else if (SELECT_CONDITION) {
