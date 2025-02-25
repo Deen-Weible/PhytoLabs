@@ -56,7 +56,21 @@ void drawMenuItem(int position, const char *label, const unsigned char* icon = k
   u8g2.drawStr(25, textY, label);
   u8g2.drawBitmap(4, iconY, 16 / 8, 16, icon);
 }
+// Draw slider
+void drawSlider(int smallSliderValue, int bigSliderValue) {
+	u8g2.drawLine(10, SCREEN_HEIGHT - 20, SCREEN_WIDTH - 10, SCREEN_HEIGHT - 20); // horizontal line across whole 128 screen
 
+	// Line end.. border? idk - looks nice
+	u8g2.drawLine(SCREEN_WIDTH - 9, SCREEN_HEIGHT - 22, SCREEN_WIDTH - 9, SCREEN_HEIGHT - 18);
+	u8g2.drawLine(9, SCREEN_HEIGHT - 22, 9, SCREEN_HEIGHT - 18);
+
+	// Draw the indicators
+	int smallIndicatorX = (map(smallSliderValue, 0, 100, 10, SCREEN_WIDTH - 10));
+	int bigIndicatorX = (map(bigSliderValue, 0, 100, 10, SCREEN_WIDTH - 10));
+
+	u8g2.drawLine(smallIndicatorX, SCREEN_HEIGHT - 23, smallIndicatorX, SCREEN_HEIGHT - 17);
+	u8g2.drawLine(bigIndicatorX, SCREEN_HEIGHT - 23, bigIndicatorX, SCREEN_HEIGHT - 17);
+}
 // Update the offset time and all derivative values
 void updateTimes() {
 	offset_time = time(&now) - updated_offset + updated_hour * 3600 + updated_minute * 60;
@@ -233,9 +247,30 @@ void drawSliderTestMenu() {
 		current_setting_unit++;
 	}
 
+	// Ensure they stay in range/in order with each other
+	if ((smallSliderValue >= bigSliderValue) && current_setting_unit == 1) {
+		smallSliderValue = bigSliderValue - 1;
+	if ((smallSliderValue >= bigSliderValue) && current_setting_unit == 0) {
+		bigSliderValue = smallSliderValue + 1;
+	}
+	} if (bigSliderValue <= smallSliderValue) {
+		bigSliderValue = smallSliderValue + 1;
+	}
+
+	// Return to settings
+	if (current_setting_unit > 1) {
+		current_screen = "Settings";
+	}
+
+	// DEBUG: Render text with stats
 	char sliderText[30];
 	sprintf(sliderText, "Small: %d, Big: %d, Unit: %d", smallSliderValue, bigSliderValue, current_setting_unit);
-	u8g2.drawStr(0, 40, sliderText);
+	Serial.println(sliderText);
+
+	// Draw the slider
+	drawSlider(smallSliderValue, bigSliderValue);
+
+	// u8g2.drawStr(0, 40, sliderText);
 
 }
 
