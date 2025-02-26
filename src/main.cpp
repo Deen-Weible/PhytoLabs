@@ -289,7 +289,6 @@ void drawSliderTestMenu() {
 	drawSlider(smallSliderValue, bigSliderValue);
 
 	// u8g2.drawStr(0, 40, sliderText);
-
 }
 
 // Setup the screen, time and buttons
