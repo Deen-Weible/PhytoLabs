@@ -73,7 +73,7 @@ void drawSlider(int smallSliderValue, int bigSliderValue) {
 
 	// Convert ints into char
 	char smallSliderValueChar[12];
-	char bigSliderValueChar[3];
+	char bigSliderValueChar[12];
 
 	// Draw the text (above indicators)
 	if ((bigSliderValue - smallSliderValue) > 11) {
@@ -281,13 +281,12 @@ void drawSliderTestMenu() {
 	}
 
 	// DEBUG: Render text with stats
-	char sliderText[30];
-	sprintf(sliderText, "Small: %d, Big: %d, Unit: %d", smallSliderValue, bigSliderValue, current_setting_unit);
-	Serial.println(sliderText);
+	// char sliderText[30];
+	// sprintf(sliderText, "Small: %d, Big: %d, Unit: %d", smallSliderValue, bigSliderValue, current_setting_unit);
+	// Serial.println(sliderText);
 
 	// Draw the slider
 	drawSlider(smallSliderValue, bigSliderValue);
-
 	// u8g2.drawStr(0, 40, sliderText);
 }
 
