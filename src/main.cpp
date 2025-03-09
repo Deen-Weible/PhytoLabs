@@ -6,6 +6,7 @@
 
 // internal
 #include <helpers.h>
+#include <index.h>
 
 // Button states
 int button_down_clicked = 0;
@@ -30,6 +31,46 @@ int current_hour = 0;
 
 // Keep track of which item is selected in the menu
 int selected_menu_item = 0;
+
+// AP config
+void StartAP(const char *ssid, const char *password, const IPAddress &localIP, const IPAddress &gatewayIP)
+{
+  WiFi.mode(WIFI_STA);
+  WiFi.softAPConfig(localIP, gatewayIP, subnetMask);
+  WiFi.softAP(ssid, password, WIFI_CHANNEL, 0, MAX_CLIENTS);
+
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+}
+
+// Setup the DNS server so that localUrl can be resolved
+void SetupDNS(DNSServer &dnsServer, const IPAddress &localIP)
+{
+  dnsServer.setTTL(3600);
+  dnsServer.start(53, "*", WiFi.softAPIP());
+}
+
+// Setup the HTTP server
+void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
+  server.on("/wpad.dat", [](AsyncWebServerRequest *request)
+            { request->send(404); });
+  server.on("/connecttest.txt", [](AsyncWebServerRequest *request)
+            { request->redirect("http://logout.net"); });
+
+  // 404 favicon
+  server.on("/favicon.ico", [](AsyncWebServerRequest *request)
+  { request->send(404); });
+
+  // Serve the main page
+  server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request)
+            {
+		AsyncWebServerResponse *response = request->beginResponse(200, "text/html", MAIN_page);
+		response->addHeader("Cache-Control", "public,max-age=31536000");
+		request->send(response); });
+
+  // Realtime updates:
+  server.on("/readADC", [](AsyncWebServerRequest *request)
+            { request->send(200, "text/plane", "Got it"); }); // To get update of ADC Value only
+}
 
 // UI functions
 // Draw simple ui elements (titlebar, footer)
@@ -306,6 +347,13 @@ void setup() {
 	pinMode(BUTTON_DOWN_PIN, INPUT_PULLUP);
   pinMode(BUTTON_UP_PIN, INPUT_PULLUP);
   pinMode(BUTTON_SELECT_PIN, INPUT_PULLUP);
+
+	// Set up the WiFi
+	StartAP(ssid, password, localIP, gatewayIP);
+  SetupDNS(dnsServer, localIP);
+
+  SetupServer(server, localIP);
+  server.begin();
 
 	// Finally, initialize the screen.
   u8g2.begin();

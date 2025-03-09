@@ -1,9 +1,26 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 #include <Preferences.h>
+#include <ESPAsyncWebServer.h>
+#include <DNSServer.h>
 
 #ifndef HELPERS
 #define HELPERS
+
+// Networking & Sever
+#define MAX_CLIENTS 4
+#define WIFI_CHANNEL 6
+#define DNS_INTERVAL 30 // to keep from overloading the DNS server
+const IPAddress localIP(1, 2, 3, 4);
+const IPAddress gatewayIP(1, 2, 3, 4); // same as localIP
+const IPAddress subnetMask(255, 255, 255, 0);
+const char *localUrl = "http://settings.dev"; // for ease of access
+const char *ssid = "PhytoLabs Initialization";
+const char *password = NULL; // no password
+
+// Web server
+DNSServer dnsServer;
+AsyncWebServer server(80);
 
 // Variables
 time_t now;
