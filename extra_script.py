@@ -7,4 +7,5 @@ def before_upload():
 
     header_file.write('const char MAIN_page[] PROGMEM = R"=====(' + html_file.read() + ')=====";')
 
+print("does this run?")
 before_upload()

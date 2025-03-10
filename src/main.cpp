@@ -55,6 +55,18 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
             { request->send(404); });
   server.on("/connecttest.txt", [](AsyncWebServerRequest *request)
             { request->redirect("http://logout.net"); });
+  server.on("/redirect", [](AsyncWebServerRequest *request)
+            { request->redirect(localUrl); });
+  server.on("/generate_204", [](AsyncWebServerRequest *request)
+            { request->redirect(localUrl); });
+  server.on("/hotspot-detect.html", [](AsyncWebServerRequest *request)
+            { request->redirect(localUrl); });
+  server.on("/ncsi.txt", [](AsyncWebServerRequest *request)
+            { request->redirect(localUrl); });
+  server.on("/success.txt", [](AsyncWebServerRequest *request)
+            { request->send(200); });
+  server.on("/canonical.html", [](AsyncWebServerRequest *request)
+            { request->redirect(localUrl); });
 
   // 404 favicon
   server.on("/favicon.ico", [](AsyncWebServerRequest *request)
@@ -333,6 +345,7 @@ void drawSliderTestMenu() {
 
 // Setup the screen, time and buttons
 void setup() {
+	WiFi.begin("DEENS-WIFI-24", "deendeen");
 	Serial.begin(115200);
   SPI.setClockDivider(CLOCK_SPEED);
   u8g2.setBusClock(CLOCK_SPEED);
@@ -362,10 +375,12 @@ void setup() {
 void loop() {
 	u8g2.firstPage();
 	do {
+		Serial.println(WiFi.localIP());
+		dnsServer.processNextRequest();
 		updateTimes();
 		resetButtons();
 
-		// Draw each menu
+		// Draw each menup
 		if (current_screen == "Settings") {
 			drawSettingsMenu();
 		} else if (current_screen == "Time")
