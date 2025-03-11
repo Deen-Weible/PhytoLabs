@@ -14,9 +14,18 @@ const char MAIN_page[] PROGMEM = R"=====(<html>
 	</div>
 
 	<script>
+		function getData() {
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function () {
+				if (this.readyState == 4 && this.status == 200) {
+					document.getElementById("ADCValue").innerHTML = this.responseText;
+				}
+			};
+			xhttp.open("GET", "readADC", true);
+			xhttp.send();
+		}
+
 		function sendData(url, data, callback, method = "POST") {
-
-
 			var xhttp = new XMLHttpRequest();
 			xhttp.open(method, url, true);
 			xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
@@ -36,6 +45,7 @@ const char MAIN_page[] PROGMEM = R"=====(<html>
 				}
 			};
 			xhttp.send(params);
+			return xhttp;
 		}
 
 		var obj = new Object();
@@ -44,15 +54,16 @@ const char MAIN_page[] PROGMEM = R"=====(<html>
 		// obj.str = document.getElementById("str1").value
 
 		function SendForms() {
-		sendData("SendForms", document.getElementById("num1").value, function (response) {
-			// Adjust status check as needed (e.g., checking for 200 or other statuses)
-			if (response.status === 200) {
-				console.log("Request succeeded:", response.responseText);
-			} else {
-				console.log("Request failed with status", response.status);
-				document.getElementById("ADCValue").innerHTML = response.responseText;
-			}
-		})};
+			var response = sendData("SendForms", document.getElementById("num1").value)
+				// Adjust status check as needed (e.g., checking for 200 or other statuses)
+				response.onreadystatechange = function () {
+				if (response.status === 200) {
+					console.log("Request succeeded:", response.responseText);
+				} else {
+					console.log("Request failed with status", response.status);
+					document.getElementById("ADCValue").innerHTML = response.responseText;
+				}
+			}}
 	</script>
 </body>
 

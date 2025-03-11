@@ -79,9 +79,11 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
 		response->addHeader("Cache-Control", "public,max-age=31536000");
 		request->send(response); });
 
-  // Realtime updates:
-  server.on("/readADC", [](AsyncWebServerRequest *request)
-            { request->send(200, "text/plane", "Got it"); }); // To get update of ADC Value only
+	server.on("/SendForms", [](AsyncWebServerRequest *request)
+	{
+		request->send(200, "text/plain", "Successfully lit up!");
+    Serial.println("Responded");
+	});
 }
 
 // UI functions
@@ -375,7 +377,7 @@ void setup() {
 void loop() {
 	u8g2.firstPage();
 	do {
-		Serial.println(WiFi.localIP());
+		// Serial.println(WiFi.localIP());
 		dnsServer.processNextRequest();
 		updateTimes();
 		resetButtons();

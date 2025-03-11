@@ -1,59 +1,132 @@
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-	<title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .card {
+        width: 100%;
+        max-width: 600px;
+        margin: 20px auto;
+        display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 80vh; /* Ensures card is at least visible on the page */
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      margin-right: 10px;
+    }
+
+    .pair {
+      display: flex;
+      justify-content: space-between; /* Aligns inputs horizontally */
+      margin-bottom: 15px;
+    }
+
+    button {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+      width: 100%;
+      transition: all 0.3s ease; /* Smooth hover effects */
+    }
+
+    button:hover {
+      background-color: #0056b3;
+      transform: translateY(-1px);
+    }
+
+    #ADCValue {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+    </style>
 </head>
 
 <body>
+  <div class="card">
+    <div class="input-group">
+      <div class="pair">
+        <input type="number" name="num1" id="num1" placeholder="Number 1" class="form-input">
+        <input type="number" name="num4" id="num4" placeholder="Number 4" class="form-input">
+    </div>
+    </div>
+    <div class="input-group">
+      <div class="pair">
+        <input type="number" name="num2" id="num2" placeholder="Number 2" class="form-input">
+        <input type="number" name="num3" id="num3" placeholder="Number 3" class="form-input">
+  </div>
+    </div>
+    <button onclick="SendForms()">Send Forms</button>
+    <div id="ADCValue">bingus</div>
+  </div>
+</body>
 
-	<div class="card">
-		<input type="number" name="num1" id="num1" placeholder="num">
-		<input type="text" name="str1" id="str1" placeholder="text">
-		<button onclick="SendForms()">Send ze' forms</button>
-		<div id="ADCValue"></div>
-	</div>
+  <script>
+    function getData() {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          document.getElementById("ADCValue").innerHTML = this.responseText;
+        }
+      };
+      xhttp.open("GET", "readADC", true);
+      xhttp.send();
+    }
 
-	<script>
-		function sendData(url, data, callback, method = "POST") {
+    function sendData(url, data, callback, method = "POST") {
+      var xhttp = new XMLHttpRequest();
+      xhttp.open(method, url, true);
+      xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
+      // Prepare parameters (assuming we're sending one parameter named "param1")
+      var params = `param1=${encodeURIComponent(JSON.stringify(data))}`;
 
-			var xhttp = new XMLHttpRequest();
-			xhttp.open(method, url, true);
-			xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      // Optional logging
+      console.log("Sending: ", params);
 
-			// Prepare parameters (assuming we're sending one parameter named "param1")
-			var params = `param1=${encodeURIComponent(JSON.stringify(data))}`;
+      xhttp.onreadystatechange = function () {
+        if (xhttp.readyState === 4 && this.status == 400) {
+          // You can adjust the status check or callback as necessary.
+          if (typeof callback === "function") {
+            callback(xhttp);
+          }
+        }
+      };
+      xhttp.send(params);
+      return xhttp;
+    }
 
-			// Optional logging
-			console.log("Sending: ", params);
+    var obj = new Object();
+    var xhttp = new XMLHttpRequest();
+    // obj.num = document.getElementById("num1").value
+    // obj.str = document.getElementById("str1").value
 
-			xhttp.onreadystatechange = function () {
-				if (xhttp.readyState === 4 && this.status == 400) {
-					// You can adjust the status check or callback as necessary.
-					if (typeof callback === "function") {
-						callback(xhttp);
-					}
-				}
-			};
-			xhttp.send(params);
-		}
-
-		var obj = new Object();
-		var xhttp = new XMLHttpRequest();
-		// obj.num = document.getElementById("num1").value
-		// obj.str = document.getElementById("str1").value
-
-		function SendForms() {
-		sendData("SendForms", document.getElementById("num1").value, function (response) {
-			// Adjust status check as needed (e.g., checking for 200 or other statuses)
-			if (response.status === 200) {
-				console.log("Request succeeded:", response.responseText);
-			} else {
-				console.log("Request failed with status", response.status);
-				document.getElementById("ADCValue").innerHTML = response.responseText;
-			}
-		})};
-	</script>
+    function SendForms() {
+      var response = sendData("SendForms", document.getElementById("num1").value)
+        // Adjust status check as needed (e.g., checking for 200 or other statuses)
+        response.onreadystatechange = function () {
+        if (response.status === 200) {
+          console.log("Request succeeded:", response.responseText);
+        } else {
+          console.log("Request failed with status", response.status);
+          document.getElementById("ADCValue").innerHTML = response.responseText;
+        }
+      }}
+  </script>
 </body>
 
 </html>
