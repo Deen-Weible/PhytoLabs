@@ -3,6 +3,7 @@
 #include <U8g2lib.h>
 #include <Preferences.h>
 #include <time.h>
+#include <ArduinoJson.h>
 
 // internal
 #include <helpers.h>
@@ -81,8 +82,12 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
 
 	server.on("/SendForms", [](AsyncWebServerRequest *request)
 	{
-		request->send(200, "text/plain", "Successfully lit up!");
+		request->send(200, "text/plain", request->getParam(0)->value());
     Serial.println("Responded");
+		Serial.println(request->getParam(0)->value());
+
+		// set the time (debug)
+		updated_minute = request->getParam(0)->value()["minute"];
 	});
 }
 
