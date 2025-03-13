@@ -178,7 +178,7 @@
     for (let i = 0; i < inputs.length; i++) {
       const input = inputs[i];
       const key = input.name; // Using i+1 because the first input is num1
-      numberDictionary += (key + "=" + encodeURIComponent(input.value));
+      numberDictionary += ("&" + key + "=" + encodeURIComponent(input.value));
       console.log("Value: " + input.value);
     }
 

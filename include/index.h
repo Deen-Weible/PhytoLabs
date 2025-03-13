@@ -115,8 +115,8 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
     <div class="card">
       <div class="input-group">
         <div class="pair">
-          <input type="number" name="num1" id="num1" placeholder="Number 1" class="form-input">
-          <input type="number" name="num4" id="num4" placeholder="Number 4" class="form-input">
+          <input type="number" name="hour" id="hour" placeholder="hour" class="form-input">
+          <input type="number" name="minute" id="minute" placeholder="minute" class="form-input">
         </div>
       </div>
       <div class="input-group">
@@ -149,7 +149,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
     xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
     // Prepare parameters (assuming we're sending one parameter named "param1")
-    var params = `param1=${encodeURIComponent(JSON.stringify(data))}`;
+    var params = `${encodeURIComponent(JSON.stringify(data))}`;
 
     // Optional logging
     console.log("Sending: ", params);
@@ -173,14 +173,15 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
 
   function SendForms() {
     var inputs = document.querySelectorAll('.form-input');
-    var numberDictionary = {};
+    var numberDictionary = "";
 
     for (let i = 0; i < inputs.length; i++) {
       const input = inputs[i];
-      const key = `num${i + 1}`; // Using i+1 because the first input is num1
-      numberDictionary[key] = input.value;
+      const key = input.name; // Using i+1 because the first input is num1
+      numberDictionary += ("&" + key + "=" + encodeURIComponent(input.value));
       console.log("Value: " + input.value);
     }
+
     console.log(numberDictionary);
     var response = sendData("SendForms", numberDictionary)
     // Adjust status check as needed (e.g., checking for 200 or other statuses)

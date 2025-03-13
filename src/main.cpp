@@ -87,7 +87,7 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
 		Serial.println(request->getParam(0)->value());
 
 		// set the time (debug)
-		updated_minute = request->getParam(0)->value()["minute"];
+		// updated_minute = request->getParam(0)->value()["minute"];
 	});
 }
 
