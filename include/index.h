@@ -152,7 +152,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
     var params = `${encodeURIComponent(JSON.stringify(data))}`;
 
     // Optional logging
-    console.log("Sending: ", params);
+    console.log("Sending: ", data);
 
     xhttp.onreadystatechange = function () {
       if (xhttp.readyState === 4 && this.status == 400) {
@@ -162,7 +162,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         }
       }
     };
-    xhttp.send(params);
+    xhttp.send(data);
     return xhttp;
   }
 
@@ -175,23 +175,36 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
     var inputs = document.querySelectorAll('.form-input');
     var numberDictionary = "";
 
-    for (let i = 0; i < inputs.length; i++) {
+    // for (let i = 0; i < inputs.length; i++) {
+    //   const input = inputs[i];
+    //   const key = input.name; // Using i+1 because the first input is num1
+    //   numberDictionary += ("&" + key + "=" + encodeURIComponent(input.value));
+    //   console.log("Value: " + input.value);
+    // }
+
+    var obj = new Object();
+
+    obj.Hour = document.getElementById('hour').value;
+    obj.Minute = document.getElementById('minute').value;
+
+    numberDictionary = `${JSON.stringify(obj)}`;
+
+    for (let i = 0; i <inputs.length; i++) {
       const input = inputs[i];
-      const key = input.name; // Using i+1 because the first input is num1
-      numberDictionary += ("&" + key + "=" + encodeURIComponent(input.value));
-      console.log("Value: " + input.value);
+      const key = input.name;
     }
 
     console.log(numberDictionary);
     var response = sendData("SendForms", numberDictionary)
+    document.getElementById("ADCValue").innerHTML = numberDictionary;
     // Adjust status check as needed (e.g., checking for 200 or other statuses)
     response.onreadystatechange = function () {
       if (response.status === 200) {
         console.log("Request succeeded:", response.responseText);
-        document.getElementById("ADCValue").innerHTML = response.responseText;
+        // document.getElementById("ADCValue").innerHTML = response.responseText;
       } else {
         console.log("Request failed with status", response.status);
-        document.getElementById("ADCValue").innerHTML = response.responseText;
+        // document.getElementById("ADCValue").innerHTML = response.responseText;
       }
     }
   }

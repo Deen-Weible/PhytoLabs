@@ -50,6 +50,8 @@ void SetupDNS(DNSServer &dnsServer, const IPAddress &localIP)
   dnsServer.start(53, "*", WiFi.softAPIP());
 }
 
+JsonDocument doc;
+
 // Setup the HTTP server
 void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
   server.on("/wpad.dat", [](AsyncWebServerRequest *request)
@@ -82,9 +84,18 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
 
 	server.on("/SendForms", [](AsyncWebServerRequest *request)
 	{
-		request->send(200, "text/plain", request->getParam(0)->value());
+		String response = request->getParam(0)->value();
+		request->send(200, "text/plain", response);
     Serial.println("Responded");
-		Serial.println(request->getParam(0)->value());
+		Serial.println(response);
+		deserializeJson(doc, response);
+
+
+		String minute = doc["Minute"];
+		int hour = doc["Hour"];
+
+		Serial.println(minute);
+		Serial.println(hour);
 
 		// set the time (debug)
 		// updated_minute = request->getParam(0)->value()["minute"];
