@@ -91,8 +91,12 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
 		deserializeJson(doc, response);
 
 
-		String minute = doc["Minute"];
+		int minute = doc["Minute"];
 		int hour = doc["Hour"];
+
+		updated_minute = Wrap(minute, 0, 59);
+		updated_hour = Wrap(hour, 0, 23);
+		updated_offset = time(&now);
 
 		Serial.println(minute);
 		Serial.println(hour);

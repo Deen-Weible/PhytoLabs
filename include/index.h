@@ -149,8 +149,6 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
     xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
     // Prepare parameters (assuming we're sending one parameter named "param1")
-    var params = `${encodeURIComponent(JSON.stringify(data))}`;
-
     // Optional logging
     console.log("Sending: ", data);
 
