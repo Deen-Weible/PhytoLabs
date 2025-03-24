@@ -90,7 +90,6 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
 		Serial.println(response);
 		deserializeJson(doc, response);
 
-
 		int minute = doc["Minute"];
 		int hour = doc["Hour"];
 
@@ -98,11 +97,7 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
 		updated_hour = Wrap(hour, 0, 23);
 		updated_offset = time(&now);
 
-		Serial.println(minute);
 		Serial.println(hour);
-
-		// set the time (debug)
-		// updated_minute = request->getParam(0)->value()["minute"];
 	});
 }
 
@@ -205,6 +200,8 @@ void resetButtons() {
 // All of ze' menus
 void drawSettingsMenu() {
 	drawUI("Settings", menu_item_descriptions[selected_menu_item]);
+	// Serial.println(selected_menu_item);
+	// Serial.println(menu_items[selected_menu_item]);
 
 	// Navigation
 	if (UP_CONDITION) {
@@ -218,6 +215,8 @@ void drawSettingsMenu() {
 	} else if (SELECT_CONDITION) {
 		button_select_clicked = 1;
 		current_screen = menu_items[selected_menu_item];
+		Serial.println(menu_items[selected_menu_item]);
+		Serial.println(current_screen);
 
 		// Reset the time settings if the user selects the Time menu item
 		current_setting_unit = 0;
@@ -365,6 +364,12 @@ void drawSliderTestMenu() {
 	// u8g2.drawStr(0, 40, sliderText);
 }
 
+void drawWifiMenu() {
+	drawUI("WiFi", "Access Settings");
+
+
+}
+
 // Setup the screen, time and buttons
 void setup() {
 	WiFi.begin("DEENS-WIFI-24", "deendeen");
@@ -402,15 +407,20 @@ void loop() {
 		updateTimes();
 		resetButtons();
 
+		// Serial.println("Current Screen" + current_screen);
+		// Serial.println(menu_items[selected_menu_item]);
+
 		// Draw each menup
 		if (current_screen == "Settings") {
 			drawSettingsMenu();
 		} else if (current_screen == "Time")
 		{
 			drawTimeMenu();
-		} else if (current_screen = "Slider Test")
+		} else if (current_screen == "Slider Test")
 		{
 			drawSliderTestMenu();
+		} else if (current_screen == "WiFi") {
+			drawWifiMenu();
 		}
 	} while (u8g2.nextPage());
 }
