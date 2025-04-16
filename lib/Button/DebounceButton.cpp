@@ -2,7 +2,7 @@
 
 DebounceButton::DebounceButton(int buttonPin, unsigned long debounceDelay)
     : buttonPin(buttonPin), debounceDelay(debounceDelay) {
-  pinMode(buttonPin, INPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
 }
 
 bool DebounceButton::isPressed() {
