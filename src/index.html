@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
   <style>
+    /* Existing styles remain unchanged */
     .card-container {
       display: flex;
       justify-content: center;
@@ -22,7 +23,6 @@
       flex-direction: column;
       justify-content: center;
       padding: 25px;
-      /* min-height: 80vh; Ensures card is at least visible on the page */
     }
 
     .input-group {
@@ -40,7 +40,6 @@
     .pair {
       display: flex;
       justify-content: space-between;
-      /* Aligns inputs horizontally */
       margin-bottom: 15px;
     }
 
@@ -53,7 +52,6 @@
       width: 100%;
       box-shadow: 3px 4px 4px rgba(0, 0, 0, 0.3);
       transition: all 0.3s ease;
-      /* Smooth hover effects */
     }
 
     button:hover {
@@ -62,53 +60,22 @@
       scale: 1.01;
     }
 
-    button:active {
-      animation: pressAnimation 0.1s ease-out forwards;
-    }
-
-    /* Keyframes for the press animation */
-    @keyframes pressAnimation {
-      0% {
-        /* transform: translateY(0) scale(1); */
-        box-shadow: 3px 4px 4px rgba(0, 0, 0, 0.3);
-      }
-
-      50% {
-        transform: translateY(2px) scale(0.99);
-        box-shadow: 1px 2px 2px rgba(0, 0, 0, 0.2);
-      }
-
-      100% {
-        /* transform: translateY(0) scale(1); */
-        box-shadow: 3px 4px 4px rgba(0, 0, 0, 0.3);
-      }
-    }
-
-    #ADCValue {
-      background-color: #434343;
+    /* New styles for the file input button */
+    #file-upload::file-selector-button {
+      background-color: #313131;
       color: white;
-      padding: 15px;
+      padding: 8px 16px;
+      border: none;
       border-radius: 4px;
-      margin-bottom: 20px;
-      position: absolute;
-      right: 15px;
-      bottom: 15px;
-      width: min(85vw, 550px);
+      cursor: pointer;
+      margin-right: 10px;
+      transition: background-color 0.3s ease;
     }
 
-    @media (max-width: 700px) {
-      #ADCValue {
-        /* top: auto; */
-        width:90vw;
-        bottom:15px;
-        left: 0;
-        right: 0;
-        margin-left: auto;
-        margin-right: auto;
-      }
+    #file-upload::file-selector-button:hover {
+      background-color: #222222;
     }
   </style>
-</head>
 
 <body>
   <div class="card-container">
@@ -124,6 +91,10 @@
           <input type="number" name="num2" id="num2" placeholder="Number 2" class="form-input">
           <input type="number" name="num3" id="num3" placeholder="Number 3" class="form-input">
         </div>
+        <div class="pair" style="border: 1px solid #ccc;;">
+          <input type="file" id="file-upload" accept=".bin" class="form-input" style="border:none">
+          <button onclick="sendFile()" style="margin:8px">Update</button>
+        </div>
       </div>
       <button onclick="SendForms()">Send Forms</button>
     </div>
@@ -132,8 +103,23 @@
 </body>
 
 <script>
+  function sendFile() {
+    const xhr = new XMLHttpRequest();
+
+    xhr.open('POST', '/update-firmware');
+    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    xhr.upload.addEventListener('progress', function (evt) {
+      if (evt.lengthComputable) {
+        const per = evt.loaded / evt.total;
+      }
+    });
+    xhr.send(document.getElementById("file-upload").files[0]);
+
+  }
   function getData() {
     var xhttp = new XMLHttpRequest();
+    xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
     xhttp.onreadystatechange = function () {
       if (this.readyState == 4 && this.status == 200) {
         document.getElementById("ADCValue").innerHTML = this.responseText;
@@ -173,13 +159,6 @@
     var inputs = document.querySelectorAll('.form-input');
     var numberDictionary = "";
 
-    // for (let i = 0; i < inputs.length; i++) {
-    //   const input = inputs[i];
-    //   const key = input.name; // Using i+1 because the first input is num1
-    //   numberDictionary += ("&" + key + "=" + encodeURIComponent(input.value));
-    //   console.log("Value: " + input.value);
-    // }
-
     var obj = new Object();
 
     obj.Hour = document.getElementById('hour').value;
@@ -187,7 +166,7 @@
 
     numberDictionary = `${JSON.stringify(obj)}`;
 
-    for (let i = 0; i <inputs.length; i++) {
+    for (let i = 0; i < inputs.length; i++) {
       const input = inputs[i];
       const key = input.name;
     }
