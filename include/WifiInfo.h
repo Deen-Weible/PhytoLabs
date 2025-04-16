@@ -3,7 +3,7 @@
 
 // Update these credentials with your own
 
-const char* ssid = "myNetworkName";
-const char* password = "myPassword";
+const char* ssid = "DEENS-WIFI-24";
+const char* password = "deendeen";
 
 #endif // WIFI_CREDENTIALS_H
