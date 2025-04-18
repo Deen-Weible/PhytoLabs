@@ -32,15 +32,10 @@ U8G2_SSD1309_128X64_NONAME2_1_4W_SW_SPI u8g2(U8G2_R0, 18, 23, 15, 17,
 #define SCREEN_HEIGHT 64                          // Display height in pixels
 #define CLOCK_SPEED 400000                        // SPI clock speed
 
-// Button Pins and Conditions
-#define BUTTON_UP_PIN 25
-#define BUTTON_DOWN_PIN 33
-#define BUTTON_SELECT_PIN 32
-#define UP_CONDITION (digitalRead(BUTTON_UP_PIN) == LOW) && !button_up_clicked
-#define DOWN_CONDITION                                                         \
-  (digitalRead(BUTTON_DOWN_PIN) == LOW) && !button_down_clicked
-#define SELECT_CONDITION                                                       \
-  (digitalRead(BUTTON_SELECT_PIN) == LOW) && !button_select_clicked
+// Buttons
+const DebounceButton UpButton(25);
+const DebounceButton DownButton(33);
+const DebounceButton SelectButton(32);
 
 // Menu Configuration
 const int kMenuNumItems = 8; // Number of menu items
@@ -52,6 +47,11 @@ const unsigned char kSquareIcon[] PROGMEM = {
     0x00, 0x00, 0x3f, 0xfc, 0x5f, 0xfa, 0x6f, 0xf6, 0x77, 0xee, 0x7b,
     0xde, 0x7c, 0x3e, 0x7c, 0x3e, 0x7c, 0x3e, 0x7c, 0x3e, 0x7b, 0xde,
     0x77, 0xee, 0x6f, 0xf6, 0x5f, 0xfa, 0x3f, 0xfc, 0x00, 0x00};
+
+static unsigned char Untitled_bits[] = {
+    0xfe, 0x1f, 0x03, 0x30, 0x09, 0x24, 0x01, 0x20, 0x01, 0x20,
+    0xe1, 0x21, 0x11, 0x22, 0x11, 0x22, 0xe1, 0x21, 0x01, 0x20,
+    0x01, 0x20, 0x01, 0x20, 0x03, 0x30, 0xfe, 0x1f};
 
 // Menu items and descriptions
 char menu_items[kMenuNumItems][KMenuMaxTitleLength] = {
@@ -87,16 +87,45 @@ public:
   int max;
 };
 
+// Helper to keep track of time, with offsets and shiz
 class InternalTime {
 public:
-  long offset_time = 0;
-  int updated_hour = 0;
-  int updated_minute = 0;
-  int updated_offset = 0;
+  void tick() { second = time(&now); }
 
-  int current_second = 0;
-  int current_minute = 0;
-  int current_hour = 0;
+  void set_current_time(int new_hour, int new_minute) {
+    hour = new_hour;
+    minute = new_minute;
+    resetRTC();
+  }
+
+  void set_hour(int new_hour) {
+    hour = new_hour;
+    resetRTC();
+  }
+  void set_minute(int new_minute) {
+    minute = new_minute;
+    resetRTC();
+  }
+
+  // Reset the RTC to the offset time
+  void resetRTC() {
+    struct timeval tv = {.tv_sec = ((minute * 60) + (hour * 3600)),
+                         .tv_usec = 0};
+    settimeofday(&tv, NULL);
+  }
+  void set_epoch(long epoch) {
+    struct timeval tv = {.tv_sec = epoch, .tv_usec = 0};
+    settimeofday(&tv, NULL);
+  }
+
+  int get_hour() { return second / 3600 % 24; }
+  int get_minute() { return (second % 3600) / 60; }
+  int get_second() { return second % 60; }
+
+private:
+  long second = 0;
+  int minute = 0;
+  int hour = 0;
 };
 
 #endif

@@ -12,11 +12,6 @@
 #include <UiKit.h>
 #include <index.h>
 
-// Button states
-int button_down_clicked = 0;
-int button_select_clicked = 0;
-int button_up_clicked = 0;
-
 // Current screen
 String current_screen = "Settings";
 
@@ -73,18 +68,13 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
   server.on("/SendForms", [](AsyncWebServerRequest *request) {
     String response = request->getParam(0)->value();
     request->send(200, "text/plain", response);
-    Serial.println("Responded");
-    Serial.println(response);
     deserializeJson(doc, response);
 
     int minute = doc["Minute"];
     int hour = doc["Hour"];
 
-    internal_time.updated_minute = Wrap(minute, 0, 59);
-    internal_time.updated_hour = Wrap(hour, 0, 23);
-    internal_time.updated_offset = time(&now);
-
-    Serial.println(hour);
+    internal_time.set_epoch((Wrap(minute, 0, 59) * 60) +
+                            (Wrap(hour, 0, 23) * 3600));
   });
 }
 
@@ -104,24 +94,36 @@ void SetupDNS(DNSServer &dnsServer, const IPAddress &localIP) {
 
 // Initialize everything
 // DEBUG
-BaseUi ui;
+BaseUi ui("Main", "Debug", &internal_time);
 
 void setup() {
+
+  // Set up the WiFi
+  StartAP(WIFI_STA, ssid, password, localIP, gatewayIP);
+  SetupDNS(dnsServer, localIP);
+
+  SetupServer(server, localIP);
+  server.begin();
+
   u8g2.begin();
   Serial.begin(115200);
   SPI.setClockDivider(CLOCK_SPEED);
   u8g2.setBusClock(CLOCK_SPEED);
 
   delay(2000);
-  ui.init("Main", "Debug", internal_time);
+  Serial.println(WiFi.localIP());
 }
+
+// Debug test
+MenuItem debug_item("a", "b", Untitled_bits);
+MenuItem debug_item2("c", "d", kSquareIcon);
+// ListMenu list_menu(debug_item, debug_item2);
 
 void loop() {
   u8g2.firstPage();
   do {
-    if (button.isPressed()) {
-      Serial.println("Button pressed");
-    }
+    // list_menu.Draw();
+    internal_time.tick();
     ui.draw();
   } while (u8g2.nextPage());
 }

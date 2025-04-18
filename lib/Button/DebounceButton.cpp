@@ -1,8 +1,14 @@
 #include "DebounceButton.h"
 
 DebounceButton::DebounceButton(int buttonPin, unsigned long debounceDelay)
-    : buttonPin(buttonPin), debounceDelay(debounceDelay) {
+    : buttonPin(buttonPin), debounceDelay(debounceDelay), lastButtonState(HIGH),
+      buttonState(HIGH), lastDebounceTime(0) {
   pinMode(buttonPin, INPUT_PULLUP);
+
+  // ensure it doesn't register a press on startup
+  int initialState = digitalRead(buttonPin);
+  lastButtonState = initialState;
+  buttonState = initialState;
 }
 
 bool DebounceButton::isPressed() {

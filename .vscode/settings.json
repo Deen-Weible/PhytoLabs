@@ -2,6 +2,13 @@
 	"files.associations": {
 		"*.drift": "sql",
 		"cstring": "cpp",
-		"typeinfo": "cpp"
+		"typeinfo": "cpp",
+		"*.tcc": "cpp",
+		"chrono": "cpp",
+		"condition_variable": "cpp",
+		"mutex": "cpp",
+		"sstream": "cpp",
+		"thread": "cpp",
+		"regex": "cpp"
 	}
 }
