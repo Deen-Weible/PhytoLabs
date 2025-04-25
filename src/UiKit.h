@@ -2,6 +2,85 @@
 #include <Helpers.h>
 #include <U8g2lib.h>
 
+class NavInfo {
+public:
+  // constructorf
+  NavInfo(uint8_t s) : current_screen_id(s) {};
+
+  uint8_t GetCurrentScreenId() const { return current_screen_id; }
+  void setCurrentScreenId(uint8_t s) { current_screen_id = s; }
+  Screen *GetCurrentScreen() const { return current_screen; }
+  void setCurrentScreen(Screen *s) { current_screen = s; }
+
+private:
+  uint8_t current_screen_id;
+  Screen *current_screen;
+};
+
+class MenuItem {
+public:
+  MenuItem(const char *Title, const char *Description,
+           const unsigned char *Icon, const uint8_t id)
+      : title(Title ? Title : ""), description(Description ? Description : ""),
+        icon(Icon) {}
+
+  virtual void Draw() = 0;
+
+  const char *GetTitle() const { return title; }
+  const char *GetDescription() const { return description; }
+  const unsigned char *GetIcon() const { return icon; }
+  const uint8_t GetId() const { return id; };
+
+private:
+  const char *title;
+  const char *description;
+  const unsigned char *icon; // Changed to pointer for bitmap array
+  uint8_t id;
+};
+
+class ListMenu {
+public:
+  // Constructor with array of menu items
+  ListMenu(MenuItem items[])
+      : items(items), num_items(sizeof(items) / sizeof(items[0])) {};
+
+  // Update with a new array of menu items
+  void UpdateItems(MenuItem new_items[]) {
+    items = new_items;
+    num_items = sizeof(new_items) / sizeof(new_items[0]);
+  }
+
+  void Up() { current_item = Wrap((current_item + 1), 0, num_items - 1); }
+  void Down() { current_item = Wrap((current_item - 1), 0, num_items - 1); }
+  uint8_t Select() { return items[current_item].GetId(); };
+
+  void Draw() {
+    const char *title = items[0].GetTitle();
+    const char *title2 = items[1].GetTitle();
+    const unsigned char *icon1 = items[0].GetIcon(); // Pointer to bitmap array
+    const unsigned char *icon2 = items[1].GetIcon(); // Pointer to bitmap array
+
+    if (title == nullptr) {
+      Serial.println("Error: Null title");
+      return;
+    }
+    u8g2.setFontMode(1);
+
+    u8g2.setFont(u8g_font_7x13B);
+    u8g2.drawXBMP(5, 16, 14, 14, icon1); // Use bitmap array
+    u8g2.drawStr(25, 28, title);
+
+    u8g2.setFont(u8g_font_5x8);
+    u8g2.drawXBMP(5, 33, 14, 14, icon2); // Use bitmap array
+    u8g2.drawStr(25, 44, title2);
+  }
+
+private:
+  MenuItem *items; // Use a pointer to manage dynamic memory
+  int current_item = 0;
+  int num_items;
+};
+
 class BaseUi {
 public:
   // initial constructor
@@ -12,7 +91,7 @@ public:
     desc = new_desc;
   }
 
-  void draw() {
+  void Draw() {
     u8g2.setFontMode(1);
     u8g2.drawBox(0, 0, SCREEN_WIDTH, 10);
     u8g2.setDrawColor(2);
@@ -37,81 +116,17 @@ private:
   InternalTime *time;
 };
 
-class MenuItem {
+class Screen {
 public:
-  MenuItem(const char *Title, const char *Description,
-           const unsigned char *Icon)
-      : title(Title ? Title : ""), description(Description ? Description : ""),
-        icon(Icon) {}
-  void draw(int x, int y) const; // Assuming read-only
-  bool isPressed() const;        // Assuming read-only
-  const char *GetTitle() const { return title; }
-  const char *GetDescription() const { return description; }
-  const unsigned char *GetIcon() const {
-    return icon;
-  } // Return pointer to array
-
-private:
-  const char *title;
-  const char *description;
-  const unsigned char *icon; // Changed to pointer for bitmap array
+  virtual ~Screen() {}
+  // Pure virtual function, must be implemented by derived classes
+  virtual void Draw() = 0;
 };
 
-class ListMenu {
-public:
-  // Constructor with array of menu items
-  ListMenu(MenuItem items[], int num_items)
-      : items(items), num_items(num_items) {};
+// Settings Menus
 
-  // Update with a new array of menu items
-  void UpdateItems(MenuItem new_items[]) {
-    items = new_items;
-    num_items = sizeof(new_items) / sizeof(new_items[0]);
-  }
+// MenuItem TimeMenu("Time", "Current time", Untitled_bits, 0);
+// MenuItem SliderMenu("Slider", "Slider test", Untitled_bits, 1);
+// MenuItem WiFiMenu("WiFi", "Ze' Wifi", Untitled_bits, 2);
 
-  void Up() { current_item = Wrap((current_item + 1), 0, num_items - 1); }
-  void Down() { current_item = Wrap((current_item - 1), 0, num_items - 1); }
-
-
-private:
-  MenuItem *items; // Use a pointer to manage dynamic memory
-  int current_item = 0;
-  int num_items;
-};
-// class ListMenu {
-// public:
-//   // constructor with two menu items
-//   ListMenu(MenuItem &item1, MenuItem &item2)
-//       : item1(item1), item2(item2) {}
-
-//   void UpdateItems(MenuItem &new_item1, MenuItem &new_item2) {
-//     item1 = new_item1;
-//     item2 = new_item2;
-//   }
-
-//   // draw the list menu
-//   void Draw() {
-//     const char *title = item1.GetTitle();
-//     const char *title2 = item2.GetTitle();
-//     const unsigned char *icon1 = item1.GetIcon(); // Pointer to bitmap array
-//     const unsigned char *icon2 = item2.GetIcon(); // Pointer to bitmap array
-
-//     if (title == nullptr) {
-//       Serial.println("Error: Null title");
-//       return;
-//     }
-//     u8g2.setFontMode(1);
-
-//     u8g2.setFont(u8g_font_7x13B);
-//     u8g2.drawXBMP(5, 16, 14, 14, icon1); // Use bitmap array
-//     u8g2.drawStr(25, 28, title);
-
-//     u8g2.setFont(u8g_font_5x8);
-//     u8g2.drawBitmap(4, 33, 16 / 8, 16, icon2); // Use bitmap array
-//     u8g2.drawStr(25, 44, title2);
-//   }
-
-// private:
-//   MenuItem &item1;
-//   MenuItem &item2;
-// };
+// MenuItem SettingsMenus[3] = {TimeMenu, SliderMenu, WiFiMenu};

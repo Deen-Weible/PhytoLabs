@@ -115,15 +115,14 @@ void setup() {
 }
 
 // Debug test
-MenuItem debug_item("a", "b", Untitled_bits);
-MenuItem debug_item2("c", "d", kSquareIcon);
-// ListMenu list_menu(debug_item, debug_item2);
+// ListMenu list_menu(SettingsMenus);
 
 void loop() {
   u8g2.firstPage();
   do {
     // list_menu.Draw();
     internal_time.tick();
-    ui.draw();
+    ui.Draw();
+    // list_menu.Draw();
   } while (u8g2.nextPage());
 }

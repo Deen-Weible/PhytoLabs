@@ -3,6 +3,20 @@
 
 #include <Arduino.h>
 
+#define NO_INPUT 0
+#define UP 1
+#define DOWN 2
+#define SELECT 3
+
+// for easy
+#define BUTTON_UP_PIN 25
+#define BUTTON_DOWN_PIN 33
+#define BUTTON_SELECT_PIN 32
+
+DebounceButton upButton(BUTTON_UP_PIN);
+DebounceButton downButton(BUTTON_DOWN_PIN);
+DebounceButton selectButton(BUTTON_SELECT_PIN);
+
 class DebounceButton {
 public:
   // Constructor
@@ -10,6 +24,7 @@ public:
 
   // Method to check if the button is pressed
   bool isPressed();
+  uint8_t getInput();
 
 private:
   const int buttonPin;                // Pin number for the button
