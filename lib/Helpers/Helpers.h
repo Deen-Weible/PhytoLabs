@@ -32,11 +32,6 @@ U8G2_SSD1309_128X64_NONAME2_1_4W_SW_SPI u8g2(U8G2_R0, 18, 23, 15, 17,
 #define SCREEN_HEIGHT 64                          // Display height in pixels
 #define CLOCK_SPEED 400000                        // SPI clock speed
 
-// Buttons
-const DebounceButton UpButton(25);
-const DebounceButton DownButton(33);
-const DebounceButton SelectButton(32);
-
 // Menu Configuration
 const int kMenuNumItems = 8; // Number of menu items
 const int KMenuMaxTitleLength =

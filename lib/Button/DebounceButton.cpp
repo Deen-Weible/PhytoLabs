@@ -11,8 +11,6 @@ DebounceButton::DebounceButton(int buttonPin, unsigned long debounceDelay)
   buttonState = initialState;
 }
 
-
-
 bool DebounceButton::isPressed() {
   int reading = digitalRead(buttonPin);
 

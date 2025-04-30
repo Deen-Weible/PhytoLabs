@@ -17,7 +17,10 @@ String current_screen = "Settings";
 
 // Keep track of time + user offset
 InternalTime internal_time;
-DebounceButton button(25);
+// Buttons
+DebounceButton upButton(BUTTON_UP_PIN);         // Pin for UP button
+DebounceButton downButton(BUTTON_DOWN_PIN);     // Pin for DOWN button
+DebounceButton selectButton(BUTTON_SELECT_PIN); // Pin for SELECT button
 
 int current_setting_unit = 0; // keep track of the unit being changed from the
                               // menu (minutes/hours/done)
@@ -117,10 +120,27 @@ void setup() {
 // Debug test
 // ListMenu list_menu(SettingsMenus);
 
+// Return current input
+uint8_t getInput() {
+  if (upButton.isPressed()) {
+    return UP;
+  }
+  if (downButton.isPressed()) {
+    return DOWN;
+  }
+  if (selectButton.isPressed()) {
+    return SELECT;
+  }
+  return NO_INPUT;
+}
+
 void loop() {
   u8g2.firstPage();
   do {
-    // list_menu.Draw();
+    uint8_t input = getInput();
+    if (input != NO_INPUT) {
+      Serial.println("Input: " + String(input));
+    };
     internal_time.tick();
     ui.Draw();
     // list_menu.Draw();
