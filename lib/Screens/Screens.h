@@ -3,6 +3,7 @@
 
 // #include <U8g2lib.h>
 #include <Helpers.h>
+#include <UiKit.h>
 
 class MenuItem {
 public:
@@ -66,6 +67,17 @@ private:
   int num_items;
 };
 
+class TimeScreen : public Screen {
+public:
+  void Draw() override {
+    // Debug
+    u8g2.setFontMode(1);
+    u8g2.setFont(u8g_font_baby);
+    u8g2.setDrawColor(2);
+    u8g2.drawStr(50, 50, "Time Screen");
+  }
+};
+
 class BaseUi {
 public:
   // initial constructor
@@ -100,5 +112,14 @@ private:
   char *desc;
   InternalTime *time;
 };
+
+// class TestClass {
+// public:
+//   TestClass(BaseUi *ui) : base_ui(ui) {}
+//   void setTitle() { base_ui->update("Test Title", "Test description"); }
+
+// private:
+//   BaseUi *base_ui;
+// };
 
 #endif // SCREENS_H

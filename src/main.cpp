@@ -9,6 +9,7 @@
 // Internal Headers
 #include <DebounceButton.h>
 #include <Helpers.h>
+#include <Screens.h>
 #include <UiKit.h>
 #include <index.h>
 
@@ -96,9 +97,6 @@ void SetupDNS(DNSServer &dnsServer, const IPAddress &localIP) {
 }
 
 // Initialize everything
-// DEBUG
-BaseUi ui("Main", "Debug", &internal_time);
-
 void setup() {
 
   // Set up the WiFi
@@ -134,6 +132,11 @@ uint8_t getInput() {
   return NO_INPUT;
 }
 
+BaseUi base_ui("title", "desc", &internal_time);
+
+// HACK: test
+// TestClass test(&base_ui);
+
 void loop() {
   u8g2.firstPage();
   do {
@@ -142,7 +145,7 @@ void loop() {
       Serial.println("Input: " + String(input));
     };
     internal_time.tick();
-    ui.Draw();
+    base_ui.Draw();
     // list_menu.Draw();
   } while (u8g2.nextPage());
 }
