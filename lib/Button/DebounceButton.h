@@ -26,8 +26,8 @@ private:
 };
 
 // for easy
-#define BUTTON_UP_PIN 33
-#define BUTTON_DOWN_PIN 25
+#define BUTTON_UP_PIN 25
+#define BUTTON_DOWN_PIN 33
 #define BUTTON_SELECT_PIN 32
 
 #endif // DEBOUNCEBUTTON_H

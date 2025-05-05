@@ -1,9 +1,9 @@
+#ifndef UIKIT_H
+#define UIKIT_H
+
 #include <Arduino.h>
 #include <Helpers.h>
 #include <U8g2lib.h>
-
-#ifndef UIKIT_H
-#define UIKIT_H
 
 // class NavInfo {
 // public:
@@ -19,6 +19,27 @@
 //   uint8_t current_screen_id;
 //   Screen *current_screen;
 // };
+
+class MenuItem {
+  public:
+    // Constructor with default empty strings if nullptr is passed
+    MenuItem(const char *Title, const char *Description,
+             const unsigned char *Icon, const uint8_t id)
+        : title(Title ? Title : ""), description(Description ? Description : ""),
+          icon(Icon), id(id) {}
+
+    // Getter methods
+    const char *GetTitle() const { return title; }
+    const char *GetDescription() const { return description; }
+    const unsigned char *GetIcon() const { return icon; }
+    const uint8_t GetId() const { return id; }
+
+  private:
+    const char *title;
+    const char *description;
+    const unsigned char *icon; // Pointer to bitmap array for the icon
+    uint8_t id;
+  };
 
 class Screen {
 public:

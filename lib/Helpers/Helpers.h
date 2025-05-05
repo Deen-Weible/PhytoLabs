@@ -1,11 +1,12 @@
+#ifndef HELPERS
+#define HELPERS
+
 #include <Arduino.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
 #include <Preferences.h>
 #include <U8g2lib.h>
-
-#ifndef HELPERS
-#define HELPERS
+#include <UiKit.h>
 
 // Networking & Server Configuration
 #define MAX_CLIENTS 4   // Maximum number of WiFi clients
@@ -43,12 +44,23 @@ const unsigned char kSquareIcon[] PROGMEM = {
     0xde, 0x7c, 0x3e, 0x7c, 0x3e, 0x7c, 0x3e, 0x7c, 0x3e, 0x7b, 0xde,
     0x77, 0xee, 0x6f, 0xf6, 0x5f, 0xfa, 0x3f, 0xfc, 0x00, 0x00};
 
-static unsigned char Untitled_bits[] = {
+static unsigned char Untitled_bits[] PROGMEM = {
     0xfe, 0x1f, 0x03, 0x30, 0x09, 0x24, 0x01, 0x20, 0x01, 0x20,
     0xe1, 0x21, 0x11, 0x22, 0x11, 0x22, 0xe1, 0x21, 0x01, 0x20,
     0x01, 0x20, 0x01, 0x20, 0x03, 0x30, 0xfe, 0x1f};
 
 // Menu items and descriptions
+MenuItem menuItems[kMenuNumItems] = {
+  MenuItem("Time", "Current Time", Untitled_bits, 0),
+  MenuItem("Slider Test", "Test ui slider", Untitled_bits, 1),
+  MenuItem("WiFi", "Manage WiFi / HotSpot", Untitled_bits, 2),
+  MenuItem("Fireworks", "desc 4", Untitled_bits, 3),
+  MenuItem("GPS Speed", "desc 5", Untitled_bits, 4),
+  MenuItem("Big Knob", "desc 6", Untitled_bits, 5),
+  MenuItem("Park Sensor", "desc 7", Untitled_bits, 6),
+  MenuItem("Turbo Gauge", "desc 8", Untitled_bits, 7)
+};
+
 char menu_items[kMenuNumItems][KMenuMaxTitleLength] = {
     {"Time"},      {"Slider Test"}, {"WiFi"},        {"Fireworks"},
     {"GPS Speed"}, {"Big Knob"},    {"Park Sensor"}, {"Turbo Gauge"}};

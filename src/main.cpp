@@ -1,3 +1,4 @@
+// Standard Arduino and library includes
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <Preferences.h>
@@ -6,34 +7,46 @@
 #include <Update.h>
 #include <time.h>
 
-// Internal Headers
+// Internal project headers
 #include <DebounceButton.h>
 #include <Helpers.h>
 #include <Screens.h>
 #include <UiKit.h>
 #include <index.h>
 
-// Current screen
-String current_screen = "Settings";
+// Global variables
+String current_screen = "Settings"; // Current screen being displayed
 
-// Keep track of time + user offset
-InternalTime internal_time;
-// Buttons
-DebounceButton upButton(BUTTON_UP_PIN);         // Pin for UP button
-DebounceButton downButton(BUTTON_DOWN_PIN);     // Pin for DOWN button
-DebounceButton selectButton(BUTTON_SELECT_PIN); // Pin for SELECT button
+InternalTime internal_time; // Manages internal time with user offset
 
-int current_setting_unit = 0; // keep track of the unit being changed from the
-                              // menu (minutes/hours/done)
+// Button objects for debouncing
+DebounceButton upButton(BUTTON_UP_PIN);         // UP button
+DebounceButton downButton(BUTTON_DOWN_PIN);     // DOWN button
+DebounceButton selectButton(BUTTON_SELECT_PIN); // SELECT button
 
-// Keep track of which item is selected in the menu
-int selected_menu_item = 0;
+int current_setting_unit =
+    0; // Tracks the unit being changed (minutes/hours/done)
+int selected_menu_item = 0; // Tracks the selected item in the menu
 
-// form processing variables
-JsonDocument doc;
+JsonDocument doc; // For processing JSON data from forms
 
-// Setup the HTTP server
+// Function to get the current input from buttons
+uint8_t getInput() {
+  if (upButton.isPressed()) {
+    return UP;
+  }
+  if (downButton.isPressed()) {
+    return DOWN;
+  }
+  if (selectButton.isPressed()) {
+    return SELECT;
+  }
+  return NO_INPUT;
+}
+
+// Set up the HTTP server with various endpoints
 void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
+  // Handle specific URLs for captive portal behavior
   server.on("/wpad.dat",
             [](AsyncWebServerRequest *request) { request->send(404); });
   server.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
@@ -57,7 +70,7 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
     request->redirect(localUrl);
   });
 
-  // 404 the favicon
+  // Handle favicon request with 404
   server.on("/favicon.ico",
             [](AsyncWebServerRequest *request) { request->send(404); });
 
@@ -69,6 +82,7 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
     request->send(response);
   });
 
+  // Handle form submissions to set time
   server.on("/SendForms", [](AsyncWebServerRequest *request) {
     String response = request->getParam(0)->value();
     request->send(200, "text/plain", response);
@@ -77,11 +91,13 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
     int minute = doc["Minute"];
     int hour = doc["Hour"];
 
+    // Set the internal time based on form data
     internal_time.set_epoch((Wrap(minute, 0, 59) * 60) +
                             (Wrap(hour, 0, 23) * 3600));
   });
 }
 
+// Start the Wi-Fi access point
 void StartAP(const wifi_mode_t mode, const char *ssid, const char *password,
              const IPAddress &localIP, const IPAddress &gatewayIP) {
   WiFi.mode(mode);
@@ -90,62 +106,62 @@ void StartAP(const wifi_mode_t mode, const char *ssid, const char *password,
   vTaskDelay(100 / portTICK_PERIOD_MS);
 }
 
-// Setup the DNS server so that localUrl can be resolved
+// Set up the DNS server
 void SetupDNS(DNSServer &dnsServer, const IPAddress &localIP) {
   dnsServer.setTTL(3600);
   dnsServer.start(53, "*", WiFi.softAPIP());
 }
 
-// Initialize everything
-void setup() {
+// Initialize the base UI
+BaseUi base_ui("title", "desc", &internal_time);
 
-  // Set up the WiFi
-  StartAP(WIFI_STA, ssid, password, localIP, gatewayIP);
+void setup() {
+  // Initialize Wi-Fi as an access point
+  StartAP(WIFI_AP, ssid, password, localIP,
+          gatewayIP); // Changed to WIFI_AP for access point mode
+
+  // Set up DNS server
   SetupDNS(dnsServer, localIP);
 
+  // Set up the HTTP server
   SetupServer(server, localIP);
   server.begin();
 
+  // Initialize the display
   u8g2.begin();
+
+  // Initialize serial communication
   Serial.begin(115200);
+
+  // Set SPI clock speed
   SPI.setClockDivider(CLOCK_SPEED);
   u8g2.setBusClock(CLOCK_SPEED);
 
+  // Delay for stability
   delay(2000);
+
+  // Print the local IP address
   Serial.println(WiFi.localIP());
 }
 
-// Debug test
-// ListMenu list_menu(SettingsMenus);
-
-// Return current input
-uint8_t getInput() {
-  if (upButton.isPressed()) {
-    return UP;
-  }
-  if (downButton.isPressed()) {
-    return DOWN;
-  }
-  if (selectButton.isPressed()) {
-    return SELECT;
-  }
-  return NO_INPUT;
-}
-
-BaseUi base_ui("title", "desc", &internal_time);
-
-// HACK: test
-// TestClass test(&base_ui);
+ListMenu list_menu(0, 8, menuItems);
 
 void loop() {
+  // Start a new page for the display
   u8g2.firstPage();
   do {
+    list_menu.HandleInput(getInput());
+    list_menu.Draw();
+    // Get the current input from buttons
     uint8_t input = getInput();
     if (input != NO_INPUT) {
+      // Print the input for debugging
       Serial.println("Input: " + String(input));
-    };
+    }
+    // Update the internal time
     internal_time.tick();
+    // Draw the header/footer UI on the display
     base_ui.Draw();
-    // list_menu.Draw();
+    // list_menu.Draw();  // Uncomment if needed
   } while (u8g2.nextPage());
 }
