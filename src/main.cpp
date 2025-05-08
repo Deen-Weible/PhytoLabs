@@ -16,8 +16,8 @@
 
 // Global variables
 String current_screen = "Settings"; // Current screen being displayed
-
 InternalTime internal_time; // Manages internal time with user offset
+NavInfo nav_info(0); // NavInfo object for navigation information
 
 // Button objects for debouncing
 DebounceButton upButton(BUTTON_UP_PIN);         // UP button

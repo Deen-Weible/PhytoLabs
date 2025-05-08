@@ -50,15 +50,33 @@ static unsigned char Untitled_bits[] PROGMEM = {
     0x01, 0x20, 0x01, 0x20, 0x03, 0x30, 0xfe, 0x1f};
 
 // Menu items and descriptions
+
+// TEMP: A super hacky screen so it compiles :)
+
+class hack_screen : public Screen {
+  public:
+   hack_screen() : Screen(0) {}
+
+   void Draw() override {
+    Serial.println("Hack Screen hast been summoned");
+   }
+   uint8_t HandleInput(uint8_t input) override {
+    Serial.println("Hack Screen input: " + String(input));
+    return 0;
+   }
+};
+
+hack_screen new_hack_screen;
+
 MenuItem menuItems[kMenuNumItems] = {
-  MenuItem("Time", "Current Time", Untitled_bits, 0),
-  MenuItem("Slider Test", "Test ui slider", Untitled_bits, 1),
-  MenuItem("WiFi", "Manage WiFi / HotSpot", Untitled_bits, 2),
-  MenuItem("Fireworks", "desc 4", Untitled_bits, 3),
-  MenuItem("GPS Speed", "desc 5", Untitled_bits, 4),
-  MenuItem("Big Knob", "desc 6", Untitled_bits, 5),
-  MenuItem("Park Sensor", "desc 7", Untitled_bits, 6),
-  MenuItem("Turbo Gauge", "desc 8", Untitled_bits, 7)
+  MenuItem("Time", "Current Time", Untitled_bits, 0, &new_hack_screen),
+  MenuItem("Slider Test", "Test ui slider", Untitled_bits, 1, &new_hack_screen),
+  MenuItem("WiFi", "Manage WiFi / HotSpot", Untitled_bits, 2, &new_hack_screen),
+  MenuItem("Fireworks", "desc 4", Untitled_bits, 3, &new_hack_screen),
+  MenuItem("GPS Speed", "desc 5", Untitled_bits, 4, &new_hack_screen),
+  MenuItem("Big Knob", "desc 6", Untitled_bits, 5, &new_hack_screen),
+  MenuItem("Park Sensor", "desc 7", Untitled_bits, 6, &new_hack_screen),
+  MenuItem("Turbo Gauge", "desc 8", Untitled_bits, 7, &new_hack_screen)
 };
 
 char menu_items[kMenuNumItems][KMenuMaxTitleLength] = {

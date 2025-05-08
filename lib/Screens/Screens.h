@@ -69,11 +69,11 @@ public:
   // Added screen_id and num_items as parameters
   ListMenu(uint8_t screen_id, uint8_t num_items, MenuItem *items,
            uint8_t new_current_item = 0)
-      : Screen(screen_id),          // Initialize the base class
+      : Screen(screen_id),                  // Initialize the base class
         items(items), num_items(num_items), // Use the provided number of items
         current_item(new_current_item) {}
 
-  void HandleInput(uint8_t input) override {
+  uint8_t HandleInput(uint8_t input) override {
     switch (input) {
     case UP:
       current_item = Wrap(current_item + 1, 0, num_items - 1);
@@ -81,18 +81,18 @@ public:
     case DOWN:
       current_item = Wrap(current_item - 1, 0, num_items - 1);
       break;
-    default:
-      return;
+    case SELECT:
+      Serial.println("Selected: " + String(items[current_item].GetId()));
+      return items[current_item].GetId();
+      break;
     }
+    return NULL;
   }
 
   void Draw() override {
     if (num_items < 2) {
       return;
     }
-
-    Serial.println(sizeof(items));
-    Serial.println(sizeof(items) / sizeof(items[0]));
 
     u8g2.setFontMode(1);
     u8g2.setFont(u8g_font_7x13B);

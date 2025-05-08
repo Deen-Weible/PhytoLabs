@@ -1,0 +1,4 @@
+Notes for the dumb (it's you, you wrote this):
+
+finish the hack_screen class so you can get the menu items to work for the time being.
+this involves you finishing the navinfo class as well.
