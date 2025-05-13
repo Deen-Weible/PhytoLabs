@@ -20,18 +20,17 @@
 //   Screen *current_screen;
 // };
 class Screen {
-  public:
-    Screen(uint8_t s) : screen_id(s) {};
+public:
+  Screen(uint8_t s) : screen_id(s) {};
 
-    virtual void Draw() = 0;
-    virtual uint8_t HandleInput(uint8_t input);
+  virtual void Draw() = 0;
+  virtual uint8_t HandleInput(uint8_t input);
 
-    const uint8_t getId() const { return screen_id; }
+  const uint8_t getId() const { return screen_id; }
 
-  private:
-    const uint8_t screen_id;
-  };
-
+private:
+  const uint8_t screen_id;
+};
 
 class MenuItem {
 public:
@@ -46,14 +45,14 @@ public:
   const char *GetDescription() const { return description; }
   const unsigned char *GetIcon() const { return icon; }
   const uint8_t GetId() const { return id; }
-  const Screen *GetScreen() const { return screen; }
+  Screen *GetScreen() const { return screen; }
 
 private:
   const char *title;
   const char *description;
   const unsigned char *icon; // Pointer to bitmap array for the icon
   uint8_t id;
-  const Screen *screen;
+  Screen *screen;
 };
 
 class NavInfo {
@@ -61,10 +60,13 @@ public:
   // constructorf
   NavInfo(uint8_t s) : current_screen_id(s) {};
 
-  void setCurrentScreenId(uint8_t s) { current_screen_id = s; }
+  void SetCurrentScreenId(uint8_t s) { current_screen_id = s; }
   uint8_t GetCurrentScreenId() const { return current_screen_id; }
-
-  void SetCurrentScreen(Screen *s, uint8_t id) {}
+  void SetCurrentScreen(Screen *s, uint8_t id) {
+    current_screen = s;
+    current_screen_id = id;
+  }
+  Screen *GetCurrentScreen() const { return current_screen; }
   // void setCurrentScreen(Screen *s) { current_screen = s; }
 
   // Screen *GetCurrentScreen() const { return current_screen; }

@@ -8,10 +8,10 @@
 // Class representing a single menu item with title, description, icon, and ID
 
 // // Class representing a list menu with multiple items
-// class ListMenu {
+// class SettingsList {
 // public:
 //   // Constructor with pointer to menu items and number of items
-//   ListMenu(MenuItem *items, size_t num_items)
+//   SettingsList(MenuItem *items, size_t num_items)
 //       : items(items), num_items(num_items), current_item(0) {}
 
 //   // Update the menu with a new set of items and their count
@@ -64,13 +64,14 @@
 //   int current_item; // Index of the currently selected item
 // };
 
-class ListMenu : public Screen {
+class SettingsList : public Screen {
 public:
   // Added screen_id and num_items as parameters
-  ListMenu(uint8_t screen_id, uint8_t num_items, MenuItem *items,
+  SettingsList(uint8_t screen_id, uint8_t num_items, MenuItem *items, NavInfo *nav_info,
            uint8_t new_current_item = 0)
       : Screen(screen_id),                  // Initialize the base class
         items(items), num_items(num_items), // Use the provided number of items
+        nav_info(nav_info),                  // Initialize the NavInfo
         current_item(new_current_item) {}
 
   uint8_t HandleInput(uint8_t input) override {
@@ -83,6 +84,7 @@ public:
       break;
     case SELECT:
       Serial.println("Selected: " + String(items[current_item].GetId()));
+      nav_info->SetCurrentScreen(items[current_item].GetScreen(), items[current_item].GetId());
       return items[current_item].GetId();
       break;
     }
@@ -108,6 +110,7 @@ public:
 
 private:
   MenuItem *items;      // Pointer to the array of menu items
+  NavInfo *nav_info;   // Navigation information object
   size_t num_items;     // Number of items in the menu
   uint8_t current_item; // Index of the currently selected item
 };

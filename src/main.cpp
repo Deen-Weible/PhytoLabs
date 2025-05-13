@@ -114,6 +114,7 @@ void SetupDNS(DNSServer &dnsServer, const IPAddress &localIP) {
 
 // Initialize the base UI
 BaseUi base_ui("title", "desc", &internal_time);
+ListMenu list_menu(0, 8, menuItems, &nav_info);
 
 void setup() {
   // Initialize Wi-Fi as an access point
@@ -140,18 +141,19 @@ void setup() {
   // Delay for stability
   delay(2000);
 
+  nav_info.SetCurrentScreen(&list_menu, 1);
+
   // Print the local IP address
   Serial.println(WiFi.localIP());
 }
-
-ListMenu list_menu(0, 8, menuItems);
 
 void loop() {
   // Start a new page for the display
   u8g2.firstPage();
   do {
     list_menu.HandleInput(getInput());
-    list_menu.Draw();
+    // list_menu.Draw();
+    nav_info.GetCurrentScreen()->Draw();
     // Get the current input from buttons
     uint8_t input = getInput();
     if (input != NO_INPUT) {
