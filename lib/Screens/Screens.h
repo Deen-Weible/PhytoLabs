@@ -64,17 +64,83 @@
 //   int current_item; // Index of the currently selected item
 // };
 
+class TimeMenu : public Screen {
+public:
+  TimeMenu(InternalTime *time, NavInfo *nav_info, uint8_t screen_id)
+      : time(time), nav_info(nav_info), Screen(screen_id) {};
+
+  void Draw() override {
+    // Buffer appropriate time string to the screen (preview/actual)
+    if (current_setting_unit < 2) {
+      sprintf(time_str, "%02d:%02d", updated_hour, updated_minute);
+      sprintf(seconds_str, "%02d", 00);
+    } else {
+      sprintf(time_str, "%02d:%02d", time->get_hour(), time->get_minute());
+      sprintf(seconds_str, "%02d", time->get_second());
+    }
+
+    u8g2.setFont(u8g_font_10x20r);
+
+    // Draw the indicator box
+    if (current_setting_unit < 2) {
+      u8g2.drawBox(65 - (current_setting_unit * 30), 16, 20, 19);
+    }
+
+    // Draw the time and second
+    u8g2.drawStr(35, 32, time_str);
+    u8g2.setFont(u8g_font_baby);
+    u8g2.drawStr(85, 32, seconds_str);
+  };
+
+  void HandleInput(uint8_t input) override {
+    if (input == SELECT) {
+      current_setting_unit += 1;
+    }
+
+    if (!current_setting_unit) {
+      if (input == UP) {
+        updated_minute = Wrap(updated_minute + 1, 0, 59);
+      } else if (input == DOWN) {
+        updated_minute = Wrap(updated_minute - 1, 0, 59);
+      }
+    } else if (current_setting_unit == 1) {
+      if (input == UP) {
+        updated_hour = Wrap(updated_hour + 1, 0, 23);
+      } else if (input == DOWN) {
+        updated_hour = Wrap(updated_hour - 1, 0, 23);
+      }
+    } else if (current_setting_unit == 2 && input == SELECT) {
+      time->resetRTC();
+      time->set_current_time(updated_hour, updated_minute);
+
+      // HACK: temp
+      Serial.println("Time menu: Third input");
+    }
+  };
+
+private:
+  char time_str[6];
+  char seconds_str[3];
+  uint8_t updated_hour = 00;
+  uint8_t updated_minute = 00;
+  uint8_t current_setting_unit;
+
+  InternalTime *time;
+  NavInfo *nav_info;
+};
+
 class SettingsList : public Screen {
 public:
   // Added screen_id and num_items as parameters
-  SettingsList(uint8_t screen_id, uint8_t num_items, MenuItem *items, NavInfo *nav_info,
-           uint8_t new_current_item = 0)
+  SettingsList(uint8_t screen_id, uint8_t num_items, MenuItem *items,
+               NavInfo *nav_info,
+               uint8_t new_current_item = 0)
       : Screen(screen_id),                  // Initialize the base class
         items(items), num_items(num_items), // Use the provided number of items
-        nav_info(nav_info),                  // Initialize the NavInfo
+        nav_info(nav_info),                 // Initialize the NavInfo
         current_item(new_current_item) {}
 
-  uint8_t HandleInput(uint8_t input) override {
+  void HandleInput(uint8_t input) override {
     switch (input) {
     case UP:
       current_item = Wrap(current_item + 1, 0, num_items - 1);
@@ -84,11 +150,10 @@ public:
       break;
     case SELECT:
       Serial.println("Selected: " + String(items[current_item].GetId()));
-      nav_info->SetCurrentScreen(items[current_item].GetScreen(), items[current_item].GetId());
-      return items[current_item].GetId();
+      nav_info->SetCurrentScreen(items[current_item].GetScreen(),
+                                 items[current_item].GetId());
       break;
     }
-    return NULL;
   }
 
   void Draw() override {
@@ -110,23 +175,10 @@ public:
 
 private:
   MenuItem *items;      // Pointer to the array of menu items
-  NavInfo *nav_info;   // Navigation information object
+  NavInfo *nav_info;    // Navigation information object
   size_t num_items;     // Number of items in the menu
   uint8_t current_item; // Index of the currently selected item
 };
-
-// Class representing a time screen, inheriting from Screen
-class TimeScreen : public Screen {
-public:
-  // Override the Draw method to display the time screen
-  void Draw() override {
-    u8g2.setFontMode(1);
-    u8g2.setFont(u8g_font_baby);
-    u8g2.setDrawColor(2);
-    u8g2.drawStr(50, 50, "Time Screen");
-  }
-};
-
 // Class representing the base UI with title, description, and time
 class BaseUi {
 public:

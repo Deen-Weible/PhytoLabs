@@ -19,6 +19,33 @@ String current_screen = "Settings"; // Current screen being displayed
 InternalTime internal_time; // Manages internal time with user offset
 NavInfo nav_info(0); // NavInfo object for navigation information
 
+class hack_screen : public Screen {
+  public:
+   hack_screen() : Screen(0) {}
+
+   void Draw() override {
+    Serial.println("Hack Screen hast been summoned");
+   }
+   void HandleInput(uint8_t input) override {
+    Serial.println("Hack Screen input: " + String(input));
+   }
+};
+
+hack_screen new_hack_screen;
+TimeMenu time_menu(&internal_time, &nav_info, 0);
+
+MenuItem menuItems[kMenuNumItems] = {
+  MenuItem("Time", "Current Time", Untitled_bits, 0, &time_menu),
+  MenuItem("Slider Test", "Test ui slider", Untitled_bits, 1, &new_hack_screen),
+  MenuItem("WiFi", "Manage WiFi / HotSpot", Untitled_bits, 2, &new_hack_screen),
+  MenuItem("Fireworks", "desc 4", Untitled_bits, 3, &new_hack_screen),
+  MenuItem("GPS Speed", "desc 5", Untitled_bits, 4, &new_hack_screen),
+  MenuItem("Big Knob", "desc 6", Untitled_bits, 5, &new_hack_screen),
+  MenuItem("Park Sensor", "desc 7", Untitled_bits, 6, &new_hack_screen),
+  MenuItem("Turbo Gauge", "desc 8", Untitled_bits, 7, &new_hack_screen)
+};
+
+
 // Button objects for debouncing
 DebounceButton upButton(BUTTON_UP_PIN);         // UP button
 DebounceButton downButton(BUTTON_DOWN_PIN);     // DOWN button
@@ -114,7 +141,7 @@ void SetupDNS(DNSServer &dnsServer, const IPAddress &localIP) {
 
 // Initialize the base UI
 BaseUi base_ui("title", "desc", &internal_time);
-ListMenu list_menu(0, 8, menuItems, &nav_info);
+SettingsList settings_menu(0, 8, menuItems, &nav_info);
 
 void setup() {
   // Initialize Wi-Fi as an access point
@@ -141,7 +168,7 @@ void setup() {
   // Delay for stability
   delay(2000);
 
-  nav_info.SetCurrentScreen(&list_menu, 1);
+  nav_info.SetCurrentScreen(&settings_menu, 1);
 
   // Print the local IP address
   Serial.println(WiFi.localIP());
@@ -151,11 +178,12 @@ void loop() {
   // Start a new page for the display
   u8g2.firstPage();
   do {
-    list_menu.HandleInput(getInput());
-    // list_menu.Draw();
-    nav_info.GetCurrentScreen()->Draw();
-    // Get the current input from buttons
+    // settings_menu.HandleInput(getInput());
     uint8_t input = getInput();
+    // settings_menu.Draw();
+    nav_info.GetCurrentScreen()->Draw();
+    nav_info.GetCurrentScreen()->HandleInput(input);
+    // Get the current input from buttons
     if (input != NO_INPUT) {
       // Print the input for debugging
       Serial.println("Input: " + String(input));
@@ -164,6 +192,6 @@ void loop() {
     internal_time.tick();
     // Draw the header/footer UI on the display
     base_ui.Draw();
-    // list_menu.Draw();  // Uncomment if needed
+    // settings_menu.Draw();  // Uncomment if needed
   } while (u8g2.nextPage());
 }

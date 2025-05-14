@@ -24,7 +24,7 @@ public:
   Screen(uint8_t s) : screen_id(s) {};
 
   virtual void Draw() = 0;
-  virtual uint8_t HandleInput(uint8_t input);
+  virtual void HandleInput(uint8_t input);
 
   const uint8_t getId() const { return screen_id; }
 
