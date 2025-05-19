@@ -50,11 +50,6 @@ static unsigned char Untitled_bits[] PROGMEM = {
     0x01, 0x20, 0x01, 0x20, 0x03, 0x30, 0xfe, 0x1f};
 
 // Menu items and descriptions
-
-// TEMP: A super hacky screen so it compiles :)
-
-
-
 char menu_items[kMenuNumItems][KMenuMaxTitleLength] = {
     {"Time"},      {"Slider Test"}, {"WiFi"},        {"Fireworks"},
     {"GPS Speed"}, {"Big Knob"},    {"Park Sensor"}, {"Turbo Gauge"}};
