@@ -92,30 +92,36 @@ public:
     u8g2.drawStr(85, 32, seconds_str);
   };
 
-  void HandleInput(uint8_t input) override {
+  uint8_t HandleInput(uint8_t input) override {
     if (input == SELECT) {
       current_setting_unit += 1;
     }
 
     if (!current_setting_unit) {
+      // Handle minute setting
       if (input == UP) {
         updated_minute = Wrap(updated_minute + 1, 0, 59);
       } else if (input == DOWN) {
         updated_minute = Wrap(updated_minute - 1, 0, 59);
       }
     } else if (current_setting_unit == 1) {
+      // Handle hour setting
       if (input == UP) {
         updated_hour = Wrap(updated_hour + 1, 0, 23);
       } else if (input == DOWN) {
         updated_hour = Wrap(updated_hour - 1, 0, 23);
       }
     } else if (current_setting_unit == 2 && input == SELECT) {
+      // Save the new time
       time->resetRTC();
       time->set_current_time(updated_hour, updated_minute);
 
       // HACK: temp
       Serial.println("Time menu: Third input");
+      return 1;
     }
+
+    return 0;
   };
 
 private:
@@ -140,7 +146,7 @@ public:
         nav_info(nav_info),                 // Initialize the NavInfo
         current_item(new_current_item) {}
 
-  void HandleInput(uint8_t input) override {
+  uint8_t HandleInput(uint8_t input) override {
     switch (input) {
     case UP:
       current_item = Wrap(current_item + 1, 0, num_items - 1);
@@ -150,10 +156,10 @@ public:
       break;
     case SELECT:
       Serial.println("Selected: " + String(items[current_item].GetId()));
-      nav_info->SetCurrentScreen(items[current_item].GetScreen(),
-                                 items[current_item].GetId());
+      return items[current_item].GetId();
       break;
     }
+    return 0;
   }
 
   void Draw() override {

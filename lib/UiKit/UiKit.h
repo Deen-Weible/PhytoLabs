@@ -5,6 +5,8 @@
 #include <Helpers.h>
 #include <U8g2lib.h>
 
+#define MAX_SCREENS 20
+
 // Class to manage navigation state between screens
 // (commented out as placeholder for future implementation)
 /*
@@ -37,7 +39,7 @@ public:
   virtual void Draw() = 0;
 
   // Virtual function to handle user input events
-  virtual void HandleInput(uint8_t input);
+  virtual uint8_t HandleInput(uint8_t input);
 
   // Getter for screen ID
   const uint8_t getId() const { return screen_id; }
@@ -63,31 +65,92 @@ public:
   Screen *GetScreen() const { return screen; }
 
 private:
-  const char *title;        // Menu item title
-  const char *description;  // Menu item description
+  const char *title;         // Menu item title
+  const char *description;   // Menu item description
   const unsigned char *icon; // Pointer to bitmap array for the icon
-  uint8_t id;               // Unique identifier for the menu item
-  Screen *screen;           // Associated screen object
+  uint8_t id;                // Unique identifier for the menu item
+  Screen *screen;            // Associated screen object
 };
 
 // Class to manage current screen state and navigation
 class NavInfo {
 public:
-  // constructorf
-  NavInfo(uint8_t s) : current_screen_id(s) {}
+  // Constructor: Initialize current screen and screen list
+  NavInfo(uint8_t initialId)
+      : current_screen_id(initialId), current_screen(nullptr), num_screens(0) {
+    // Initialize all screen pointers to nullptr
+    for (int i = 0; i < MAX_SCREENS; i++) {
+      screens[i].screen = nullptr;
+    }
+  }
 
-  void SetCurrentScreenId(uint8_t s) { current_screen_id = s; }
-  uint8_t GetCurrentScreenId() const { return current_screen_id; }
-  void SetCurrentScreen(Screen *s, uint8_t id) {
-    current_screen = s;
-    current_screen_id = id;
+  // Register a screen with its ID
+  void RegisterScreen(Screen *screen) {
+    if (num_screens < MAX_SCREENS) {
+      screens[num_screens].id = screen->getId();
+      screens[num_screens].screen = screen;
+      num_screens++;
+    }
+    // If full, do nothing (or add error handling if needed)
+  }
+
+  // Get a screen by its ID
+  Screen *GetScreenById(uint8_t id) const {
+    for (int i = 0; i < num_screens; i++) {
+      if (screens[i].id == id) {
+        return screens[i].screen;
+      }
+    }
+    return nullptr; // Return nullptr if not found
+  }
+
+  // Set the current screen using its ID
+  void SetScreenById(uint8_t id) {
+      Serial.println("Setting screen");
+      current_screen = GetScreenById(id);
+      current_screen_id = id;
+  }
+
+  void test() {
+    Serial.println("Test called");
+  }
+
+  // Other useful methods
+  void SetCurrentScreen(Screen *screen) {
+    current_screen = screen;
+    current_screen_id = screen->getId();
   }
   Screen *GetCurrentScreen() const { return current_screen; }
+  uint8_t GetCurrentScreenId() const { return current_screen_id; }
 
 private:
-  uint8_t current_screen_id; // Current screen ID
-  Screen *current_screen;    // Reference to the currently active screen
+  uint8_t current_screen_id; // Current screen ID (1 byte)
+  Screen *current_screen;    // Current screen pointer (2 bytes)
+  int num_screens;           // Number of registered screens (2 bytes)
+
+  // Struct to store screen ID and pointer
+  struct ScreenEntry {
+    uint8_t id;           // 1 byte
+    Screen *screen;       // 2 bytes
+  } screens[MAX_SCREENS]; // Array of MAX_SCREENS entries
 };
+// class NavInfo {
+// public:
+//   // constructorf
+//   NavInfo(uint8_t s) : current_screen_id(s) {}
+
+//   void SetCurrentScreenId(uint8_t s) { current_screen_id = s; }
+//   uint8_t GetCurrentScreenId() const { return current_screen_id; }
+//   void SetCurrentScreen(Screen *s, uint8_t id) {
+//     current_screen = s;
+//     current_screen_id = id;
+//   }
+//   Screen *GetCurrentScreen() const { return current_screen; }
+
+// private:
+//   uint8_t current_screen_id; // Current screen ID
+//   Screen *current_screen;    // Reference to the currently active screen
+// };
 
 // Settings Menus
 // MenuItem TimeMenu("Time", "Current time", Untitled_bits, 0);

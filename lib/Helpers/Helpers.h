@@ -34,7 +34,7 @@ U8G2_SSD1309_128X64_NONAME2_1_4W_SW_SPI u8g2(U8G2_R0, 18, 23, 15, 17,
 #define CLOCK_SPEED 400000                        // SPI clock speed
 
 // Menu Configuration
-const int kMenuNumItems = 8; // Number of menu items
+const int kMenuNumItems = 2; // Number of menu items
 const int KMenuMaxTitleLength =
     22; // Maximum length of menu titles/descriptions
 
@@ -49,15 +49,15 @@ static unsigned char Untitled_bits[] PROGMEM = {
     0xe1, 0x21, 0x11, 0x22, 0x11, 0x22, 0xe1, 0x21, 0x01, 0x20,
     0x01, 0x20, 0x01, 0x20, 0x03, 0x30, 0xfe, 0x1f};
 
-// Menu items and descriptions
-char menu_items[kMenuNumItems][KMenuMaxTitleLength] = {
-    {"Time"},      {"Slider Test"}, {"WiFi"},        {"Fireworks"},
-    {"GPS Speed"}, {"Big Knob"},    {"Park Sensor"}, {"Turbo Gauge"}};
+// // Menu items and descriptions
+// char menu_items[kMenuNumItems][KMenuMaxTitleLength] = {
+//     {"Time"},      {"Slider Test"}, {"WiFi"},        {"Fireworks"},
+//     {"GPS Speed"}, {"Big Knob"},    {"Park Sensor"}, {"Turbo Gauge"}};
 
-char menu_item_descriptions[kMenuNumItems][KMenuMaxTitleLength] = {
-    {"Current Time"}, {"Test ui slider"}, {"Manage WiFi / HotSpot"},
-    {"desc 4"},       {"desc 5"},         {"desc 6"},
-    {"desc 7"},       {"desc 8"}};
+// char menu_item_descriptions[kMenuNumItems][KMenuMaxTitleLength] = {
+//     {"Current Time"}, {"Test ui slider"}, {"Manage WiFi / HotSpot"},
+//     {"desc 4"},       {"desc 5"},         {"desc 6"},
+//     {"desc 7"},       {"desc 8"}};
 
 // Utility Functions
 int Wrap(int kX, int const kLowerBound,
