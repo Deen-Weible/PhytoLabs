@@ -153,9 +153,9 @@ private:
 // };
 
 // Settings Menus
-// MenuItem TimeMenu("Time", "Current time", Untitled_bits, 0);
-// MenuItem SliderMenu("Slider", "Slider test", Untitled_bits, 1);
-// MenuItem WiFiMenu("WiFi", "Ze' Wifi", Untitled_bits, 2);
+// MenuItem TimeMenu("Time", "Current time", kPlaceholderIcon, 0);
+// MenuItem SliderMenu("Slider", "Slider test", kPlaceholderIcon, 1);
+// MenuItem WiFiMenu("WiFi", "Ze' Wifi", kPlaceholderIcon, 2);
 
 // MenuItem SettingsMenus[3] = {TimeMenu, SliderMenu, WiFiMenu};
 

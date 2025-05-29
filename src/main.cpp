@@ -13,33 +13,45 @@
 #include <Screens.h>
 #include <UiKit.h>
 #include <index.h>
+#include <Icons.h>
 
 // Global variables
 String current_screen = "Settings"; // Current screen being displayed
-InternalTime internal_time; // Manages internal time with user offset
-NavInfo nav_info(0); // NavInfo object for navigation information
+InternalTime internal_time;         // Manages internal time with user offset
+NavInfo nav_info(0);                // NavInfo object for navigation information
 
+// HACK: lol
 class hack_screen : public Screen {
-  public:
-   hack_screen() : Screen(0) {}
+public:
+  hack_screen() : Screen(0) {}
 
-   void Draw() override {
-    Serial.println("Hack Screen hast been summoned");
-   }
-   uint8_t HandleInput(uint8_t input) override {
+  void Draw() override { Serial.println("Hack Screen hast been summoned"); }
+  uint8_t HandleInput(uint8_t input) override {
     Serial.println("Hack Screen input: " + String(input));
     return 0;
-   }
+  }
 };
 
 hack_screen new_hack_screen;
 TimeMenu time_menu(&internal_time, &nav_info, 2);
 
-MenuItem menuItems[kMenuNumItems] = {
-  MenuItem("Time", "Current Time", Untitled_bits, 2, &time_menu),
-  MenuItem("Slider Test", "Test ui slider", Untitled_bits, 3, &new_hack_screen),
-};
+// Menu Configuration
+const int kMenuNumItems = 2; // Number of menu items
+const int KMenuMaxTitleLength =
+    22; // Maximum length of menu titles/descriptions
 
+MenuItem menuItems[kMenuNumItems] = {
+    MenuItem("Time", "Current Time", kClockIcon, 2, &new_hack_screen),
+    MenuItem("Slider Test", "Test ui slider", kPlaceholderIcon, 3,
+             &new_hack_screen)
+    // MenuItem("WiFi", "Manage WiFi / HotSpot", kPlaceholderIcon, 2,
+    //          &new_hack_screen),
+    // MenuItem("Fireworks", "desc 4", kPlaceholderIcon, 3, &new_hack_screen),
+    // MenuItem("GPS Speed", "desc 5", kPlaceholderIcon, 4, &new_hack_screen),
+    // MenuItem("Big Knob", "desc 6", kPlaceholderIcon, 5, &new_hack_screen),
+    // MenuItem("Park Sensor", "desc 7", kPlaceholderIcon, 6, &new_hack_screen),
+    // MenuItem("Turbo Gauge", "desc 8", kPlaceholderIcon, 7, &new_hack_screen)
+  };
 
 // Button objects for debouncing
 DebounceButton upButton(BUTTON_UP_PIN);         // UP button
