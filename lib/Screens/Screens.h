@@ -115,6 +115,8 @@ public:
       // Save the new time
       time->resetRTC();
       time->set_current_time(updated_hour, updated_minute);
+      // reset the counter
+      current_setting_unit = 0;
 
       // HACK: temp
       Serial.println("Time menu: Third input");
@@ -169,7 +171,7 @@ public:
 
     u8g2.setFontMode(1);
     u8g2.setFont(u8g_font_7x13B);
-    u8g2.drawXBMP(5, 16, 14, 14, items[0].GetIcon());
+    u8g2.drawXBMP(5, 16, 14, 14, items[current_item].GetIcon());
     u8g2.drawStr(25, 28, items[current_item].GetTitle());
 
     if (current_item + 1 < num_items) {

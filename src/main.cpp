@@ -10,10 +10,10 @@
 // Internal project headers
 #include <DebounceButton.h>
 #include <Helpers.h>
+#include <Icons.h>
 #include <Screens.h>
 #include <UiKit.h>
 #include <index.h>
-#include <Icons.h>
 
 // Global variables
 String current_screen = "Settings"; // Current screen being displayed
@@ -36,22 +36,20 @@ hack_screen new_hack_screen;
 TimeMenu time_menu(&internal_time, &nav_info, 2);
 
 // Menu Configuration
-const int kMenuNumItems = 2; // Number of menu items
+const int kMenuNumItems = 8; // Number of menu items
 const int KMenuMaxTitleLength =
     22; // Maximum length of menu titles/descriptions
 
+// Menu Items (>2 are placeholder)
 MenuItem menuItems[kMenuNumItems] = {
-    MenuItem("Time", "Current Time", kClockIcon, 2, &new_hack_screen),
-    MenuItem("Slider Test", "Test ui slider", kPlaceholderIcon, 3,
-             &new_hack_screen)
-    // MenuItem("WiFi", "Manage WiFi / HotSpot", kPlaceholderIcon, 2,
-    //          &new_hack_screen),
-    // MenuItem("Fireworks", "desc 4", kPlaceholderIcon, 3, &new_hack_screen),
-    // MenuItem("GPS Speed", "desc 5", kPlaceholderIcon, 4, &new_hack_screen),
-    // MenuItem("Big Knob", "desc 6", kPlaceholderIcon, 5, &new_hack_screen),
-    // MenuItem("Park Sensor", "desc 7", kPlaceholderIcon, 6, &new_hack_screen),
-    // MenuItem("Turbo Gauge", "desc 8", kPlaceholderIcon, 7, &new_hack_screen)
-  };
+    MenuItem("Time", "Current Time", kClockIcon, 2),
+    MenuItem("Slider Test", "Test ui slider", kPlaceholderIcon, 3),
+    MenuItem("WiFi", "Manage WiFi / HotSpot", kPlaceholderIcon, 2),
+    MenuItem("Fireworks", "desc 4", kPlaceholderIcon, 3),
+    MenuItem("GPS Speed", "desc 5", kPlaceholderIcon, 4),
+    MenuItem("Big Knob", "desc 6", kPlaceholderIcon, 5),
+    MenuItem("Park Sensor", "desc 7", kPlaceholderIcon, 6),
+    MenuItem("Turbo Gauge", "desc 8", kPlaceholderIcon, 7)};
 
 // Button objects for debouncing
 DebounceButton upButton(BUTTON_UP_PIN);         // UP button

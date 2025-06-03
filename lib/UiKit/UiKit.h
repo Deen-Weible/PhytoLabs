@@ -53,23 +53,21 @@ class MenuItem {
 public:
   // Constructor with default empty strings if nullptr is passed
   MenuItem(const char *Title, const char *Description,
-           const unsigned char *Icon, const uint8_t id, Screen *screen)
+           const unsigned char *Icon, const uint8_t id)
       : title(Title ? Title : ""), description(Description ? Description : ""),
-        icon(Icon), id(id), screen(screen) {}
+        icon(Icon), id(id) {}
 
   // Getter methods for menu item properties
   const char *GetTitle() const { return title; }
   const char *GetDescription() const { return description; }
   const unsigned char *GetIcon() const { return icon; }
   const uint8_t GetId() const { return id; }
-  Screen *GetScreen() const { return screen; }
 
 private:
   const char *title;         // Menu item title
   const char *description;   // Menu item description
   const unsigned char *icon; // Pointer to bitmap array for the icon
   uint8_t id;                // Unique identifier for the menu item
-  Screen *screen;            // Associated screen object
 };
 
 // Class to manage current screen state and navigation
