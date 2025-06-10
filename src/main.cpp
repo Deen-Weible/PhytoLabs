@@ -123,7 +123,7 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
     int hour = doc["Hour"];
 
     // Set the internal time based on form data
-    internal_time.set_epoch((Wrap(minute, 0, 59) * 60) +
+    internal_time.SetEpoch((Wrap(minute, 0, 59) * 60) +
                             (Wrap(hour, 0, 23) * 3600));
   });
 }
@@ -204,7 +204,7 @@ void loop() {
     }
 
     // Update the internal time
-    internal_time.tick();
+    internal_time.Tick();
     // Draw the header/footer UI on the display
     base_ui.Draw();
     // settings_menu.Draw();  // Uncomment if needed

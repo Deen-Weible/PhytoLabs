@@ -68,44 +68,59 @@ public:
 };
 
 // Helper to keep track of time, with offsets and shiz
+// Manages system time with hour, minute, and second tracking, including RTC
+// synchronization
 class InternalTime {
 public:
-  void tick() { second = time(&now); }
+  // Updates the internal second counter based on system time
+  void Tick() { second_ = time(&now_); };
 
-  void set_current_time(int new_hour, int new_minute) {
-    hour = new_hour;
-    minute = new_minute;
-    resetRTC();
-  }
+  // Sets the current time with hour and minute, resetting RTC
+  void SetCurrentTime(int new_hour, int new_minute) {
+    hour_ = new_hour;
+    minute_ = new_minute;
+    ResetRTC();
+  };
 
-  void set_hour(int new_hour) {
-    hour = new_hour;
-    resetRTC();
-  }
-  void set_minute(int new_minute) {
-    minute = new_minute;
-    resetRTC();
-  }
+  // Sets the hour and resets RTC
+  void SetHour(int new_hour) {
+    hour_ = new_hour;
+    ResetRTC();
+  };
 
-  // Reset the RTC to the offset time
-  void resetRTC() {
-    struct timeval tv = {.tv_sec = ((minute * 60) + (hour * 3600)),
+  // Sets the minute and resets RTC
+  void SetMinute(int new_minute) {
+    minute_ = new_minute;
+    ResetRTC();
+  };
+
+  // Resets the RTC based on the current hour and minute
+  void ResetRTC() {
+    struct timeval tv = {.tv_sec = (minute_ * 60) + (hour_ * 3600),
                          .tv_usec = 0};
-    settimeofday(&tv, NULL);
-  }
-  void set_epoch(long epoch) {
-    struct timeval tv = {.tv_sec = epoch, .tv_usec = 0};
-    settimeofday(&tv, NULL);
-  }
+    settimeofday(&tv, nullptr);
+  };
 
-  int get_hour() { return second / 3600 % 24; }
-  int get_minute() { return (second % 3600) / 60; }
-  int get_second() { return second % 60; }
+  // Sets the system time using an epoch timestamp
+  void SetEpoch(long epoch) {
+    struct timeval tv = {.tv_sec = epoch, .tv_usec = 0};
+    settimeofday(&tv, nullptr);
+  };
+
+  // Returns the current hour (0-23)
+  int GetHour() const { return (second_ / 3600) % 24; };
+
+  // Returns the current minute (0-59)
+  int GetMinute() const { return (second_ % 3600) / 60; };
+
+  // Returns the current second (0-59)
+  int GetSecond() const { return second_ % 60; };
 
 private:
-  long second = 0;
-  int minute = 0;
-  int hour = 0;
+  long second_ = 0; // Current time in seconds since epoch
+  int minute_ = 0;  // Current minute (0-59)
+  int hour_ = 0;    // Current hour (0-23)
+  time_t now_;      // Current system time
 };
 
 #endif

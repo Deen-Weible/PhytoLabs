@@ -75,8 +75,8 @@ public:
       sprintf(time_str, "%02d:%02d", updated_hour, updated_minute);
       sprintf(seconds_str, "%02d", 00);
     } else {
-      sprintf(time_str, "%02d:%02d", time->get_hour(), time->get_minute());
-      sprintf(seconds_str, "%02d", time->get_second());
+      sprintf(time_str, "%02d:%02d", time->GetHour(), time->GetMinute());
+      sprintf(seconds_str, "%02d", time->GetSecond());
     }
 
     u8g2.setFont(u8g_font_10x20r);
@@ -113,8 +113,8 @@ public:
       }
     } else if (current_setting_unit == 2 && input == SELECT) {
       // Save the new time
-      time->resetRTC();
-      time->set_current_time(updated_hour, updated_minute);
+      time->ResetRTC();
+      time->SetCurrentTime(updated_hour, updated_minute);
       // reset the counter
       current_setting_unit = 0;
 
@@ -210,7 +210,7 @@ public:
     // Draw the time if available
     if (time != NULL) {
       char time_str[20];
-      sprintf(time_str, "%02d:%02d", time->get_hour(), time->get_minute());
+      sprintf(time_str, "%02d:%02d", time->GetHour(), time->GetMinute());
       u8g2.drawStr(103, 7, time_str);
     }
 
