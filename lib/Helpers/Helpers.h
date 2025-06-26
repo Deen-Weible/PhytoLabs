@@ -16,7 +16,7 @@ const IPAddress localIP(1, 2, 3, 4);           // Local IP address for AP
 const IPAddress gatewayIP(1, 2, 3, 4);         // Gateway IP (same as localIP)
 const IPAddress subnetMask(255, 255, 255, 0);  // Subnet mask
 const char *localUrl = "http://settings.dev";  // Local URL for easy access
-const char *ssid = "PhytoLabs Initialization"; // AP SSID
+const char *ssid = "PhytoLabs"; // AP SSID
 const char *password = NULL; // AP password (NULL for open network)
 
 // Web Server and DNS

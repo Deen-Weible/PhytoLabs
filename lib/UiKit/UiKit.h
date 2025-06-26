@@ -7,28 +7,6 @@
 
 #define MAX_SCREENS 20
 
-// Class to manage navigation state between screens
-// (commented out as placeholder for future implementation)
-/*
-class NavInfo {
-public:
-  // constructorf
-  NavInfo(uint8_t s) : current_screen_id(s) {};
-
-  void SetCurrentScreenId(uint8_t s) { current_screen_id = s; }
-  uint8_t GetCurrentScreenId() const { return current_screen_id; }
-  void SetCurrentScreen(Screen *s, uint8_t id) {
-    current_screen = s;
-    current_screen_id = id;
-  }
-  Screen *GetCurrentScreen() const { return current_screen; }
-
-private:
-  uint8_t current_screen_id;
-  Screen *current_screen;
-};
-*/
-
 // Base class for all UI screens
 class Screen {
 public:
@@ -132,6 +110,7 @@ private:
     Screen *screen;       // 2 bytes
   } screens[MAX_SCREENS]; // Array of MAX_SCREENS entries
 };
+
 // class NavInfo {
 // public:
 //   // constructorf
