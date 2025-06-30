@@ -7,38 +7,76 @@
 
 #define MAX_SCREENS 20
 
-// Base class for all UI screens
+/**
+ * @brief Base class for all UI screens
+ */
 class Screen {
 public:
   // Constructor with screen identifier
   Screen(uint8_t s) : screen_id(s) {}
 
-  // Pure virtual function for drawing the screen content
+  /**
+   * @brief Pure virtual function for drawing the screen content
+   * @note This method must be overridden by derived classes
+   */
   virtual void Draw() = 0;
 
-  // Virtual function to handle user input events
+  /**
+   * @brief Virtual function to handle user input events
+   * @param input The input event code (e.g., button press)
+   * @return uint8_t Action code indicating the result of handling input
+   */
   virtual uint8_t HandleInput(uint8_t input);
 
-  // Getter for screen ID
+  /**
+   * @brief Getter for screen ID
+   * @return const uint8_t The unique identifier for the screen
+   */
   const uint8_t getId() const { return screen_id; }
 
 private:
   const uint8_t screen_id; // Unique identifier for the screen
 };
 
-// Class representing a menu item with associated screen
+/**
+ * @brief Class representing a menu item with associated screen
+ */
 class MenuItem {
 public:
-  // Constructor with default empty strings if nullptr is passed
+  /**
+   * @brief Constructor with default empty strings if nullptr is passed
+   * @param Title The title of the menu item
+   * @param Description The description of the menu item
+   * @param Icon Pointer to bitmap array for the icon
+   * @param id Unique identifier for the menu item
+   */
   MenuItem(const char *Title, const char *Description,
            const unsigned char *Icon, const uint8_t id)
       : title(Title ? Title : ""), description(Description ? Description : ""),
         icon(Icon), id(id) {}
 
-  // Getter methods for menu item properties
+  /**
+   * @brief Getter methods for menu item properties
+   * @return const char* The title of the menu item
+   */
   const char *GetTitle() const { return title; }
+
+  /**
+   * @brief Getter methods for menu item properties
+   * @return const char* The description of the menu item
+   */
   const char *GetDescription() const { return description; }
+
+  /**
+   * @brief Getter methods for menu item properties
+   * @return const unsigned char* Pointer to bitmap array for the icon
+   */
   const unsigned char *GetIcon() const { return icon; }
+
+  /**
+   * @brief Getter methods for menu item properties
+   * @return const uint8_t Unique identifier for the menu item
+   */
   const uint8_t GetId() const { return id; }
 
 private:
@@ -48,10 +86,15 @@ private:
   uint8_t id;                // Unique identifier for the menu item
 };
 
-// Class to manage current screen state and navigation
+/**
+ * @brief Class to manage current screen state and navigation
+ */
 class NavInfo {
 public:
-  // Constructor: Initialize current screen and screen list
+  /**
+   * @brief Constructor: Initialize current screen and screen list
+   * @param initialId The ID of the initial screen
+   */
   NavInfo(uint8_t initialId)
       : current_screen_id(initialId), current_screen(nullptr), num_screens(0) {
     // Initialize all screen pointers to nullptr
@@ -60,7 +103,10 @@ public:
     }
   }
 
-  // Register a screen with its ID
+  /**
+   * @brief Register a screen with its ID
+   * @param screen Pointer to the Screen object to register
+   */
   void RegisterScreen(Screen *screen) {
     if (num_screens < MAX_SCREENS) {
       screens[num_screens].id = screen->getId();
@@ -70,7 +116,11 @@ public:
     // If full, do nothing (or add error handling if needed)
   }
 
-  // Get a screen by its ID
+  /**
+   * @brief Get a screen by its ID
+   * @param id The ID of the screen to retrieve
+   * @return Screen* Pointer to the registered screen or nullptr if not found
+   */
   Screen *GetScreenById(uint8_t id) const {
     for (int i = 0; i < num_screens; i++) {
       if (screens[i].id == id) {
@@ -80,23 +130,40 @@ public:
     return nullptr; // Return nullptr if not found
   }
 
-  // Set the current screen using its ID
+  /**
+   * @brief Set the current screen using its ID
+   * @param id The ID of the screen to set as current
+   */
   void SetScreenById(uint8_t id) {
       Serial.println("Setting screen");
       current_screen = GetScreenById(id);
       current_screen_id = id;
   }
 
+  /**
+   * @brief Test function for debugging purposes
+   */
   void test() {
     Serial.println("Test called");
   }
 
-  // Other useful methods
+  /**
+   * @brief Set the current screen using a pointer
+   * @param screen Pointer to the Screen object
+   */
   void SetCurrentScreen(Screen *screen) {
     current_screen = screen;
     current_screen_id = screen->getId();
   }
+  /**
+   * @brief Get the current screen
+   * @return Screen* Pointer to the current screen
+   */
   Screen *GetCurrentScreen() const { return current_screen; }
+  /**
+   * @brief Get the current screen ID
+   * @return uint8_t The ID of the current screen
+   */
   uint8_t GetCurrentScreenId() const { return current_screen_id; }
 
 private:
@@ -104,7 +171,9 @@ private:
   Screen *current_screen;    // Current screen pointer (2 bytes)
   int num_screens;           // Number of registered screens (2 bytes)
 
-  // Struct to store screen ID and pointer
+  /**
+   * @brief Struct to store screen ID and pointer
+   */
   struct ScreenEntry {
     uint8_t id;           // 1 byte
     Screen *screen;       // 2 bytes
@@ -115,7 +184,7 @@ private:
 // public:
 //   // constructorf
 //   NavInfo(uint8_t s) : current_screen_id(s) {}
-
+//
 //   void SetCurrentScreenId(uint8_t s) { current_screen_id = s; }
 //   uint8_t GetCurrentScreenId() const { return current_screen_id; }
 //   void SetCurrentScreen(Screen *s, uint8_t id) {
@@ -123,7 +192,7 @@ private:
 //     current_screen_id = id;
 //   }
 //   Screen *GetCurrentScreen() const { return current_screen; }
-
+//
 // private:
 //   uint8_t current_screen_id; // Current screen ID
 //   Screen *current_screen;    // Reference to the currently active screen
