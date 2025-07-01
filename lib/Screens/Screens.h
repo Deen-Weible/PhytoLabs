@@ -267,7 +267,6 @@ public:
       current_item = Wrap(current_item - 1, 0, num_items - 1);
       break;
     case SELECT:
-      Serial.println("Selected: " + String(items[current_item].GetId()));
       return items[current_item].GetId();
       break;
     }
