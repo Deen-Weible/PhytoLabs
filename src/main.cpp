@@ -236,6 +236,10 @@ void setup() {
   Serial.println(WiFi.localIP()); // Print AP IP address for debugging
 }
 
+// Defining variables here to keep them by their function (loop)
+uint8_t input;
+uint8_t input_result;
+
 /**
  * @brief Main loop function for the Arduino sketch
  */
@@ -243,8 +247,8 @@ void loop() {
   u8g2.firstPage(); // Begin a new display page
   do {
     // dnsServer.processNextRequest();
-    uint8_t input = getInput(); // Check for button input
-    uint8_t input_result =
+    input = getInput(); // Check for button input
+    input_result =
         nav_info.GetCurrentScreen()->HandleInput(input); // Handle input
     nav_info.GetCurrentScreen()->Draw(); // Draw the current screen
 
