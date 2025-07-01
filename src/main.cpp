@@ -22,7 +22,8 @@
 #include <Icons.h>          // Icon definitions for UI
 #include <Screens.h>        // Screen management classes
 #include <UiKit.h>          // UI toolkit for display
-#include <index.h>          // Likely contains HTML content for the web server
+#include <index.h>          // HTML content for the web server
+#include <WiFiInfo.h>       // WiFi information class
 
 /**
  * --- Global Variables ---
@@ -197,8 +198,13 @@ SettingsList settings_menu(1, 8, menuItems, &nav_info); // Settings menu screen
  * @brief Setup function for the Arduino sketch
  */
 void setup() {
-    StartAP(WIFI_AP, ssid, password, localIP, gatewayIP); // Start Wi-Fi AP
-    SetupDNS(dnsServer, localIP);                        // Initialize DNS server
+    // StartAP(WIFI_AP, ssid, password, localIP, gatewayIP); // Start Wi-Fi AP
+    // SetupDNS(dnsServer, localIP);                        // Initialize DNS server
+
+    // TEMP: connect to wifi
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
     SetupServer(server, localIP);                        // Setup HTTP server
     server.begin();                                      // Start the server
 
@@ -223,7 +229,7 @@ void setup() {
 void loop() {
     u8g2.firstPage(); // Begin a new display page
     do {
-        dnsServer.processNextRequest();
+        // dnsServer.processNextRequest();
         static uint8_t input = getInput(); // Check for button input
         static uint8_t input_result = nav_info.GetCurrentScreen()->HandleInput(input); // Handle input
         nav_info.GetCurrentScreen()->Draw(); // Draw the current screen

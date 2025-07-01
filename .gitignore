@@ -5,3 +5,4 @@
 .vscode/launch.json
 .vscode/ipch
 .opencode/
+include/WiFiInfo.h
