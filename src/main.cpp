@@ -162,7 +162,7 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
   // Handle form submission to set time
   server.on("/SendForms", [](AsyncWebServerRequest *request) {
     String response = request->getParam(0)->value(); // Get form data
-    request->send(200, "text/plain", response);      // Send response back
+    request->send(200, "text/plain", "All good");      // Send response back
     deserializeJson(doc, response);                  // Parse JSON data
 
     int minute = doc["Minute"]; // Extract minute from JSON

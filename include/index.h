@@ -176,14 +176,14 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
     document.getElementById("ADCValue").innerHTML = numberDictionary;
     // Adjust status check as needed (e.g., checking for 200 or other statuses)
     response.onreadystatechange = function () {
-      if (response.status === 200) {
-        console.log("Request succeeded:", response.responseText);
-        // document.getElementById("ADCValue").innerHTML = response.responseText;
-      } else {
-        console.log("Request failed with status", response.status);
-        // document.getElementById("ADCValue").innerHTML = response.responseText;
+      if (this.readyState === 4) {
+        if (this.status === 200) {
+          console.log("Request succeeded:", this.responseText);
+        } else {
+          console.log("Request failed with status", this.status);
+        }
       }
-    }
+    };
   }
 </script>
 </body>
