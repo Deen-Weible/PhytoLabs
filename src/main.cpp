@@ -13,6 +13,7 @@
 #include <U8g2lib.h>     // For OLED display control
 #include <Update.h>      // For OTA (Over-The-Air) updates
 #include <time.h>        // For time-related functions
+#include <ESPAsyncWebServer.h> // Ensure this is included (assumed from context)
 
 /**
  * --- Internal Project Headers ---
@@ -38,21 +39,8 @@ NavInfo nav_info(0); // Navigation info object initialized with ID 0
  */
 class hack_screen : public Screen {
 public:
-  /**
-   * @brief Constructor with default screen ID 0
-   */
   hack_screen() : Screen(0) {}
-
-  /**
-   * @brief Prints hack test as a stand-in
-   */
   void Draw() override { Serial.println("Hack Screen has been summoned"); }
-
-  /**
-   * @brief Handles input for the hack screen
-   * @param input The input type (UP, DOWN, SELECT, etc.)
-   * @return The result of handling the input
-   */
   uint8_t HandleInput(uint8_t input) override {
     Serial.println("Hack Screen input: " + String(input));
     return 0;
@@ -69,32 +57,27 @@ SliderMenu slider_menu(&nav_info, 3);
 const int kMenuNumItems = 8;        // Total number of menu items
 const int KMenuMaxTitleLength = 22; // Max length for menu titles/descriptions
 
-// Array of menu items (items beyond index 2 are placeholders)
 MenuItem menuItems[kMenuNumItems] = {
-    MenuItem("Time", "Current Time", kClockIcon, 2), // Time display
-    MenuItem("Slider Test", "Test ui slider", kPlaceholderIcon,
-             3), // UI slider test
-    MenuItem("WiFi", "Manage WiFi / HotSpot", kPlaceholderIcon,
-             2),                                            // WiFi settings
-    MenuItem("Fireworks", "desc 4", kPlaceholderIcon, 3),   // Placeholder
-    MenuItem("GPS Speed", "desc 5", kPlaceholderIcon, 4),   // Placeholder
-    MenuItem("Big Knob", "desc 6", kPlaceholderIcon, 5),    // Placeholder
-    MenuItem("Park Sensor", "desc 7", kPlaceholderIcon, 6), // Placeholder
-    MenuItem("Turbo Gauge", "desc 8", kPlaceholderIcon, 7)  // Placeholder
+    MenuItem("Time", "Current Time", kClockIcon, 2),
+    MenuItem("Slider Test", "Test ui slider", kPlaceholderIcon, 3),
+    MenuItem("WiFi", "Manage WiFi / HotSpot", kPlaceholderIcon, 2),
+    MenuItem("Fireworks", "desc 4", kPlaceholderIcon, 3),
+    MenuItem("GPS Speed", "desc 5", kPlaceholderIcon, 4),
+    MenuItem("Big Knob", "desc 6", kPlaceholderIcon, 5),
+    MenuItem("Park Sensor", "desc 7", kPlaceholderIcon, 6),
+    MenuItem("Turbo Gauge", "desc 8", kPlaceholderIcon, 7)
 };
 
 /**
  * --- Button Objects for Debouncing ---
  */
-DebounceButton upButton(BUTTON_UP_PIN);         // Button for "up" navigation
-DebounceButton downButton(BUTTON_DOWN_PIN);     // Button for "down" navigation
-DebounceButton selectButton(BUTTON_SELECT_PIN); // Button for selection
+DebounceButton upButton(BUTTON_UP_PIN);
+DebounceButton downButton(BUTTON_DOWN_PIN);
+DebounceButton selectButton(BUTTON_SELECT_PIN);
 
 /**
  * --- Additional Global Variables ---
  */
-// int current_setting_unit = 0; // Tracks which time unit is being adjusted
-// (e.g., minutes, hours)
 int selected_menu_item = 0; // Index of the currently selected menu item
 JsonDocument doc;           // JSON document for processing form data
 
@@ -103,16 +86,10 @@ JsonDocument doc;           // JSON document for processing form data
  * @return The type of input (UP, DOWN, SELECT, or NO_INPUT)
  */
 uint8_t getInput() {
-  if (upButton.isPressed()) {
-    return UP;
-  } // Return UP if up button pressed
-  if (downButton.isPressed()) {
-    return DOWN;
-  } // Return DOWN if down button pressed
-  if (selectButton.isPressed()) {
-    return SELECT;
-  } // Return SELECT if select button pressed
-  return NO_INPUT; // Return no input if no buttons pressed
+  if (upButton.isPressed()) return UP;
+  if (downButton.isPressed()) return DOWN;
+  if (selectButton.isPressed()) return SELECT;
+  return NO_INPUT;
 }
 
 /**
@@ -121,119 +98,193 @@ uint8_t getInput() {
  * @param localIP The local IP address of the device
  */
 void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
-  // Redirect or handle specific URLs for captive portal compatibility
   server.on("/wpad.dat", [](AsyncWebServerRequest *request) {
     request->send(404);
-  }); // Proxy autoconfig
+  });
   server.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
     request->redirect("http://logout.net");
-  }); // Connectivity test
+  });
   server.on("/redirect", [](AsyncWebServerRequest *request) {
     request->redirect(localUrl);
-  }); // Generic redirect
+  });
   server.on("/generate_204", [](AsyncWebServerRequest *request) {
     request->redirect(localUrl);
-  }); // Android captive portal check
+  });
   server.on("/hotspot-detect.html", [](AsyncWebServerRequest *request) {
     request->redirect(localUrl);
-  }); // iOS captive portal check
+  });
   server.on("/ncsi.txt", [](AsyncWebServerRequest *request) {
     request->redirect(localUrl);
-  }); // Windows connectivity check
+  });
   server.on("/success.txt", [](AsyncWebServerRequest *request) {
     request->send(200);
-  }); // Success response
+  });
   server.on("/canonical.html", [](AsyncWebServerRequest *request) {
     request->redirect(localUrl);
-  }); // Canonical redirect
+  });
   server.on("/favicon.ico", [](AsyncWebServerRequest *request) {
     request->send(404);
-  }); // Favicon not found
+  });
 
-  // Serve the main page
   server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response =
         request->beginResponse(200, "text/html", MAIN_page);
-    response->addHeader("Cache-Control",
-                        "public,max-age=31536000"); // Cache for 1 year
+    response->addHeader("Cache-Control", "public,max-age=31536000");
     request->send(response);
   });
 
-  // Handle form submission to set time
   server.on("/SendForms", [](AsyncWebServerRequest *request) {
-    String response = request->getParam(0)->value(); // Get form data
-    request->send(200, "text/plain", "All good");      // Send response back
-    deserializeJson(doc, response);                  // Parse JSON data
-
-    int minute = doc["Minute"]; // Extract minute from JSON
-    int hour = doc["Hour"];     // Extract hour from JSON
-
-    // Set internal time based on form data (converting to seconds)
+    String response = request->getParam(0)->value();
+    request->send(200, "text/plain", "All good");
+    deserializeJson(doc, response);
+    int minute = doc["Minute"];
+    int hour = doc["Hour"];
     internal_time.SetEpoch((Wrap(minute, 0, 59) * 60) +
                            (Wrap(hour, 0, 23) * 3600));
   });
+
+  // Serve the firmware update page
+  server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
+      const char* update_page = R"rawliteral(
+  <!DOCTYPE html>
+  <html lang='en'>
+  <head>
+      <meta charset='UTF-8'>
+      <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+      <title>Firmware Update</title>
+      <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+          h1 { color: #333; }
+          #status { margin: 20px 0; color: #666; }
+          .button { padding: 10px 20px; background-color: #007BFF; color: white; border: none; cursor: pointer; }
+          .button:hover { background-color: #0056b3; }
+          input[type='file'] { margin: 10px 0; }
+      </style>
+  </head>
+  <body>
+      <h1>Firmware Update</h1>
+      <form id='uploadForm' enctype='multipart/form-data'>
+          <input type='file' name='file' accept='.bin' required>
+          <br>
+          <input type='submit' value='Update Firmware' class='button'>
+      </form>
+      <div id='status'>Select a .bin file to begin.</div>
+
+      <script>
+          document.getElementById('uploadForm').onsubmit = async function(e) {
+              e.preventDefault();
+              const fileInput = document.querySelector('input[type="file"]');
+              const file = fileInput.files[0];
+              if (!file) {
+                  alert('Please select a firmware file!');
+                  return;
+              }
+
+              const status = document.getElementById('status');
+              status.textContent = 'Uploading...';
+
+              const formData = new FormData();
+              formData.append('file', file);
+
+              try {
+                  const response = await fetch('/update', {
+                      method: 'POST',
+                      body: formData
+                  });
+                  const text = await response.text();
+                  status.textContent = text;
+                  if (response.ok) {
+                      status.style.color = '#28a745';
+                      setTimeout(() => { status.textContent += ' Device is rebooting...'; }, 1000);
+                  } else {
+                      status.style.color = '#dc3545';
+                  }
+              } catch (error) {
+                  status.textContent = 'Upload failed: ' + error.message;
+                  status.style.color = '#dc3545';
+              }
+          };
+      </script>
+  </body>
+  </html>
+  )rawliteral";
+      request->send(200, "text/html", update_page);
+  });
+
+  // Handle the firmware update
+  server.on(
+      "/update",
+      HTTP_POST,
+      [](AsyncWebServerRequest *request){
+          if (Update.hasError()) {
+              request->send(500, "text/plain", "Update failed");
+          } else {
+              request->send(200, "text/plain", "Update successful. Rebooting...");
+              delay(1000);
+              ESP.restart();
+          }
+      },
+      [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+          if (!index) {
+              if (!Update.begin(UPDATE_SIZE_UNKNOWN)) return;
+          }
+          if (len) {
+              Update.write(data, len);
+          }
+          if (final) {
+              Update.end(true);
+          }
+      }
+  );
 }
 
 /**
  * @brief Starts Wi-Fi Access Point
- * @param mode The Wi-Fi mode (e.g., WIFI_AP)
- * @param ssid The SSID for the access point
- * @param password The password for the access point
- * @param localIP The local IP address of the device
- * @param gatewayIP The gateway IP address
  */
 void StartAP(const wifi_mode_t mode, const char *ssid, const char *password,
              const IPAddress &localIP, const IPAddress &gatewayIP) {
-  WiFi.mode(mode); // Set Wi-Fi mode (e.g., WIFI_AP)
-  WiFi.softAPConfig(localIP, gatewayIP, subnetMask); // Configure AP IP settings
-  WiFi.softAP(ssid, password, WIFI_CHANNEL, 0, MAX_CLIENTS); // Start AP
-  vTaskDelay(100 / portTICK_PERIOD_MS); // Small delay for stability
+  WiFi.mode(mode);
+  WiFi.softAPConfig(localIP, gatewayIP, subnetMask);
+  WiFi.softAP(ssid, password, WIFI_CHANNEL, 0, MAX_CLIENTS);
+  vTaskDelay(100 / portTICK_PERIOD_MS);
 }
 
 /**
  * @brief Setup DNS server for captive portal functionality
- * @param dnsServer The DNSServer instance to configure
- * @param localIP The local IP address of the device
  */
 void SetupDNS(DNSServer &dnsServer, const IPAddress &localIP) {
-  dnsServer.setTTL(3600);                    // Set DNS time-to-live to 1 hour
-  dnsServer.start(53, "*", WiFi.softAPIP()); // Start DNS server on port 53
+  dnsServer.setTTL(3600);
+  dnsServer.start(53, "*", WiFi.softAPIP());
 }
 
 /**
  * --- UI Initialization ---
  */
-BaseUi base_ui("title", "desc", &internal_time); // Base UI with header/footer
-SettingsList settings_menu(1, 8, menuItems, &nav_info); // Settings menu screen
+BaseUi base_ui("title", "desc", &internal_time);
+SettingsList settings_menu(1, 8, menuItems, &nav_info);
 
 /**
  * @brief Setup function for the Arduino sketch
  */
 void setup() {
-  // StartAP(WIFI_AP, ssid, password, localIP, gatewayIP); // Start Wi-Fi AP
-  // SetupDNS(dnsServer, localIP);                        // Initialize DNS
-  // server
-
-  // TEMP: connect to wifi
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-  SetupServer(server, localIP); // Setup HTTP server
-  server.begin();               // Start the server
+  SetupServer(server, localIP);
+  server.begin();
 
-  u8g2.begin();                     // Initialize OLED display
-  Serial.begin(115200);             // Start serial communication at 115200 baud
-  SPI.setClockDivider(CLOCK_SPEED); // Set SPI clock speed
-  u8g2.setBusClock(CLOCK_SPEED);    // Set display bus clock
-  delay(2000);                      // Delay for system stability
+  u8g2.begin();
+  Serial.begin(115200);
+  SPI.setClockDivider(CLOCK_SPEED);
+  u8g2.setBusClock(CLOCK_SPEED);
+  delay(2000);
 
-  // Register screens with navigation system
   nav_info.RegisterScreen(&settings_menu);
   nav_info.RegisterScreen(&time_menu);
   nav_info.RegisterScreen(&slider_menu);
-  nav_info.SetCurrentScreen(&settings_menu); // Set initial screen
+  nav_info.SetCurrentScreen(&settings_menu);
 
-  Serial.println(WiFi.localIP()); // Print AP IP address for debugging
+  Serial.println(WiFi.localIP());
 }
 
 // Defining variables here to keep them by their function (loop)
@@ -244,20 +295,17 @@ uint8_t input_result;
  * @brief Main loop function for the Arduino sketch
  */
 void loop() {
-  u8g2.firstPage(); // Begin a new display page
+  u8g2.firstPage();
   do {
-    // dnsServer.processNextRequest();
-    input = getInput(); // Check for button input
-    input_result =
-        nav_info.GetCurrentScreen()->HandleInput(input); // Handle input
-    nav_info.GetCurrentScreen()->Draw(); // Draw the current screen
+    input = getInput();
+    input_result = nav_info.GetCurrentScreen()->HandleInput(input);
+    nav_info.GetCurrentScreen()->Draw();
 
-    // Switch screen if input result indicates a change
     if (input_result != NO_INPUT) {
       nav_info.SetScreenById(input_result);
     }
 
-    internal_time.Tick(); // Update internal time
-    base_ui.Draw();       // Draw base UI (header/footer)
-  } while (u8g2.nextPage()); // Continue until all pages are drawn
+    internal_time.Tick();
+    base_ui.Draw();
+  } while (u8g2.nextPage());
 }
