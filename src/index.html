@@ -1,191 +1,393 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Tabbed Interface</title>
+    <style>
+        /* --- 1. Global Styles & Variables --- */
+        :root {
+            --primary-color: #2c3e50; /* Dark Blue */
+            --secondary-color: #34495e; /* Lighter Dark Blue */
+            --accent-color: #3498db; /* Bright Blue */
+            --text-color: #ecf0f1; /* Light Gray */
+            --bg-color: #f4f6f9; /* Off-white for content */
+            --header-height: 60px;
+            --sidebar-width: 240px;
+            --transition-speed: 0.3s;
+        }
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-  <style>
-    /* Existing styles remain unchanged */
-    .card-container {
-      display: flex;
-      justify-content: center;
-      min-height: 100vh;
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .card {
-      border: 2px solid #ccc;
-      height: min-content;
-      width: 100%;
-      max-width: 600px;
-      margin: 20px auto;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 25px;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+            /* Prevents horizontal scrollbar caused by sidebar transform */
+            overflow-x: hidden;
+        }
 
-    .input-group {
-      margin-bottom: 15px;
-    }
+        /* --- 2. Main Layout Structure (Desktop First) --- */
+        .page-container {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: var(--header-height) 1fr;
+            height: 100vh;
+        }
 
-    .form-input {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      margin-right: 10px;
-      border-radius: 4px;
-    }
+        /* --- 3. Header --- */
+        .main-header {
+            grid-column: 1 / -1; /* Span across all columns */
+            grid-row: 1 / 2;
+            /* position: fixed; */
+            width: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            z-index: 1000;
+        }
 
-    .pair {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 15px;
-    }
+        .main-header .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
 
-    button {
-      background-color: #313131;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      cursor: pointer;
-      width: 100%;
-      box-shadow: 3px 4px 4px rgba(0, 0, 0, 0.3);
-      transition: all 0.3s ease;
-    }
+        /* --- 4. Hamburger Menu (Mobile Only) --- */
+        .hamburger-menu {
+            display: none; /* Hidden on desktop */
+            cursor: pointer;
+            width: 30px;
+            height: 22px;
+            position: relative;
+            z-index: 1002; /* Above sidebar overlay */
+        }
 
-    button:hover {
-      background-color: #222222;
-      transform: translateY(-2px);
-      scale: 1.01;
-    }
+        .hamburger-menu .bar {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background-color: var(--text-color);
+            position: absolute;
+            left: 0;
+            transition: all var(--transition-speed) ease-in-out;
+        }
 
-    /* New styles for the file input button */
-    #file-upload::file-selector-button {
-      background-color: #313131;
-      color: white;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-right: 10px;
-      transition: background-color 0.3s ease;
-    }
+        .hamburger-menu .bar1 { top: 0; }
+        .hamburger-menu .bar2 { top: 50%; transform: translateY(-50%); }
+        .hamburger-menu .bar3 { bottom: 0; }
 
-    #file-upload::file-selector-button:hover {
-      background-color: #222222;
-    }
-  </style>
+        /* Hamburger animation to 'X' */
+        .sidebar-open .hamburger-menu .bar1 {
+            top: 50%;
+            transform: translateY(-50%) rotate(45deg);
+        }
+        .sidebar-open .hamburger-menu .bar2 {
+            opacity: 0;
+        }
+        .sidebar-open .hamburger-menu .bar3 {
+            bottom: 50%;
+            transform: translateY(50%) rotate(-45deg);
+        }
 
+        /* --- 5. Sidebar / Navigation Tabs --- */
+        .sidebar {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+            background-color: var(--secondary-color);
+            /* padding-top: 20px; */
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column; /* Vertical tabs on desktop */
+            transition: transform var(--transition-speed) ease-in-out;
+        }
+
+        .tab-button {
+            width: 100%;
+            padding: 15px 20px;
+            background-color: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+            border-left: 4px solid transparent;
+        }
+
+        .tab-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-button.active {
+            background-color: var(--primary-color);
+            color: var(--accent-color);
+            border-left-color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* --- 6. Content Area --- */
+        .content-area {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+            padding: 30px;
+            overflow-y: auto; /* Enables infinite scrolling */
+            position: relative;
+        }
+
+        .content-panel {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            right: 30px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed) ease-in-out, visibility var(--transition-speed);
+        }
+
+        .content-panel.active {
+            position: static; /* Allow it to take up space and push footer */
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .content-panel h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .content-panel p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        /* --- 7. Mobile Overlay --- */
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1; /* Below sidebar, above content */
+        }
+
+        .sidebar-open .mobile-overlay {
+            display: block;
+        }
+
+        /* --- 8. Responsive Styles (Mobile View) --- */
+        @media (max-width: 768px) {
+            .page-container {
+                /* Single column layout for mobile */
+                grid-template-columns: 1fr;
+            }
+
+            .main-header .logo {
+                font-size: 1.2rem;
+            }
+
+            .hamburger-menu {
+                display: block; /* Show hamburger */
+            }
+
+            .sidebar {
+                grid-column: 1 / -1;
+                position: fixed;
+                top: var(--header-height);
+                left: 0;
+                width: var(--sidebar-width);
+                height: calc(100vh - var(--header-height));
+                z-index: 2;
+                transform: translateX(-100%); /* Hide off-screen */
+                padding-top: 0;
+
+                /* Horizontal tab layout for mobile view */
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                background-color: var(--secondary-color);
+            }
+
+            .sidebar-open .sidebar {
+                transform: translateX(0); /* Slide in */
+            }
+
+            .tab-button {
+                /* Style for horizontal tabs */
+                text-align: center;
+                border-left: none;
+                border-bottom: 2px solid transparent;
+                padding: 20px 10px;
+            }
+
+            .tab-button.active {
+                border-bottom-color: var(--accent-color);
+                background-color: var(--primary-color);
+            }
+
+            .content-area {
+                grid-column: 1 / -1;
+                /* Add padding-top to prevent content from hiding under the fixed header */
+                padding-top: 30px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tab-button {
+                width: 100%; /* One tab per row on very small screens */
+            }
+        }
+    </style>
+</head>
 <body>
-  <div class="card-container">
-    <div class="card">
-      <div class="input-group">
-        <div class="pair">
-          <input type="number" name="hour" id="hour" placeholder="hour" class="form-input">
-          <input type="number" name="minute" id="minute" placeholder="minute" class="form-input">
-        </div>
-      </div>
-      <div class="input-group">
-        <div class="pair">
-          <input type="number" name="num2" id="num2" placeholder="Number 2" class="form-input">
-          <input type="number" name="num3" id="num3" placeholder="Number 3" class="form-input">
-        </div>
-        <div class="pair" style="border: 1px solid #ccc">
-          <input type="file" id="file-upload" accept=".bin" class="form-input" style="border:none">
-          <button onclick="sendFile()" style="margin:8px">Update</button>
-        </div>
-      </div>
-      <button onclick="SendForms()">Send Forms</button>
+
+    <div class="page-container">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="logo">MySite</div>
+            <div class="hamburger-menu">
+                <span class="bar bar1"></span>
+                <span class="bar bar2"></span>
+                <span class="bar bar3"></span>
+            </div>
+        </header>
+
+        <!-- Mobile Overlay -->
+        <div class="mobile-overlay"></div>
+
+        <!-- Sidebar with Tabs -->
+        <nav class="sidebar">
+            <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-button" data-tab="profile">Profile</button>
+            <button class="tab-button" data-tab="messages">Messages</button>
+            <button class="tab-button" data-tab="settings">Settings</button>
+            <button class="tab-button" data-tab="long-content">Long Content</button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <section id="dashboard" class="content-panel active">
+                <h2>Dashboard</h2>
+                <p>Welcome to your dashboard. Here you can see an overview of your account activity and recent notifications.</p>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam.</p>
+            </section>
+
+            <section id="profile" class="content-panel">
+                <h2>Profile</h2>
+                <p>This is your profile page. You can edit your personal information, change your password, and update your preferences here.</p>
+                <p>Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh.</p>
+            </section>
+
+            <section id="messages" class="content-panel">
+                <h2>Messages</h2>
+                <p>You have 3 unread messages.</p>
+                <ul>
+                    <li>From: Admin - Subject: Welcome!</li>
+                    <li>From: Support - Subject: Your ticket has been updated.</li>
+                    <li>From: Jane Doe - Subject: Project Update</li>
+                </ul>
+            </section>
+
+            <section id="settings" class="content-panel">
+                <h2>Settings</h2>
+                <p>Configure your application settings. You can adjust notification settings, theme preferences, and language options.</p>
+                <p>Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc.</p>
+            </section>
+
+            <section id="long-content" class="content-panel">
+                <h2>Long Content Demo</h2>
+                <p>This section demonstrates how the content area
+handles vertical scrolling independently of the fixed sidebar. The
+layout supports "infinite scrolling" by design.</p>
+                <p>Lorem ipsum dolor sit amet... (Repeated text to create scrollbar)</p>
+                <!-- Repeat this block to create long content -->
+                <p>Pellentesque habitant morbi tristique senectus et
+netus et malesuada fames ac turpis egestas. Vestibulum tortor quam,
+feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero
+sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris
+placerat eleifend leo.</p>
+                <p>Pellentesque habitant morbi tristique senectus et
+netus et malesuada fames ac turpis egestas. Vestibulum tortor quam,
+feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero
+sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris
+placerat eleifend leo.</p>
+                <p>Pellentesque habitant morbi tristique senectus et
+netus et malesuada fames ac turpis egestas. Vestibulum tortor quam,
+feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero
+sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris
+placerat eleifend leo.</p>
+                <p>Pellentesque habitant morbi tristique senectus et
+netus et malesuada fames ac turpis egestas. Vestibulum tortor quam,
+feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero
+sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris
+placerat eleifend leo.</p>
+                <p>Pellentesque habitant morbi tristique senectus et
+netus et malesuada fames ac turpis egestas. Vestibulum tortor quam,
+feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero
+sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris
+placerat eleifend leo.</p>
+                <p>Pellentesque habitant morbi tristique senectus et
+netus et malesuada fames ac turpis egestas. Vestibulum tortor quam,
+feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero
+sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris
+placerat eleifend leo.</p>
+                <p>You have reached the end of the content.</p>
+            </section>
+        </main>
     </div>
-  </div>
-  <div id="ADCValue">bingus</div>
-</body>
 
-<script>
-  function sendFile() {
-    const xhr = new XMLHttpRequest();
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const body = document.body;
+            const hamburgerMenu = document.querySelector('.hamburger-menu');
+            const mobileOverlay = document.querySelector('.mobile-overlay');
+            const sidebar = document.querySelector('.sidebar');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const contentPanels = document.querySelectorAll('.content-panel');
 
-    xhr.open('POST', '/update-firmware');
-    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    xhr.upload.addEventListener('progress', function (evt) {
-      if (evt.lengthComputable) {
-        const per = evt.loaded / evt.total;
-      }
-    });
-    xhr.send(document.getElementById("file-upload").files[0]);
+            // --- 1. Mobile Menu Toggle ---
+            const toggleMobileMenu = () => {
+                body.classList.toggle('sidebar-open');
+            };
 
-  }
-  function getData() {
-    var xhttp = new XMLHttpRequest();
-    xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            hamburgerMenu.addEventListener('click', toggleMobileMenu);
+            mobileOverlay.addEventListener('click', toggleMobileMenu);
 
-    xhttp.onreadystatechange = function () {
-      if (this.readyState == 4 && this.status == 200) {
-        document.getElementById("ADCValue").innerHTML = this.responseText;
-      }
-    };
-    xhttp.open("GET", "readADC", true);
-    xhttp.send();
-  }
+            // --- 2. Tab Switching Logic ---
+            sidebar.addEventListener('click', function(e) {
+                // Use event delegation for efficiency
+                if (e.target && e.target.classList.contains('tab-button')) {
+                    const tabButton = e.target;
+                    const targetTabId = tabButton.dataset.tab;
 
-  function sendData(url, data, callback, method = "POST") {
-    var xhttp = new XMLHttpRequest();
-    xhttp.open(method, url, true);
-    xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    // Deactivate all tabs and panels
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    contentPanels.forEach(panel => panel.classList.remove('active'));
 
-    // Prepare parameters (assuming we're sending one parameter named "param1")
-    // Optional logging
-    console.log("Sending: ", data);
+                    // Activate the clicked tab and corresponding panel
+                    tabButton.classList.add('active');
+                    const targetPanel = document.getElementById(targetTabId);
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                    }
 
-    xhttp.onreadystatechange = function () {
-      if (xhttp.readyState === 4 && this.status == 400) {
-        // You can adjust the status check or callback as necessary.
-        if (typeof callback === "function") {
-          callback(xhttp);
-        }
-      }
-    };
-    xhttp.send(data);
-    return xhttp;
-  }
+                    // Close mobile menu on tab selection
+                    if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
+                        toggleMobileMenu();
+                    }
+                }
+            });
+        });
+    </script>
 
-  var obj = [];
-  var xhttp = new XMLHttpRequest();
-  // obj.num = document.getElementById("num1").value
-  // obj.str = document.getElementById("str1").value
-
-  function SendForms() {
-    var inputs = document.querySelectorAll('.form-input');
-    var numberDictionary = "";
-
-    var obj = new Object();
-
-    obj.Hour = document.getElementById('hour').value;
-    obj.Minute = document.getElementById('minute').value;
-
-    numberDictionary = `${JSON.stringify(obj)}`;
-
-    for (let i = 0; i < inputs.length; i++) {
-      const input = inputs[i];
-      const key = input.name;
-    }
-
-    console.log(numberDictionary);
-    var response = sendData("SendForms", numberDictionary)
-    document.getElementById("ADCValue").innerHTML = numberDictionary;
-    // Adjust status check as needed (e.g., checking for 200 or other statuses)
-    response.onreadystatechange = function () {
-      if (this.readyState === 4) {
-        if (this.status === 200) {
-          console.log("Request succeeded:", this.responseText);
-        } else {
-          console.log("Request failed with status", this.status);
-        }
-      }
-    };
-  }
-</script>
-</body>
-
-</html>
+</body></html>
