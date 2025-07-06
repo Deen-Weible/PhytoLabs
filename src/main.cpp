@@ -6,14 +6,14 @@
 /**
  * --- Standard Arduino and Library Includes ---
  */
-#include <Arduino.h>     // Core Arduino library for basic functions
-#include <ArduinoJson.h> // For JSON parsing and serialization
-#include <Preferences.h> // For storing persistent data
-#include <SPI.h>         // For SPI communication with display
-#include <U8g2lib.h>     // For OLED display control
-#include <Update.h>      // For OTA (Over-The-Air) updates
-#include <time.h>        // For time-related functions
+#include <Arduino.h>           // Core Arduino library for basic functions
+#include <ArduinoJson.h>       // For JSON parsing and serialization
 #include <ESPAsyncWebServer.h> // Ensure this is included (assumed from context)
+#include <Preferences.h>       // For storing persistent data
+#include <SPI.h>               // For SPI communication with display
+#include <U8g2lib.h>           // For OLED display control
+#include <Update.h>            // For OTA (Over-The-Air) updates
+#include <time.h>              // For time-related functions
 
 /**
  * --- Internal Project Headers ---
@@ -65,8 +65,7 @@ MenuItem menuItems[kMenuNumItems] = {
     MenuItem("GPS Speed", "desc 5", kPlaceholderIcon, 4),
     MenuItem("Big Knob", "desc 6", kPlaceholderIcon, 5),
     MenuItem("Park Sensor", "desc 7", kPlaceholderIcon, 6),
-    MenuItem("Turbo Gauge", "desc 8", kPlaceholderIcon, 7)
-};
+    MenuItem("Turbo Gauge", "desc 8", kPlaceholderIcon, 7)};
 
 /**
  * --- Button Objects for Debouncing ---
@@ -86,9 +85,12 @@ JsonDocument doc;           // JSON document for processing form data
  * @return The type of input (UP, DOWN, SELECT, or NO_INPUT)
  */
 uint8_t getInput() {
-  if (upButton.isPressed()) return UP;
-  if (downButton.isPressed()) return DOWN;
-  if (selectButton.isPressed()) return SELECT;
+  if (upButton.isPressed())
+    return UP;
+  if (downButton.isPressed())
+    return DOWN;
+  if (selectButton.isPressed())
+    return SELECT;
   return NO_INPUT;
 }
 
@@ -98,9 +100,8 @@ uint8_t getInput() {
  * @param localIP The local IP address of the device
  */
 void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
-  server.on("/wpad.dat", [](AsyncWebServerRequest *request) {
-    request->send(404);
-  });
+  server.on("/wpad.dat",
+            [](AsyncWebServerRequest *request) { request->send(404); });
   server.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
     request->redirect("http://logout.net");
   });
@@ -116,15 +117,13 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
   server.on("/ncsi.txt", [](AsyncWebServerRequest *request) {
     request->redirect(localUrl);
   });
-  server.on("/success.txt", [](AsyncWebServerRequest *request) {
-    request->send(200);
-  });
+  server.on("/success.txt",
+            [](AsyncWebServerRequest *request) { request->send(200); });
   server.on("/canonical.html", [](AsyncWebServerRequest *request) {
     request->redirect(localUrl);
   });
-  server.on("/favicon.ico", [](AsyncWebServerRequest *request) {
-    request->send(404);
-  });
+  server.on("/favicon.ico",
+            [](AsyncWebServerRequest *request) { request->send(404); });
 
   server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response =
@@ -143,9 +142,16 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
                            (Wrap(hour, 0, 23) * 3600));
   });
 
-  // Serve the firmware update page
-  server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
-      const char* update_page = R"rawliteral(
+  server
+      .on("/readADC", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(200, "text/plain", "Good");
+      });
+
+      // TEMP: Gonna put this in the main page, just for testing - template
+
+      // Serve the firmware update page
+      server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request) {
+        const char *update_page = R"rawliteral(
   <!DOCTYPE html>
   <html lang='en'>
   <head>
@@ -208,34 +214,34 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
   </body>
   </html>
   )rawliteral";
-      request->send(200, "text/html", update_page);
-  });
+        request->send(200, "text/html", update_page);
+      });
 
   // Handle the firmware update
   server.on(
-      "/update",
-      HTTP_POST,
-      [](AsyncWebServerRequest *request){
-          if (Update.hasError()) {
-              request->send(500, "text/plain", "Update failed");
-          } else {
-              request->send(200, "text/plain", "Update successful. Rebooting...");
-              delay(1000);
-              ESP.restart();
-          }
+      "/update", HTTP_POST,
+      [](AsyncWebServerRequest *request) {
+        if (Update.hasError()) {
+          request->send(500, "text/plain", "Update failed");
+        } else {
+          request->send(200, "text/plain", "Update successful. Rebooting...");
+          delay(1000);
+          ESP.restart();
+        }
       },
-      [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
-          if (!index) {
-              if (!Update.begin(UPDATE_SIZE_UNKNOWN)) return;
-          }
-          if (len) {
-              Update.write(data, len);
-          }
-          if (final) {
-              Update.end(true);
-          }
-      }
-  );
+      [](AsyncWebServerRequest *request, String filename, size_t index,
+         uint8_t *data, size_t len, bool final) {
+        if (!index) {
+          if (!Update.begin(UPDATE_SIZE_UNKNOWN))
+            return;
+        }
+        if (len) {
+          Update.write(data, len);
+        }
+        if (final) {
+          Update.end(true);
+        }
+      });
 }
 
 /**
