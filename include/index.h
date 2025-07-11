@@ -13,12 +13,14 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             /* Dark Blue */
             --secondary-color: #3a604a;
             /* Lighter Dark Blue */
-            --accent-color: #84b399;
+            --accent-color: #b3dfc7;
             /* Bright Blue */
             --text-color: #cdddd4;
             /* Light Gray */
             --bg-color: #f4f6f9;
             /* Off-white for content */
+            --gray: #6d8577;
+            --gray-contrast: #414d46;
             --header-height: 60px;
             --sidebar-width: 240px;
             --transition-speed: 0.3s;
@@ -51,18 +53,26 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             grid-column: 1 / -1;
             /* Span across all columns */
             grid-row: 1 / 2;
-            /* position: fixed; */
             width: 100%;
             top: 0;
             left: 0;
             display: flex;
             align-items: center;
-            justify-content: space-between;
             padding: 0 20px;
             background-color: var(--primary-color);
             color: var(--text-color);
             z-index: 1000;
         }
+
+        .main-header> :first-child {
+            margin-right: auto;
+            /* Pushes the first item to the left */
+        }
+
+        /* .main-header > .error-icon {
+
+        } */
+
 
         .main-header .logo {
             font-size: 1.5rem;
@@ -78,6 +88,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             height: 22px;
             position: relative;
             z-index: 1002;
+            margin-left: 12px;
             /* Above sidebar overlay */
         }
 
@@ -193,6 +204,33 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             margin-bottom: 15px;
         }
 
+        .error-icon {
+            color: yellow;
+            display: none;
+            animation: flashYellowAndRed 1s infinite;
+            font-size: xx-large;
+            border: 2px solid var(--accent-color);
+            padding-inline: 12px;
+        }
+
+        .error-icon.visible {
+            display: block;
+        }
+
+        @keyframes flashYellowAndRed {
+
+            0%,
+            50%,
+            100% {
+                color: yellow;
+            }
+
+            25%,
+            75% {
+                color: red;
+            }
+        }
+
         /* --- 7. Mobile Overlay --- */
         .mobile-overlay {
             display: none;
@@ -283,7 +321,8 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
     <div class="page-container">
         <!-- Header -->
         <header class="main-header">
-            <div class="logo">MySite</div>
+            <div class="logo">PhytoLabs</div>
+            <div class="error-icon">!</div>
             <div class="hamburger-menu">
                 <span class="bar bar1"></span>
                 <span class="bar bar2"></span>
@@ -297,32 +336,170 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         <!-- Sidebar with Tabs -->
         <nav class="sidebar">
             <button class="tab-button active" data-tab="dashboard">Dashboard</button>
-            <button class="tab-button" data-tab="profile">Profile</button>
+            <button class="tab-button" data-tab="profile">Settings</button>
         </nav>
 
         <!-- Main Content Area -->
         <main class="content-area">
-            <section id="dashboard" class="content-panel active">
+            <section id="dashboard" class="content-panel ">
                 <h2>Dashboard</h2>
-                <style>
-                    .widget {}
-                </style>
                 <p id="DataUpdates">Welcome to your dashboard. Here you can see an overview of your account activity and
                     recent notifications.</p>
             </section>
 
-            <section id="profile" class="content-panel">
-                <h2>Profile</h2>
-                <p>This is your profile page. You can edit your personal information, change your password, and update
-                    your preferences here.</p>
-                <p>Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris
-                    sit amet nibh.</p>
-            </section>
-        </main>
+            <section id="profile" class="content-panel active">
+                <h2>Settings</h2>
+                <style>
+                    button {
+                        padding: 5px;
+                        /* outline:none; */
+                        background-color: transparent;
+                        border: none;
+                        transition: all 0.05s ease-in-out;
+                    }
+
+                    button:hover {
+                        background-color: rgba(242, 199, 199, 0.1);
+                        transform: scale(1.05);
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                    }
+
+                    button:hover {
+                        transform: translateY(-2px);
+                        scale: 1.01;
+                    }
+
+                    button:active {
+                        transform: translateY(2px);
+                        scale: 0.95;
+                    }
+
+                    .settings-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+                        grid-column-gap: 20px;
+                    }
+
+                    @media (max-width: 768px) {
+                        .settings-grid {
+                            grid-template-columns: repeat(1, 1fr);
+                        }
+                    }
+
+                    .settings-widget {
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin: 10px;
+                        background-color: var(--accent-color);
+                        display: grid;
+                    }
+
+                    .settings-widget>span:first-child {
+                        color: var(--primary-color);
+                        font-size: 14pt;
+                    }
+
+                    .settings-widget>span:nth-child(2) {
+                        color: var(--gray);
+                        font-size: 10pt;
+                        margin-bottom: 8px;
+                    }
+
+                    .input {
+                        background-color: var(--bg-color);
+                        display: flex;
+                        width: fit-content;
+                        /* border: 2px solid transparent; */
+                        overflow: hidden;
+                        border-radius: 6px;
+                    }
+
+                    .input:focus-within {
+                        outline: 2px solid var(--gray);
+                    }
+
+                    .input>div {
+                        padding: 8px;
+                        border-right: 2px solid var(--gray);
+                        color: var(--gray);
+                        margin-right: 5px;
+                    }
+
+                    .input>input {
+                        outline: none;
+                        background: var(--bg-color);
+                        font-size: 11pt;
+                        border: none;
+                        width: max-content;
+                    }
+
+                    .sensor {
+                        background: var(--gray);
+                        color: var(--text-color);
+                        border-radius: 6px;
+                        display: flex;
+                        align-items: center;
+                    }
+
+                    .sensor>div:not(:first-child) {
+                        margin-right: 8px;
+                    }
+
+                    .sensor>div:first-child {
+                        border-right: solid 2px var(--accent-color);
+                        width: min-content;
+                        padding: 10px;
+                        margin-right: 12px;
+                        color: var(--accent-color);
+                    }
+
+                    .sensor span {
+                        color: var(--text-color);
+                        font-weight: bold;
+                    }
+
+                    .sensor button:first-of-type {
+                        margin-left: auto;
+                    }
+
+                    .sensor button {
+                        margin-right: 8px
+                    }
+                </style>
+                <section class="settings-grid">
+                    <div class="settings-widget">
+                        <span>Sensors</span>
+                        <span>Add/Remove/Configure sensors (inputs)</span>
+                        <div>
+                            <div class="sensor">
+                                <div>W</div>
+                                <div>Value <span>100</span></div>
+                                <div>--></div>
+                                <div>None</div>
+                                <button onclick="this.classList.toggle('active')">S</button>
+                                <button>X</button>
+                            </div>
+                            <div class="sensor-settings">hi</div>
+                        </div>
+                        <!-- <span>Some other stuff idk</span>
+                        <div class="input">
+                            <div>$</div>
+                            <input type="text" placeholder="Text input here">
+                        </div> -->
+                    </div>
+                    <div class="settings-widget">
+                        <span>Relays</span>
+                        <span>Add/Remove/Configure relays (outputs)</span>
+                    </div>
+                    <div class="settings-widget"><span>Widget 3</span></div>
+                    <div class="settings-widget"><span>Widget 4</span></div>
+                </section>
+
     </div>
 
     <script>
 
+        getData();
         setInterval(function () {
             // Call a function repetatively with 2 Second interval
             getData();

@@ -282,6 +282,7 @@ void setup() {
   u8g2.begin();
   Serial.begin(115200);
   SPI.setClockDivider(CLOCK_SPEED);
+  Serial.println(esp_reset_reason());
   u8g2.setBusClock(CLOCK_SPEED);
   delay(2000);
 
