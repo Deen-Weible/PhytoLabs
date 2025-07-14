@@ -64,6 +64,42 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             z-index: 1000;
         }
 
+        .floater {
+            width: 60px;
+            height: 60px;
+            background-color: var(--secondary-color);
+            position: absolute;
+            top: 70px;
+            right: 10px;
+            display:flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hidden {
+            visibility: hidden;
+        }
+
+        .loader {
+            border: 4px solid var(--bg-color);
+            /* Light grey */
+            border-top: 4px solid var(--gray);
+            /* Blue */
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
         .main-header> :first-child {
             margin-right: auto;
             /* Pushes the first item to the left */
@@ -317,7 +353,9 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
 </head>
 
 <body>
-
+    <div class="floater hidden">
+        <div class="loader"></div>
+    </div>
     <div class="page-container">
         <!-- Header -->
         <header class="main-header">
@@ -406,31 +444,37 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                     }
 
                     .input {
-                        background-color: var(--bg-color);
                         display: flex;
                         width: fit-content;
-                        /* border: 2px solid transparent; */
-                        overflow: hidden;
-                        border-radius: 6px;
+                        color: var(--text-color);
+                        align-items: center;
                     }
 
-                    .input:focus-within {
+                    .input span {
+                        width: min-content;
+                        margin-right: 12px;
+                        min-width: 50px;
+                        text-align: right;
+                    }
+
+                    input:focus-within,
+                    select:focus-within {
                         outline: 2px solid var(--gray);
                     }
 
-                    .input>div {
+                    input,
+                    select {
                         padding: 8px;
                         border-right: 2px solid var(--gray);
                         color: var(--gray);
+                        border-radius: 8px;
                         margin-right: 5px;
-                    }
-
-                    .input>input {
+                        min-width: 60px;
                         outline: none;
                         background: var(--bg-color);
                         font-size: 11pt;
                         border: none;
-                        width: max-content;
+                        width: 100%;
                     }
 
                     .sensor {
@@ -465,6 +509,26 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                     .sensor button {
                         margin-right: 8px
                     }
+
+                    .sensor-settings {
+                        margin-top: 12px;
+                        display: grid;
+                        background: var(--gray-contrast);
+                        padding: 14px;
+                        border-radius: 8px;
+                        /* grid-template-columns: repeat(2, 1fr); */
+                        gap: 18px;
+                    }
+
+                    /* @media (max-width: 600px) {
+                        .sensor-settings {
+                            grid-template-columns: 1fr;
+                        }
+                    } */
+
+                    .sensor-settings * {
+                        width: 100%;
+                    }
                 </style>
                 <section class="settings-grid">
                     <div class="settings-widget">
@@ -473,19 +537,25 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                         <div>
                             <div class="sensor">
                                 <div>W</div>
-                                <div>Value <span>100</span></div>
-                                <div>--></div>
-                                <div>None</div>
+                                <div>Name: <span>100</span></div>
                                 <button onclick="this.classList.toggle('active')">S</button>
                                 <button>X</button>
                             </div>
-                            <div class="sensor-settings">hi</div>
+                            <div class="sensor-settings">
+                                <div class="input"><span>Type: </span>
+                                    <select><option>Soil Moisture</option></select>
+                                </div>
+                                <div class="input">
+                                    <span>Name: </span>
+                                    <input type="text" placeholder="Jeff maybe?">
+                                </div>
+                                <div class="input">
+                                    <span>Pin:</span>
+                                    <input type="number" placeholder="Devboard pin number">
+                                </div>
+                            </div>
+                            <!-- <div class="input">ff -->
                         </div>
-                        <!-- <span>Some other stuff idk</span>
-                        <div class="input">
-                            <div>$</div>
-                            <input type="text" placeholder="Text input here">
-                        </div> -->
                     </div>
                     <div class="settings-widget">
                         <span>Relays</span>
