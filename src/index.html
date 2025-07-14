@@ -7,18 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Responsive Tabbed Interface</title>
     <style>
-        /* --- 1. Global Styles & Variables --- */
+        /* Global Styles & Variables */
         :root {
             --primary-color: #2e4d3b;
-            /* Dark Blue */
             --secondary-color: #3a604a;
-            /* Lighter Dark Blue */
             --accent-color: #b3dfc7;
-            /* Bright Blue */
             --text-color: #cdddd4;
-            /* Light Gray */
             --bg-color: #f4f6f9;
-            /* Off-white for content */
             --gray: #6d8577;
             --gray-contrast: #414d46;
             --header-height: 60px;
@@ -36,11 +31,15 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: #333;
-            /* Prevents horizontal scrollbar caused by sidebar transform */
             overflow-x: hidden;
         }
 
-        /* --- 2. Main Layout Structure (Desktop First) --- */
+        span {
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        /* Main Layout Structure */
         .page-container {
             display: grid;
             grid-template-columns: var(--sidebar-width) 1fr;
@@ -48,14 +47,10 @@
             height: 100vh;
         }
 
-        /* --- 3. Header --- */
+        /* Header */
         .main-header {
             grid-column: 1 / -1;
-            /* Span across all columns */
             grid-row: 1 / 2;
-            width: 100%;
-            top: 0;
-            left: 0;
             display: flex;
             align-items: center;
             padding: 0 20px;
@@ -82,9 +77,7 @@
 
         .loader {
             border: 4px solid var(--bg-color);
-            /* Light grey */
             border-top: 4px solid var(--gray);
-            /* Blue */
             border-radius: 50%;
             width: 45px;
             height: 45px;
@@ -103,30 +96,22 @@
 
         .main-header> :first-child {
             margin-right: auto;
-            /* Pushes the first item to the left */
         }
-
-        /* .main-header > .error-icon {
-
-        } */
-
 
         .main-header .logo {
             font-size: 1.5rem;
             font-weight: bold;
         }
 
-        /* --- 4. Hamburger Menu (Mobile Only) --- */
+        /* Hamburger Menu */
         .hamburger-menu {
             display: none;
-            /* Hidden on desktop */
             cursor: pointer;
             width: 30px;
             height: 22px;
             position: relative;
             z-index: 1002;
             margin-left: 12px;
-            /* Above sidebar overlay */
         }
 
         .hamburger-menu .bar {
@@ -152,7 +137,6 @@
             bottom: 0;
         }
 
-        /* Hamburger animation to 'X' */
         .sidebar-open .hamburger-menu .bar1 {
             top: 50%;
             transform: translateY(-50%) rotate(45deg);
@@ -167,16 +151,14 @@
             transform: translateY(50%) rotate(-45deg);
         }
 
-        /* --- 5. Sidebar / Navigation Tabs --- */
+        /* Sidebar / Navigation Tabs */
         .sidebar {
             grid-column: 1 / 2;
             grid-row: 2 / 3;
             background-color: var(--secondary-color);
-            /* padding-top: 20px; */
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            /* Vertical tabs on desktop */
             transition: transform var(--transition-speed) ease-in-out;
         }
 
@@ -204,31 +186,20 @@
             font-weight: bold;
         }
 
-        /* --- 6. Content Area --- */
+        /* Content Area */
         .content-area {
             grid-column: 2 / 3;
             grid-row: 2 / 3;
             padding: 30px;
             overflow-y: auto;
-            /* Enables infinite scrolling */
-            position: relative;
         }
 
         .content-panel {
-            position: absolute;
-            top: 30px;
-            left: 30px;
-            right: 30px;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity var(--transition-speed) ease-in-out, visibility var(--transition-speed);
+            display: none;
         }
 
         .content-panel.active {
-            position: static;
-            /* Allow it to take up space and push footer */
-            opacity: 1;
-            visibility: visible;
+            display: block;
         }
 
         .content-panel h2 {
@@ -244,7 +215,7 @@
         .error-icon {
             color: yellow;
             display: none;
-            animation: flashYellowAndRed 1s infinite;
+            animation: flashYellowAndRed 2s infinite;
             font-size: xx-large;
             border: 2px solid var(--accent-color);
             padding-inline: 12px;
@@ -257,18 +228,23 @@
         @keyframes flashYellowAndRed {
 
             0%,
-            50%,
             100% {
                 color: yellow;
             }
 
-            25%,
-            75% {
+            50% {
                 color: red;
             }
         }
 
-        /* --- 7. Mobile Overlay --- */
+        @media (prefers-reduced-motion: reduce) {
+            .error-icon {
+                animation: none;
+                color: red;
+            }
+        }
+
+        /* Mobile Overlay */
         .mobile-overlay {
             display: none;
             position: fixed;
@@ -278,17 +254,19 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 1;
-            /* Below sidebar, above content */
         }
 
         .sidebar-open .mobile-overlay {
             display: block;
         }
 
-        /* --- 8. Responsive Styles (Mobile View) --- */
+        /* Responsive Styles */
         @media (max-width: 768px) {
+            span {
+                text-align: left;
+            }
+
             .page-container {
-                /* Single column layout for mobile */
                 grid-template-columns: 1fr;
             }
 
@@ -298,7 +276,6 @@
 
             .hamburger-menu {
                 display: block;
-                /* Show hamburger */
             }
 
             .sidebar {
@@ -310,10 +287,7 @@
                 height: calc(100vh - var(--header-height));
                 z-index: 2;
                 transform: translateX(-100%);
-                /* Hide off-screen */
                 padding-top: 0;
-
-                /* Horizontal tab layout for mobile view */
                 flex-direction: row;
                 flex-wrap: wrap;
                 align-content: flex-start;
@@ -322,11 +296,9 @@
 
             .sidebar-open .sidebar {
                 transform: translateX(0);
-                /* Slide in */
             }
 
             .tab-button {
-                /* Style for horizontal tabs */
                 text-align: center;
                 border-left: none;
                 border-bottom: 2px solid transparent;
@@ -339,7 +311,6 @@
 
             .content-area {
                 grid-column: 1 / -1;
-                /* Add padding-top to prevent content from hiding under the fixed header */
                 padding-top: 30px;
             }
         }
@@ -347,8 +318,165 @@
         @media (max-width: 480px) {
             .tab-button {
                 width: 100%;
-                /* One tab per row on very small screens */
             }
+        }
+
+        /* Settings Widgets */
+        button {
+            padding: 5px;
+            background-color: transparent;
+            border: none;
+            transition: all 0.05s ease-in-out;
+        }
+
+        button:hover {
+            background-color: rgba(242, 199, 199, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(2px);
+            scale: 0.95;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            grid-column-gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: repeat(1, 1fr);
+            }
+        }
+
+        .settings-widget {
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px;
+            background-color: var(--accent-color);
+            display: grid;
+            grid-auto-rows: min-content;
+        }
+
+        .settings-widget>span:first-child {
+            color: var(--primary-color);
+            font-size: 14pt;
+        }
+
+        .settings-widget>span:nth-child(2) {
+            color: var(--gray);
+            font-size: 10pt;
+            margin-bottom: 8px;
+        }
+
+        .input {
+            display: flex;
+            width: fit-content;
+            color: var(--text-color);
+            align-items: center;
+        }
+
+        .input label {
+            width: min-content;
+            margin-right: 12px;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        input:focus-within,
+        select:focus-within {
+            outline: 2px solid var(--gray);
+        }
+
+        input,
+        select {
+            padding: 8px;
+            border-right: 2px solid var(--gray);
+            color: var(--gray);
+            border-radius: 8px;
+            margin-right: 5px;
+            min-width: 60px;
+            outline: none;
+            background: var(--bg-color);
+            font-size: 11pt;
+            border: none;
+            width: 100%;
+        }
+
+        .sensor {
+            background: var(--gray);
+            color: var(--text-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+        }
+
+        .sensor>div:not(:first-child) {
+            margin-right: 8px;
+        }
+
+        .sensor>div:first-child {
+            border-right: solid 2px var(--accent-color);
+            width: min-content;
+            padding: 10px;
+            margin-right: 12px;
+            color: var(--accent-color);
+        }
+
+        .sensor span {
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        .sensor button:first-of-type {
+            margin-left: auto;
+        }
+
+        .sensor button {
+            margin-right: 8px;
+        }
+
+        .sensor-settings {
+            margin-top: 12px;
+            display: grid;
+            background: var(--gray-contrast);
+            padding: 14px;
+            border-radius: 8px;
+            gap: 18px;
+        }
+
+        .sensor-settings * {
+            width: 100%;
+
+        }
+
+        .relay-settings {
+            display: grid;
+            background: var(--gray);
+            grid-template-columns: 1fr auto 1fr auto auto;
+        }
+
+        .operator {
+            background: var(--gray-contrast);
+            font-size: large;
+            border: 2px solid var(--gray);
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .relay-settings .input {
+            padding: 0 4px;
+        }
+
+        .arrow-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .arrow-container button {
+            padding: 2px;
         }
     </style>
 </head>
@@ -361,8 +489,8 @@
         <!-- Header -->
         <header class="main-header">
             <div class="logo">PhytoLabs</div>
-            <div class="error-icon">!</div>
-            <div class="hamburger-menu">
+            <div class="error-icon" title="Error: Something went wrong" aria-label="Error indicator">!</div>
+            <div class="hamburger-menu" aria-label="Toggle navigation" aria-expanded="false">
                 <span class="bar bar1"></span>
                 <span class="bar bar2"></span>
                 <span class="bar bar3"></span>
@@ -373,168 +501,23 @@
         <div class="mobile-overlay"></div>
 
         <!-- Sidebar with Tabs -->
-        <nav class="sidebar">
-            <button class="tab-button active" data-tab="dashboard">Dashboard</button>
-            <button class="tab-button" data-tab="profile">Settings</button>
+        <nav class="sidebar" role="tablist">
+            <button id="tab-dashboard" class="tab-button active" data-tab="dashboard" role="tab"
+                aria-selected="true">Dashboard</button>
+            <button id="tab-profile" class="tab-button" data-tab="profile" role="tab"
+                aria-selected="false">Settings</button>
         </nav>
 
         <!-- Main Content Area -->
         <main class="content-area">
-            <section id="dashboard" class="content-panel ">
+            <section id="dashboard" class="content-panel" role="tabpanel" aria-labelledby="tab-dashboard">
                 <h2>Dashboard</h2>
                 <p id="DataUpdates">Welcome to your dashboard. Here you can see an overview of your account activity and
                     recent notifications.</p>
             </section>
 
-            <section id="profile" class="content-panel active">
+            <section id="profile" class="content-panel active" role="tabpanel" aria-labelledby="tab-profile">
                 <h2>Settings</h2>
-                <style>
-                    button {
-                        padding: 5px;
-                        /* outline:none; */
-                        background-color: transparent;
-                        border: none;
-                        transition: all 0.05s ease-in-out;
-                    }
-
-                    button:hover {
-                        background-color: rgba(242, 199, 199, 0.1);
-                        transform: scale(1.05);
-                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-                    }
-
-                    button:hover {
-                        transform: translateY(-2px);
-                        scale: 1.01;
-                    }
-
-                    button:active {
-                        transform: translateY(2px);
-                        scale: 0.95;
-                    }
-
-                    .settings-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-                        grid-column-gap: 20px;
-                    }
-
-                    @media (max-width: 768px) {
-                        .settings-grid {
-                            grid-template-columns: repeat(1, 1fr);
-                        }
-                    }
-
-                    .settings-widget {
-                        border-radius: 12px;
-                        padding: 20px;
-                        margin: 10px;
-                        background-color: var(--accent-color);
-                        display: grid;
-                        grid-auto-rows:min-content;
-                    }
-
-                    .settings-widget>span:first-child {
-                        color: var(--primary-color);
-                        font-size: 14pt;
-                    }
-
-                    .settings-widget>span:nth-child(2) {
-                        color: var(--gray);
-                        font-size: 10pt;
-                        margin-bottom: 8px;
-                    }
-
-                    .input {
-                        display: flex;
-                        width: fit-content;
-                        color: var(--text-color);
-                        align-items: center;
-                    }
-
-                    .input span {
-                        width: min-content;
-                        margin-right: 12px;
-                        min-width: 50px;
-                        text-align: right;
-                    }
-
-                    input:focus-within,
-                    select:focus-within {
-                        outline: 2px solid var(--gray);
-                    }
-
-                    input,
-                    select {
-                        padding: 8px;
-                        border-right: 2px solid var(--gray);
-                        color: var(--gray);
-                        border-radius: 8px;
-                        margin-right: 5px;
-                        min-width: 60px;
-                        outline: none;
-                        background: var(--bg-color);
-                        font-size: 11pt;
-                        border: none;
-                        width: 100%;
-                    }
-
-                    .sensor {
-                        background: var(--gray);
-                        color: var(--text-color);
-                        border-radius: 6px;
-                        display: flex;
-                        align-items: center;
-                    }
-
-                    .sensor>div:not(:first-child) {
-                        margin-right: 8px;
-                    }
-
-                    .sensor>div:first-child {
-                        border-right: solid 2px var(--accent-color);
-                        width: min-content;
-                        padding: 10px;
-                        margin-right: 12px;
-                        color: var(--accent-color);
-                    }
-
-                    .sensor span {
-                        color: var(--text-color);
-                        font-weight: bold;
-                    }
-
-                    .sensor button:first-of-type {
-                        margin-left: auto;
-                    }
-
-                    .sensor button {
-                        margin-right: 8px
-                    }
-
-                    .sensor-settings {
-                        margin-top: 12px;
-                        display: grid;
-                        background: var(--gray-contrast);
-                        padding: 14px;
-                        border-radius: 8px;
-                        /* grid-template-columns: repeat(2, 1fr); */
-                        gap: 18px;
-                    }
-
-                    .sensor-settings * {
-                        width: 100%;
-                    }
-
-                    .relay-settings {
-                        display: grid;
-                        grid-template-columns: [first] 1fr [second] auto [third] 1fr ;
-                    }
-
-                    .relay-settings .input {
-                        padding: 0 4px;
-                    }
-                </style>
                 <section class="settings-grid">
                     <div class="settings-widget">
                         <span>Sensors</span>
@@ -543,25 +526,25 @@
                             <div class="sensor">
                                 <div>W</div>
                                 <div>Name: <span>100</span></div>
-                                <button onclick="this.classList.toggle('active')">S</button>
-                                <button>X</button>
+                                <button onclick="this.classList.toggle('active')" aria-label="Toggle sensor">⚙️</button>
+                                <button aria-label="Remove sensor">❌</button>
                             </div>
                             <div class="sensor-settings">
-                                <div class="input"><span>Type: </span>
-                                    <select>
+                                <div class="input">
+                                    <label for="sensor-type">Type: </label>
+                                    <select id="sensor-type">
                                         <option>Soil Moisture</option>
                                     </select>
                                 </div>
                                 <div class="input">
-                                    <span>Name: </span>
-                                    <input type="text" placeholder="Jeff maybe?">
+                                    <label for="sensor-name">Name: </label>
+                                    <input type="text" id="sensor-name" placeholder="Jeff maybe?">
                                 </div>
                                 <div class="input">
-                                    <span>Pin:</span>
-                                    <input type="number" placeholder="Devboard pin number">
+                                    <label for="sensor-pin">Pin: </label>
+                                    <input type="number" id="sensor-pin" placeholder="Devboard pin number">
                                 </div>
                             </div>
-                            <!-- <div class="input">ff -->
                         </div>
                     </div>
                     <div class="settings-widget">
@@ -571,46 +554,90 @@
                             <div class="sensor">
                                 <div>W</div>
                                 <div>Name: <span>100</span></div>
-                                <button onclick="this.classList.toggle('active')">S</button>
-                                <button>X</button>
+                                <button onclick="this.classList.toggle('active')" aria-label="Toggle relay">⚙️</button>
+                                <button aria-label="Remove relay">❌</button>
                             </div>
                             <div class="sensor-settings">
+                                <div class="input">
+                                    <label for="sensor-type">Type: </label>
+                                    <select id="sensor-type">
+                                        <option>Soil Moisture</option>
+                                    </select>
+                                </div>
+                                <div class="input">
+                                    <label for="sensor-name">Name: </label>
+                                    <input type="text" id="sensor-name" placeholder="Jeff maybe?">
+                                </div>
+                                <span>Conditions</span>
                                 <div class="relay-settings">
                                     <div class="input">
-                                        <!-- <span>Name: </span> -->
-                                        <select name="" id="">
-                                            <option value="2">
-                                                Jeff!! </option>
+                                        <select id="relay-select">
+                                            <option value="2">Jeff!!</option>
                                         </select>
                                     </div>
                                     <div class="input">
-                                        <select name="" id="">
+
+                                        <select id="relay-condition" class="operator">
                                             <option value="1">></option>
                                             <option value="2">
                                                 < </option>
                                         </select>
                                     </div>
                                     <div class="input">
-                                        <!-- <span>Name: </span> -->
-                                        <input type="number" placeholder="Value">
+
+                                        <input type="number" id="relay-value" placeholder="Value">
                                     </div>
+                                    <div class="arrow-container">
+                                        <button>⬆️</button>
+                                        <button>⬇️</button>
+                                    </div>
+                                    <button>❌</button>
+
                                 </div>
+                                <div class="relay-settings">
+                                    <div class="input">
+                                        <select id="relay-select">
+                                            <option value="2">Jeff!!</option>
+                                        </select>
+                                    </div>
+                                    <div class="input">
+
+                                        <select id="relay-condition" class="operator">
+                                            <option value="1">></option>
+                                            <option value="2">
+                                                < </option>
+                                        </select>
+                                    </div>
+                                    <div class="input">
+
+                                        <input type="number" id="relay-value" placeholder="Value">
+                                    </div>
+                                    <div class="arrow-container">
+                                        <button>⬆️</button>
+                                        <button>⬇️</button>
+                                    </div>
+                                    <button>❌</button>
+                                </div>
+                                <select class="add-condition">
+                                    <option value="0">Add Condition</option>
+                                    <option value="1">Time Condition</option>
+                                    <option value="2">Sensor Condition</option>
+                                </select>
                             </div>
                         </div>
                     </div>
                     <div class="settings-widget"><span>Widget 3</span></div>
                     <div class="settings-widget"><span>Widget 4</span></div>
                 </section>
-
+            </section>
+        </main>
     </div>
 
     <script>
-
         getData();
         setInterval(function () {
-            // Call a function repetatively with 2 Second interval
             getData();
-        }, 2000); //2000mSeconds update rate
+        }, 2000);
 
         class Sensor {
             constructor(type, name, pin) {
@@ -621,19 +648,12 @@
         }
 
         function getData() {
-            var xhttp = new XMLHttpRequest();
-            xhttp.onreadystatechange = function () {
-                if (this.readyState == 4 && this.status == 200) {
-                    document.getElementById("DataUpdates").innerHTML =
-                        this.responseText;
-                }
-            };
-            xhttp.open("GET", "readADC", true);
-            xhttp.send();
-        }
-
-        function addSensor(sensor) {
-
+            fetch('readADC')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById("DataUpdates").innerHTML = data;
+                })
+                .catch(error => console.error('Error:', error));
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -644,41 +664,45 @@
             const tabButtons = document.querySelectorAll('.tab-button');
             const contentPanels = document.querySelectorAll('.content-panel');
 
-            // --- 1. Mobile Menu Toggle ---
             const toggleMobileMenu = () => {
-                body.classList.toggle('sidebar-open');
+                const isOpen = body.classList.toggle('sidebar-open');
+                hamburgerMenu.setAttribute('aria-expanded', isOpen);
             };
 
             hamburgerMenu.addEventListener('click', toggleMobileMenu);
             mobileOverlay.addEventListener('click', toggleMobileMenu);
 
-            // --- 2. Tab Switching Logic ---
             sidebar.addEventListener('click', function (e) {
-                // Use event delegation for efficiency
                 if (e.target && e.target.classList.contains('tab-button')) {
                     const tabButton = e.target;
                     const targetTabId = tabButton.dataset.tab;
 
-                    // Deactivate all tabs and panels
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.setAttribute('aria-selected', 'false');
+                    });
                     contentPanels.forEach(panel => panel.classList.remove('active'));
 
-                    // Activate the clicked tab and corresponding panel
                     tabButton.classList.add('active');
+                    tabButton.setAttribute('aria-selected', 'true');
                     const targetPanel = document.getElementById(targetTabId);
                     if (targetPanel) {
                         targetPanel.classList.add('active');
                     }
 
-                    // Close mobile menu on tab selection
                     if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
                         toggleMobileMenu();
                     }
                 }
             });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && body.classList.contains('sidebar-open')) {
+                    toggleMobileMenu();
+                }
+            });
         });
     </script>
-
 </body>
 
 </html>
