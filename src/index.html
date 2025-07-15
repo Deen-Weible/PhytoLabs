@@ -75,6 +75,10 @@
             visibility: hidden;
         }
 
+        .grid {
+            display: grid;
+        }
+
         .loader {
             border: 4px solid var(--bg-color);
             border-top: 4px solid var(--gray);
@@ -440,7 +444,7 @@
 
         .sensor-settings {
             margin-top: 12px;
-            display: grid;
+            display: none;
             background: var(--gray-contrast);
             padding: 14px;
             border-radius: 8px;
@@ -477,6 +481,11 @@
 
         .arrow-container button {
             padding: 2px;
+        }
+
+        .add-selector {
+            margin-top: 12px;
+            border: 2px solid var(--gray);
         }
     </style>
 </head>
@@ -522,115 +531,29 @@
                     <div class="settings-widget">
                         <span>Sensors</span>
                         <span>Add/Remove/Configure sensors (inputs)</span>
-                        <div>
-                            <div class="sensor">
-                                <div>W</div>
-                                <div>Name: <span>100</span></div>
-                                <button onclick="this.classList.toggle('active')" aria-label="Toggle sensor">⚙️</button>
-                                <button aria-label="Remove sensor">❌</button>
-                            </div>
-                            <div class="sensor-settings">
-                                <div class="input">
-                                    <label for="sensor-type">Type: </label>
-                                    <select id="sensor-type">
-                                        <option>Soil Moisture</option>
-                                    </select>
-                                </div>
-                                <div class="input">
-                                    <label for="sensor-name">Name: </label>
-                                    <input type="text" id="sensor-name" placeholder="Jeff maybe?">
-                                </div>
-                                <div class="input">
-                                    <label for="sensor-pin">Pin: </label>
-                                    <input type="number" id="sensor-pin" placeholder="Devboard pin number">
-                                </div>
-                            </div>
-                        </div>
+                        <div id="sensors">No sensors added (or loaded yet)</div>
+                        <select class="add-selector">
+                            <option value="0">Add Condition</option>
+                            <option value="1">Time Condition</option>
+                            <option value="2">Sensor Condition</option>
+                        </select>
                     </div>
                     <div class="settings-widget">
                         <span>Relays</span>
                         <span>Add/Remove/Configure relays (outputs)</span>
-                        <div>
-                            <div class="sensor">
-                                <div>W</div>
-                                <div>Name: <span>100</span></div>
-                                <button onclick="this.classList.toggle('active')" aria-label="Toggle relay">⚙️</button>
-                                <button aria-label="Remove relay">❌</button>
-                            </div>
-                            <div class="sensor-settings">
-                                <div class="input">
-                                    <label for="sensor-type">Type: </label>
-                                    <select id="sensor-type">
-                                        <option>Soil Moisture</option>
-                                    </select>
-                                </div>
-                                <div class="input">
-                                    <label for="sensor-name">Name: </label>
-                                    <input type="text" id="sensor-name" placeholder="Jeff maybe?">
-                                </div>
-                                <span>Conditions</span>
-                                <div class="relay-settings">
-                                    <div class="input">
-                                        <select id="relay-select">
-                                            <option value="2">Jeff!!</option>
-                                        </select>
-                                    </div>
-                                    <div class="input">
-
-                                        <select id="relay-condition" class="operator">
-                                            <option value="1">></option>
-                                            <option value="2">
-                                                < </option>
-                                        </select>
-                                    </div>
-                                    <div class="input">
-
-                                        <input type="number" id="relay-value" placeholder="Value">
-                                    </div>
-                                    <div class="arrow-container">
-                                        <button>⬆️</button>
-                                        <button>⬇️</button>
-                                    </div>
-                                    <button>❌</button>
-
-                                </div>
-                                <div class="relay-settings">
-                                    <div class="input">
-                                        <select id="relay-select">
-                                            <option value="2">Jeff!!</option>
-                                        </select>
-                                    </div>
-                                    <div class="input">
-
-                                        <select id="relay-condition" class="operator">
-                                            <option value="1">></option>
-                                            <option value="2">
-                                                < </option>
-                                        </select>
-                                    </div>
-                                    <div class="input">
-
-                                        <input type="number" id="relay-value" placeholder="Value">
-                                    </div>
-                                    <div class="arrow-container">
-                                        <button>⬆️</button>
-                                        <button>⬇️</button>
-                                    </div>
-                                    <button>❌</button>
-                                </div>
-                                <select class="add-condition">
-                                    <option value="0">Add Condition</option>
-                                    <option value="1">Time Condition</option>
-                                    <option value="2">Sensor Condition</option>
-                                </select>
-                            </div>
-                        </div>
+                        <div id="relays">No relays added (or loaded yet)</div>
+                        <select class="add-selector">
+                            <option value="0">Add Condition</option>
+                            <option value="1">Time Condition</option>
+                            <option value="2">Sensor Condition</option>
+                        </select>
                     </div>
-                    <div class="settings-widget"><span>Widget 3</span></div>
-                    <div class="settings-widget"><span>Widget 4</span></div>
-                </section>
-            </section>
-        </main>
+    </div>
+    <div class="settings-widget"><span>Widget 3</span></div>
+    <div class="settings-widget"><span>Widget 4</span></div>
+    </section>
+    </section>
+    </main>
     </div>
 
     <script>
@@ -644,6 +567,23 @@
                 this.type = type;
                 this.name = name;
                 this.pin = pin;
+            }
+        }
+
+        class Relay {
+            constructor(name, pin, args, status) {
+                this.name = name;
+                this.pin = pin;
+                this.args = args;
+                this.status = status;
+            }
+
+            toggleStatus() {
+                this.status = !this.status;
+            }
+
+            isOn() {
+                return this.status;
             }
         }
 
