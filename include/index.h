@@ -75,6 +75,10 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             visibility: hidden;
         }
 
+        .grid {
+            display: grid !important;
+        }
+
         .loader {
             border: 4px solid var(--bg-color);
             border-top: 4px solid var(--gray);
@@ -262,9 +266,6 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
 
         /* Responsive Styles */
         @media (max-width: 768px) {
-            span {
-                text-align: left;
-            }
             .page-container {
                 grid-template-columns: 1fr;
             }
@@ -439,6 +440,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
 
         .sensor-settings {
             margin-top: 12px;
+            /* display: none; */
             display: grid;
             background: var(--gray-contrast);
             padding: 14px;
@@ -448,15 +450,16 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
 
         .sensor-settings * {
             width: 100%;
+
         }
 
         .relay-settings {
             display: grid;
-            grid-template-columns: 1fr auto 1fr;
+            grid-template-columns: 1fr auto 1fr auto auto;
         }
 
         .operator {
-            background:none;
+            background: var(--gray-contrast);
             font-size: large;
             border: 2px solid var(--gray);
             color: var(--text-color);
@@ -465,6 +468,20 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
 
         .relay-settings .input {
             padding: 0 4px;
+        }
+
+        .arrow-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .arrow-container button {
+            padding: 2px;
+        }
+
+        .add-selector {
+            margin-top: 12px;
+            border: 2px solid var(--gray);
         }
     </style>
 </head>
@@ -510,77 +527,25 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                     <div class="settings-widget">
                         <span>Sensors</span>
                         <span>Add/Remove/Configure sensors (inputs)</span>
-                        <div>
-                            <div class="sensor">
-                                <div>W</div>
-                                <div>Name: <span>100</span></div>
-                                <button onclick="this.classList.toggle('active')" aria-label="Toggle sensor">S</button>
-                                <button aria-label="Remove sensor">X</button>
-                            </div>
-                            <div class="sensor-settings">
-                                <div class="input">
-                                    <label for="sensor-type">Type: </label>
-                                    <select id="sensor-type">
-                                        <option>Soil Moisture</option>
-                                    </select>
-                                </div>
-                                <div class="input">
-                                    <label for="sensor-name">Name: </label>
-                                    <input type="text" id="sensor-name" placeholder="Jeff maybe?">
-                                </div>
-                                <div class="input">
-                                    <label for="sensor-pin">Pin: </label>
-                                    <input type="number" id="sensor-pin" placeholder="Devboard pin number">
-                                </div>
-                            </div>
-                        </div>
+                        <div id="sensor-container">No sensors added (or loaded yet)</div>
+                        <select class="add-selector" onchange="addSensor(this.value, this)">
+                            <option value="0">Add Sensor</option>
+                            <option value="Soil">Soil Moisture</option>
+                        </select>
                     </div>
                     <div class="settings-widget">
                         <span>Relays</span>
                         <span>Add/Remove/Configure relays (outputs)</span>
-                        <div>
-                            <div class="sensor">
-                                <div>W</div>
-                                <div>Name: <span>100</span></div>
-                                <button onclick="this.classList.toggle('active')" aria-label="Toggle relay">S</button>
-                                <button aria-label="Remove relay">X</button>
-                            </div>
-                            <div class="sensor-settings">
-                                <div class="input">
-                                    <label for="sensor-type">Type: </label>
-                                    <select id="sensor-type">
-                                        <option>Soil Moisture</option>
-                                    </select>
-                                </div>
-                                <div class="input">
-                                    <label for="sensor-name">Name: </label>
-                                    <input type="text" id="sensor-name" placeholder="Jeff maybe?">
-                                </div>
-                                <span>Conditions</span>
-                                <div class="relay-settings">
-                                    <div class="input">
-                                        <select id="relay-select">
-                                            <option value="2">Jeff!!</option>
-                                        </select>
-                                    </div>
-                                    <div class="input">
+                        <div id="relay-container">No relays added (or loaded yet)
+                            <!-- Start of relay -->
 
-                                        <select id="relay-condition" class="operator">
-                                            <option value="1">></option>
-                                            <option value="2">
-                                                << /option>
-                                        </select>
-                                    </div>
-                                    <div class="input">
-
-                                        <input type="number" id="relay-value" placeholder="Value">
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- End of relay -->
                         </div>
+                        <select class="add-selector" onchange="addRelay(this.value, this)">
+                            <option value="0">Add Relay</option>
+                            <option value="Relay">Standard Relay</option>
+                        </select>
                     </div>
-                    <div class="settings-widget"><span>Widget 3</span></div>
-                    <div class="settings-widget"><span>Widget 4</span></div>
                 </section>
             </section>
         </main>
@@ -592,12 +557,226 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             getData();
         }, 2000);
 
-        class Sensor {
-            constructor(type, name, pin) {
+        class Condition {
+            constructor(sensor, operator, value, id, type) {
+                this.sensor = sensor;
+                this.operator = operator;
+                this.value = value;
+                this.id = id;
                 this.type = type;
+            }
+        }
+
+        class Sensor {
+            constructor(id, name, pin, value, folded) {
+                this.id = id;
                 this.name = name;
                 this.pin = pin;
+                this.value = value;
+                this.folded = folded;
             }
+            setValue(value) {
+                this.value = value;
+            }
+        }
+
+        class Relay {
+            constructor(id, name, pin, conditions, status, folded) {
+                this.id = id
+                this.name = name;
+                this.pin = pin;
+                this.conditions = conditions;
+                this.status = status;
+                this.folded = folded;
+            }
+
+            toggleStatus() {
+                this.status = !this.status;
+            }
+
+            isOn() {
+                return this.status;
+            }
+        }
+
+        // All sensors/relays
+        var sensorList = [];
+        var relayList = [];
+
+        function addSensor(sensortype, dropdown) {
+            // Reset dropdown
+            dropdown.value = 0
+
+            // Add new sensor
+            var sensor = new Sensor(sensorList.length + 1, "Sensor Name", 1, 0, true);
+            sensorList.push(sensor);
+            renderSensors();
+        }
+
+        function addRelay(relaytype, dropdown) {
+            // Reset dropdown
+            dropdown.value = 0
+
+            // Add new relay
+            var relay = new Relay(relayList.length + 1, "Relay Name", 1, [], false, false);
+            relayList.push(relay);
+            renderRelays();
+        }
+        function addCondition(conditionReceiver, dropdown) {
+            // Add new condition
+            const relay = relayList.find(r => r.id === conditionReceiver)
+
+            relay.conditions.push(new Condition(1, ">", 1, relay.conditions.length + 1, dropdown.value));
+            console.log(relay.conditions)
+
+            renderConditions(relay.id);
+
+            // Reset dropdown
+            dropdown.value = 0
+        }
+
+        function renderConditions(relayId) {
+            const relay = relayList.find(r => r.id === relayId);
+
+            const conditionContainer = document.querySelector(`[data-relay-id="${relay.id}"]`);
+
+            let conditionHTML = ""
+            for (let index = 0; index < relay.conditions.length; index++) {
+                console.log(relay.conditions[index].type);
+                conditionHTML += createConditionHTML(relay.conditions[index], relay.id);
+            }
+            conditionContainer.innerHTML = conditionHTML;
+
+        }
+
+        function renderRelays() {
+            const relayContainer = document.getElementById('relay-container');
+            let renderedHTML = ""
+            for (let index = 0; index < relayList.length; index++) {
+                const relay = relayList[index];
+                renderedHTML += createRelayHTML(relay);
+            }
+            relayContainer.innerHTML = renderedHTML;
+        }
+
+        function renderSensors() {
+            const sensorContainer = document.getElementById('sensor-container');
+            let renderedHTML = ""
+            for (let index = 0; index < sensorList.length; index++) {
+                const sensor = sensorList[index];
+                renderedHTML += createSensorHTML(sensor);
+            }
+            sensorContainer.innerHTML = renderedHTML;
+        }
+
+
+        function getRelay(id) {
+            return relayList.find(r => r.id === id)
+        }
+
+        // function createRelayHTML(relay) {
+        //     return `
+        //         <div class="sensor" data-id="${relay.id}">
+        //             <div class="relay">
+        //                 <div>R</div>
+        //                 <div>Name: <span>${relay.name}</span></div>
+        //                 <button class="toggle-settings" aria-label="Toggle relay settings">⚙️</button>
+        //                 <button class="remove-relay" aria-label="Remove relay">❌</button>
+        //             </div>
+        //             <div class="relay-settings-panel " ${relay.folded ? 'grid;"' : ''}>
+        //                 <div class="input">
+        //                     <label for="relay-name-${relay.id}">Name: </label>
+        //                     <input type="text" id="relay-name-${relay.id}" class="relay-name" value="${relay.name}" placeholder="Relay name">
+        //                 </div>
+        //                 <div class="input">
+        //                     <label for="relay-pin-${relay.id}">Pin: </label>
+        //                     <input type="number" id="relay-pin-${relay.id}" class="relay-pin" value="${relay.pin}" placeholder="Devboard output pin">
+        //                 </div>
+        //                 <span>Conditions</span>
+        //                 ${//relay.conditions.map(condition => createConditionHTML(condition, relay.id)).join('')
+        //                 ""}
+        //                 <select class="add-condition-select">
+        //                     <option value="">Add Condition</option>
+        //                     <option value="sensor">Sensor Condition</option>
+        //                 </select>
+        //             </div>
+        //         </div>
+        //     `;
+        // }
+
+        function createConditionHTML(condition, relayId) {
+            if (condition.type === 'sensor') {
+                return `
+                    <div class="relay-settings" data-condition-id="${condition.id}">
+                        <div class="input">
+                            <select class="sensor-select">
+                                ${sensorList.map(sensor => `<option value="${sensor.id}" ${sensor.id === condition.sensorId ? 'selected' : ''}>${sensor.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="input">
+                            <select class="operator-select operator">
+                                <option value=">" ${condition.operator === '>' ? 'selected' : ''}>></option>
+                                <option value="<" ${condition.operator === '<' ? 'selected' : ''}><</option>
+                            </select>
+                        </div>
+                        <div class="input">
+                            <input type="number" class="condition-value" value="${condition.value}" placeholder="Value">
+                        </div>
+                        <div class="arrow-container">
+                            <button class="move-up">⬆️</button>
+                            <button class="move-down">⬇️</button>
+                        </div>
+                        <button class="remove-condition">❌</button>
+                    </div>
+                `;
+            }
+            return '';
+        }
+
+        function UpdateName(id, newName) {
+            getRelay(id).name = newName;
+            console.log(`Relay ${id} name updated to ${newName}`);
+        }
+        function updatePin(id, pin) {
+            getRelay(id).pin = pin;
+            console.log(`Relay ${id} pin updated to ${pin}`);
+        }
+        // function addCondition(id, condition) {
+        //     getRelay(id).conditions.push(condition);
+        //     console.log(`Condition added to relay ${id}`);
+        // }
+
+
+        function createRelayHTML(relay) {
+            return `
+<div id="${relay.id}">
+    <div class="sensor">
+        <div>${relay.name.charAt(0)}</div>
+        <div>${relay.name}: <span data-relay-status="${relay.id}">${relay.status ? '🟢' : '🟥'}</span></div>
+        <button
+            onclick="this.parentNode.parentNode.querySelector('.sensor-settings').classList.toggle('grid')">⚙️</button>
+        <button onclick="removeRelay(${relay.name})">❌</button>
+    </div>
+    <div class="sensor-settings">
+        <div class="input">
+            <label for="relay-name" >Name:</label>
+            <input type="text" name="relay-name" id="relay-name" placeholder="*ahem* jeff?" value="${relay.name}" onchange="UpdateName(${relay.id}, this.value)">
+        </div>
+        <div class="input">
+            <label for="relay-pin">Pin: </label>
+            <input type="number" id="relay-pin" placeholder="Devboard output pin" value="${relay.pin}">
+        </div>
+        <span>Conditions</span>
+        <div data-relay-id="${relay.id}"></div>
+        <select onchange="addCondition(${relay.id}, this)">
+            <option value="0">Add Condition</option>
+            <option value="sensor">Sensor Condition</option>
+        </select>
+    </div>
+
+</div>
+</div>
+`
         }
 
         function getData() {
