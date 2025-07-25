@@ -553,356 +553,532 @@
     </div>
 
     <script>
-        getData();
-        setInterval(function () {
-            getData();
-        }, 2000);
+// Data fetching - Initialize and set up polling
+getData();
+setInterval(getData, 2000);
 
-        class Condition {
-            constructor(sensor, operator, value, id, type) {
-                this.sensor = sensor;
-                this.operator = operator;
-                this.value = value;
-                this.id = id;
-                this.type = type;
-            }
+// ===== CLASS DEFINITIONS =====
+class Sensor {
+    constructor(id, name, pin, value, folded = true) {
+        this.id = id;
+        this.name = name;
+        this.pin = pin;
+        this.value = value;
+        this.folded = folded;
+    }
+
+    setValue(value) {
+        this.value = value;
+    }
+}
+
+class Condition {
+    constructor(sensor, operator, value, id, type) {
+        this.sensor = sensor;
+        this.operator = operator;
+        this.value = value;
+        this.id = id;
+        this.type = type;
+    }
+}
+
+class Relay {
+    constructor(id, name, pin, conditions = [], status = false, folded = false) {
+        this.id = id;
+        this.name = name;
+        this.pin = pin;
+        this.conditions = conditions;
+        this.status = status;
+        this.folded = folded;
+    }
+
+    toggleStatus() {
+        this.status = !this.status;
+    }
+
+    isOn() {
+        return this.status;
+    }
+
+    moveCondition(conditionId, direction) {
+        const currentIndex = this.conditions.findIndex(c => c.id === conditionId);
+        if (currentIndex === -1) return;
+
+        const canMoveUp = direction === 'up' && currentIndex > 0;
+        const canMoveDown = direction === 'down' && currentIndex < this.conditions.length - 1;
+
+        if (canMoveUp) {
+            this._swapConditions(currentIndex, currentIndex - 1);
+        } else if (canMoveDown) {
+            this._swapConditions(currentIndex, currentIndex + 1);
         }
 
-        class Sensor {
-            constructor(id, name, pin, value, folded) {
-                this.id = id;
-                this.name = name;
-                this.pin = pin;
-                this.value = value;
-                this.folded = folded;
-            }
-            setValue(value) {
-                this.value = value;
-            }
+        if (canMoveUp || canMoveDown) {
+            reloadConditions(this.id);
         }
+    }
 
-        class Relay {
-            constructor(id, name, pin, conditions, status, folded) {
-                this.id = id
-                this.name = name;
-                this.pin = pin;
-                this.conditions = conditions;
-                this.status = status;
-                this.folded = folded;
-            }
+    _swapConditions(index1, index2) {
+        [this.conditions[index1], this.conditions[index2]] =
+        [this.conditions[index2], this.conditions[index1]];
+    }
+}
 
-            toggleStatus() {
-                this.status = !this.status;
-            }
+// ===== DATA STORAGE =====
+const sensorList = [];
+const relayList = [];
 
-            isOn() {
-                return this.status;
-            }
+// ===== UTILITY FUNCTIONS =====
+function getRelay(id) {
+    return relayList.find(r => r.id === id);
+}
 
-            moveCondition(conditionId, direction) {
-                const currentIndex = this.conditions.findIndex(c => c.id === conditionId);
-                if (currentIndex === -1) return; // Condition not found
+function getSensor(id) {
+    return sensorList.find(s => s.id === id);
+}
 
-                if (direction === 'up' && currentIndex > 0) {
-                    console.log('Up condition');
-                    // Swap with previous
-                    const temp = this.conditions[currentIndex - 1];
-                    this.conditions[currentIndex - 1] = this.conditions[currentIndex];
-                    this.conditions[currentIndex] = temp;
-                } else if (direction === 'down' && currentIndex < this.conditions.length - 1) {
-                    console.log('Down condition');
-                    // Swap with next
-                    const temp = this.conditions[currentIndex + 1];
-                    this.conditions[currentIndex + 1] = this.conditions[currentIndex];
-                    this.conditions[currentIndex] = temp;
-                }
-                reloadConditions(this.id);
-            }
+function resetDropdown(dropdown) {
+    dropdown.value = 0;
+}
+
+// ===== ADD FUNCTIONS =====
+function addSensor(sensortype, dropdown) {
+    resetDropdown(dropdown);
+
+    const sensor = new Sensor(
+        sensorList.length + 1,
+        "Sensor Name",
+        1,
+        0
+    );
+
+    sensorList.push(sensor);
+    renderSensors();
+}
+
+function addRelay(relaytype, dropdown) {
+    resetDropdown(dropdown);
+
+    const relay = new Relay(
+        relayList.length + 1,
+        "Relay Name",
+        1
+    );
+
+    relayList.push(relay);
+    renderRelays();
+}
+
+function addCondition(conditionReceiver, dropdown) {
+    const relay = getRelay(conditionReceiver);
+    if (!relay) return;
+
+    const condition = new Condition(
+        1,
+        ">",
+        1,
+        relay.conditions.length + 1,
+        dropdown.value
+    );
+
+    // Set sensorId for compatibility with the HTML generation
+    condition.sensorId = 1;
+
+    relay.conditions.push(condition);
+    renderConditions(relay.id);
+    resetDropdown(dropdown);
+}
+
+// ===== UPDATE FUNCTIONS =====
+function updateRelayName(id, newName) {
+    const relay = getRelay(id);
+    if (relay) {
+        relay.name = newName;
+
+        // Update the display without re-rendering
+        const nameDisplay = document.querySelector(`[data-relay-name="${id}"]`);
+        const initialDisplay = document.querySelector(`[data-relay-initial="${id}"]`);
+
+        if (nameDisplay) nameDisplay.textContent = newName;
+        if (initialDisplay) initialDisplay.textContent = newName.charAt(0);
+
+        // Update condition dropdowns that reference this relay's sensors
+        updateConditionDropdowns();
+
+        console.log(`Relay ${id} name updated to ${newName}`);
+    }
+}
+
+function updateRelayPin(id, pinInput) {
+    const relay = getRelay(id);
+    if (relay) {
+        relay.pin = parseInt(pinInput.value) || 1;
+        console.log(`Relay ${id} pin updated to ${relay.pin}`);
+    }
+}
+
+function updateSensorName(id, newName) {
+    const sensor = getSensor(id);
+    if (sensor) {
+        sensor.name = newName;
+
+        // Update the display without re-rendering
+        const nameElement = document.querySelector(`[data-sensor-name="${id}"]`);
+        const initialDisplay = document.querySelector(`[data-sensor-initial="${id}"]`);
+
+        if (nameElement) nameElement.textContent = newName;
+        if (initialDisplay) initialDisplay.textContent = newName.charAt(0);
+
+        // Update all condition dropdowns that reference sensors
+        updateConditionDropdowns();
+
+        console.log(`Sensor ${id} name updated to ${newName}`);
+    }
+}
+
+function updateSensorPin(id, pin) {
+    const sensor = getSensor(id);
+    if (sensor) {
+        sensor.pin = parseInt(pin) || 1;
+        console.log(`Sensor ${id} pin updated to ${sensor.pin}`);
+    }
+}
+
+// ===== CONDITION UPDATE FUNCTIONS =====
+function updateConditionSensor(relayId, conditionId, sensorId) {
+    const relay = getRelay(relayId);
+    if (!relay) return;
+
+    const condition = relay.conditions.find(c => c.id === conditionId);
+    if (condition) {
+        condition.sensor = parseInt(sensorId);
+        condition.sensorId = parseInt(sensorId); // Keep both for compatibility
+        console.log(`Condition ${conditionId} sensor updated to ${sensorId}`);
+    }
+}
+
+function updateConditionOperator(relayId, conditionId, operator) {
+    const relay = getRelay(relayId);
+    if (!relay) return;
+
+    const condition = relay.conditions.find(c => c.id === conditionId);
+    if (condition) {
+        condition.operator = operator;
+        console.log(`Condition ${conditionId} operator updated to ${operator}`);
+    }
+}
+
+function updateConditionValue(relayId, conditionId, value) {
+    const relay = getRelay(relayId);
+    if (!relay) return;
+
+    const condition = relay.conditions.find(c => c.id === conditionId);
+    if (condition) {
+        condition.value = parseFloat(value) || 0;
+        console.log(`Condition ${conditionId} value updated to ${condition.value}`);
+    }
+}
+
+function updateConditionDropdowns() {
+    // Update all sensor dropdowns in conditions to reflect current sensor names
+    const sensorSelects = document.querySelectorAll('.sensor-select');
+    sensorSelects.forEach(select => {
+        const currentValue = select.value;
+        select.innerHTML = sensorList
+            .map(sensor => `
+                <option value="${sensor.id}" ${sensor.id == currentValue ? 'selected' : ''}>
+                    ${sensor.name}
+                </option>
+            `)
+            .join('');
+    });
+}
+
+function removeCondition(relayId, conditionId) {
+    const relay = getRelay(relayId);
+    if (!relay) return;
+
+    const index = relay.conditions.findIndex(c => c.id === conditionId);
+    if (index !== -1) {
+        relay.conditions.splice(index, 1);
+        renderConditions(relayId);
+        console.log(`Condition ${conditionId} removed from relay ${relayId}`);
+    }
+}
+
+// ===== RENDER FUNCTIONS =====
+function renderSensors() {
+    const container = document.getElementById('sensor-container');
+    if (!container) return;
+
+    container.innerHTML = sensorList.map(createSensorHTML).join('');
+}
+
+function renderRelays() {
+    const container = document.getElementById('relay-container');
+    if (!container) return;
+
+    container.innerHTML = relayList.map(createRelayHTML).join('');
+}
+
+function renderConditions(relayId) {
+    const relay = getRelay(relayId);
+    if (!relay) return;
+
+    const container = document.querySelector(`[data-relay-id="${relayId}"]`);
+    if (!container) return;
+
+    container.innerHTML = relay.conditions
+        .map(condition => createConditionHTML(condition, relayId))
+        .join('');
+}
+
+function reloadConditions(relayId) {
+    renderConditions(relayId); // Same functionality, cleaner implementation
+}
+
+// ===== SETTINGS TOGGLE FUNCTIONS =====
+function toggleSensorSettings(sensorId) {
+    const sensor = getSensor(sensorId);
+    const settingsPanel = document.querySelector(`[data-sensor-container="${sensorId}"]`);
+
+    if (sensor && settingsPanel) {
+        sensor.folded = !sensor.folded;
+
+        if (sensor.folded) {
+            settingsPanel.classList.remove('grid');
+        } else {
+            settingsPanel.classList.add('grid');
         }
+    }
+}
 
-        // All sensors/relays
-        var sensorList = [];
-        var relayList = [];
+function toggleRelaySettings(relayId) {
+    const relay = getRelay(relayId);
+    const settingsPanel = document.querySelector(`[data-relay-container="${relayId}"]`);
 
-        function addSensor(sensortype, dropdown) {
-            // Reset dropdown
-            dropdown.value = 0
+    if (relay && settingsPanel) {
+        relay.folded = !relay.folded;
 
-            // Add new sensor
-            var sensor = new Sensor(sensorList.length + 1, "Sensor Name", 1, 0, true);
-            sensorList.push(sensor);
-            renderSensors();
+        if (relay.folded) {
+            settingsPanel.classList.remove('grid');
+        } else {
+            settingsPanel.classList.add('grid');
         }
+    }
+}
 
-        function addRelay(relaytype, dropdown) {
-            // Reset dropdown
-            dropdown.value = 0
-
-            // Add new relay
-            var relay = new Relay(relayList.length + 1, "Relay Name", 1, [], false, false);
-            relayList.push(relay);
-            renderRelays();
-        }
-        function addCondition(conditionReceiver, dropdown) {
-            // Add new condition
-            const relay = relayList.find(r => r.id === conditionReceiver)
-
-            relay.conditions.push(new Condition(1, ">", 1, relay.conditions.length + 1, dropdown.value));
-            console.log(relay.conditions)
-
-            renderConditions(relay.id);
-
-            // Reset dropdown
-            dropdown.value = 0
-        }
-
-        function renderConditions(relayId) {
-            const relay = relayList.find(r => r.id === relayId);
-
-            const conditionContainer = document.querySelector(`[data-relay-id="${relay.id}"]`);
-
-            let conditionHTML = ""
-            for (let index = 0; index < relay.conditions.length; index++) {
-                console.log(relay.conditions[index].type);
-                conditionHTML += createConditionHTML(relay.conditions[index], relay.id);
-            }
-            conditionContainer.innerHTML = conditionHTML;
-
-        }
-
-        function renderRelays() {
-            const relayContainer = document.getElementById('relay-container');
-            let renderedHTML = ""
-            for (let index = 0; index < relayList.length; index++) {
-                const relay = relayList[index];
-                renderedHTML += createRelayHTML(relay);
-            }
-            relayContainer.innerHTML = renderedHTML;
-        }
-
-        function renderSensors() {
-            const sensorContainer = document.getElementById('sensor-container');
-            let renderedHTML = ""
-            for (let index = 0; index < sensorList.length; index++) {
-                const sensor = sensorList[index];
-                renderedHTML += createSensorHTML(sensor);
-            }
-            sensorContainer.innerHTML = renderedHTML;
-        }
-
-        function reloadConditions(relayId) {
-            let conditionHTML = "";
-            const conditions = getRelay(relayId).conditions;
-            const conditionContainer = document.querySelector(`[data-relay-id="${relayId}"]`);
-
-            for (let index = 0; index < conditions.length; index++) {
-                const condition = conditions[index];
-                conditionHTML += createConditionHTML(condition, relayId);
-            }
-
-            conditionContainer.innerHTML = conditionHTML;
-        }
-
-        function getRelay(id) {
-            return relayList.find(r => r.id === id)
-        }
-        function getSensor(id) {
-            return sensorList.find(s => s.id === id);
-        }
-
-        // function createRelayHTML(relay) {
-        //     return `
-        //         <div class="sensor" data-id="${relay.id}">
-        //             <div class="relay">
-        //                 <div>R</div>
-        //                 <div>Name: <span>${relay.name}</span></div>
-        //                 <button class="toggle-settings" aria-label="Toggle relay settings">⚙️</button>
-        //                 <button class="remove-relay" aria-label="Remove relay">❌</button>
-        //             </div>
-        //             <div class="relay-settings-panel " ${relay.folded ? 'grid;"' : ''}>
-        //                 <div class="input">
-        //                     <label for="relay-name-${relay.id}">Name: </label>
-        //                     <input type="text" id="relay-name-${relay.id}" class="relay-name" value="${relay.name}" placeholder="Relay name">
-        //                 </div>
-        //                 <div class="input">
-        //                     <label for="relay-pin-${relay.id}">Pin: </label>
-        //                     <input type="number" id="relay-pin-${relay.id}" class="relay-pin" value="${relay.pin}" placeholder="Devboard output pin">
-        //                 </div>
-        //                 <span>Conditions</span>
-        //                 ${//relay.conditions.map(condition => createConditionHTML(condition, relay.id)).join('')
-        //                 ""}
-        //                 <select class="add-condition-select">
-        //                     <option value="">Add Condition</option>
-        //                     <option value="sensor">Sensor Condition</option>
-        //                 </select>
-        //             </div>
-        //         </div>
-        //     `;
-        // }
-
-        function createConditionHTML(condition, relayId) {
-            if (condition.type === 'sensor') {
-                return `
-                    <div class="relay-settings" data-condition-id="${condition.id}">
-                        <div class="input">
-                            <select class="sensor-select" data-condition-sensors="${relayId}">
-                                ${sensorList.map(sensor => `<option value="${sensor.id}" ${sensor.id === condition.sensorId ? 'selected' : ''}>${sensor.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="input">
-                            <select class="operator-select operator">
-                                <option value=">" ${condition.operator === '>' ? 'selected' : ''}>></option>
-                                <option value="<" ${condition.operator === '<' ? 'selected' : ''}><</option>
-                            </select>
-                        </div>
-                        <div class="input">
-                            <input type="number" class="condition-value" value="${condition.value}" placeholder="Value">
-                        </div>
-                        <div class="arrow-container">
-                            <button class="move-up" onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'up')">⬆️</button>
-                            <button class="move-down" onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'down')">⬇️</button>
-                        </div>
-                        <button class="remove-condition">❌</button>
-                    </div>
-                `;
-            }
-            return '';
-        }
-
-        function updateRelayName(id, newName) {
-            getRelay(id).name = newName;
-            console.log(`Relay ${id} name updated to ${newName}`);
-        }
-        function updateRelayPin(id, pin) {
-            getRelay(id).pin = pin;
-            console.log(`Relay ${id} pin updated to ${pin}`);
-        }
-        function updateSensorName(id, newName) {
-            getSensor(id).name = newName;
-            document.querySelector(`[data-sensor-info="${id}"]`).innerHTML = newName
-            console.log(`Sensor ${id} name updated to ${newName}`);
-        }
-        function updateSensorPin(id, pin) {
-            getSensor(id).pin = pin;
-            console.log(`Sensor ${id} pin updated to ${pin}`);
-        }
-
-        // function addCondition(id, condition) {
-        //     getRelay(id).conditions.push(condition);
-        //     console.log(`Condition added to relay ${id}`);
-        // }
-
-
-        function createRelayHTML(relay) {
-            return `
-<div id="${relay.id}">
-    <div class="sensor">
-        <div>${relay.name.charAt(0)}</div>
-        <div>${relay.name}: <span data-relay-status="${relay.id}">${relay.status ? '🟢' : '🟥'}</span></div>
-        <button
-            onclick="this.parentNode.parentNode.querySelector('.sensor-settings').classList.toggle('grid')">⚙️</button>
-        <button onclick="removeRelay(${relay.name})">❌</button>
-    </div>
-    <div class="sensor-settings" data-relay-container="${relay.id}">
-        <div class="input">
-            <label for="relay-name" >Name:</label>
-            <input type="text" name="relay-name" id="relay-name" placeholder="*ahem* jeff?" value="${relay.name}" onchange="updateRelayName(${relay.id}, this.value)">
+// ===== HTML GENERATION FUNCTIONS =====
+function createSensorHTML(sensor) {
+    return `
+        <div id="${sensor.id}">
+            <div class="sensor">
+                <div data-sensor-initial="${sensor.id}">${sensor.name.charAt(0)}</div>
+                <div>
+                    <span data-sensor-name="${sensor.id}">${sensor.name}</span>:
+                    <span data-sensor-value="${sensor.id}">${sensor.value}</span>
+                </div>
+                <button onclick="toggleSensorSettings(${sensor.id})" aria-label="Toggle sensor">⚙️</button>
+                <button aria-label="Remove sensor">❌</button>
+            </div>
+            <div class="sensor-settings ${sensor.folded ? '' : 'grid'}" data-sensor-container="${sensor.id}">
+                <div class="input">
+                    <label for="sensor-name">Name: </label>
+                    <input
+                        type="text"
+                        id="sensor-name"
+                        placeholder="Jeff maybe?"
+                        value="${sensor.name}"
+                        onchange="updateSensorName(${sensor.id}, this.value)"
+                    >
+                </div>
+                <div class="input">
+                    <label for="sensor-pin">Pin: </label>
+                    <input
+                        type="number"
+                        id="sensor-pin"
+                        placeholder="Devboard pin number"
+                        value="${sensor.pin}"
+                        onchange="updateSensorPin(${sensor.id}, this.value)"
+                    >
+                </div>
+            </div>
         </div>
-        <div class="input">
-            <label for="relay-pin">Pin: </label>
-            <input type="number" id="relay-pin" placeholder="Devboard output pin" value="${relay.pin}" onchange="updateRelayPin(${relay.id}, this)">
+    `;
+}
+
+function createRelayHTML(relay) {
+    return `
+        <div id="${relay.id}">
+            <div class="sensor">
+                <div data-relay-initial="${relay.id}">${relay.name.charAt(0)}</div>
+                <div>
+                    <span data-relay-name="${relay.id}">${relay.name}</span>:
+                    <span data-relay-status="${relay.id}">${relay.status ? '🟢' : '🟥'}</span>
+                </div>
+                <button onclick="toggleRelaySettings(${relay.id})">⚙️</button>
+                <button onclick="removeRelay(${relay.name})">❌</button>
+            </div>
+            <div class="sensor-settings ${relay.folded ? '' : 'grid'}" data-relay-container="${relay.id}">
+                <div class="input">
+                    <label for="relay-name">Name:</label>
+                    <input
+                        type="text"
+                        name="relay-name"
+                        id="relay-name"
+                        placeholder="*ahem* jeff?"
+                        value="${relay.name}"
+                        onchange="updateRelayName(${relay.id}, this.value)"
+                    >
+                </div>
+                <div class="input">
+                    <label for="relay-pin">Pin: </label>
+                    <input
+                        type="number"
+                        id="relay-pin"
+                        placeholder="Devboard output pin"
+                        value="${relay.pin}"
+                        onchange="updateRelayPin(${relay.id}, this)"
+                    >
+                </div>
+                <span>Conditions</span>
+                <div data-relay-id="${relay.id}"></div>
+                <select onchange="addCondition(${relay.id}, this)">
+                    <option value="0">Add Condition</option>
+                    <option value="sensor">Sensor Condition</option>
+                </select>
+            </div>
         </div>
-        <span>Conditions</span>
-        <div data-relay-id="${relay.id}"></div>
-        <select onchange="addCondition(${relay.id}, this)">
-            <option value="0">Add Condition</option>
-            <option value="sensor">Sensor Condition</option>
-        </select>
-    </div>
+    `;
+}
 
-</div>
-</div>
-`
-        }
+function createConditionHTML(condition, relayId) {
+    if (condition.type !== 'sensor') return '';
 
-        function createSensorHTML(sensor) {
-            return `
-            <div id="${sensor.id}">
-                                            <div class="sensor">
-                                <div>${sensor.name.charAt(0)}</div>
-                                <div><span data-sensor-name="${sensor.id}">${sensor.name}</span>: <span data-sensor-value="${sensor.id}">${sensor.value}</span></div>
-                                <button onclick="this.classList.toggle('active')" aria-label="Toggle sensor">⚙️</button>
-                                <button aria-label="Remove sensor">❌</button>
-                            </div>
-                            <div class="sensor-settings" data-sensor-container=${sensor.id}>
-                                <div class="input">
-                                    <label for="sensor-name">Name: </label>
-                                    <input type="text" id="sensor-name" placeholder="Jeff maybe?" value="${sensor.name}" onchange="updateSensorName(${sensor.id}, this.value)">
-                                </div>
-                                <div class="input">
-                                    <label for="sensor-pin">Pin: </label>
-                                    <input type="number" id="sensor-pin" placeholder="Devboard pin number" value="${sensor.pin}" onchange="updateSensorPin(${sensor.id}, this.value)">
-                                </div>
-                            </div>
-                            </div>
-            `;
-        }
+    const sensorOptions = sensorList
+        .map(sensor => `
+            <option value="${sensor.id}" ${sensor.id === condition.sensorId ? 'selected' : ''}>
+                ${sensor.name}
+            </option>
+        `)
+        .join('');
 
-        function getData() {
-            fetch('readADC')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById("DataUpdates").innerHTML = data;
-                })
-                .catch(error => console.error('Error:', error));
-        }
+    return `
+        <div class="relay-settings" data-condition-id="${condition.id}">
+            <div class="input">
+                <select
+                    class="sensor-select"
+                    data-condition-sensors="${relayId}"
+                    onchange="updateConditionSensor(${relayId}, ${condition.id}, this.value)"
+                >
+                    ${sensorOptions}
+                </select>
+            </div>
+            <div class="input">
+                <select
+                    class="operator-select operator"
+                    onchange="updateConditionOperator(${relayId}, ${condition.id}, this.value)"
+                >
+                    <option value=">" ${condition.operator === '>' ? 'selected' : ''}>&gt;</option>
+                    <option value="<" ${condition.operator === '<' ? 'selected' : ''}>&lt;</option>
+                </select>
+            </div>
+            <div class="input">
+                <input
+                    type="number"
+                    class="condition-value"
+                    value="${condition.value}"
+                    placeholder="Value"
+                    onchange="updateConditionValue(${relayId}, ${condition.id}, this.value)"
+                >
+            </div>
+            <div class="arrow-container">
+                <button
+                    class="move-up"
+                    onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'up')"
+                >⬆️</button>
+                <button
+                    class="move-down"
+                    onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'down')"
+                >⬇️</button>
+            </div>
+            <button
+                class="remove-condition"
+                onclick="removeCondition(${relayId}, ${condition.id})"
+            >❌</button>
+        </div>
+    `;
+}
 
-        document.addEventListener('DOMContentLoaded', function () {
-            const body = document.body;
-            const hamburgerMenu = document.querySelector('.hamburger-menu');
-            const mobileOverlay = document.querySelector('.mobile-overlay');
-            const sidebar = document.querySelector('.sidebar');
-            const tabButtons = document.querySelectorAll('.tab-button');
-            const contentPanels = document.querySelectorAll('.content-panel');
+// ===== DATA FETCHING =====
+function getData() {
+    fetch('readADC')
+        .then(response => response.text())
+        .then(data => {
+            const element = document.getElementById("DataUpdates");
+            if (element) {
+                element.innerHTML = data;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
 
-            const toggleMobileMenu = () => {
-                const isOpen = body.classList.toggle('sidebar-open');
-                hamburgerMenu.setAttribute('aria-expanded', isOpen);
-            };
+// ===== UI EVENT HANDLERS =====
+document.addEventListener('DOMContentLoaded', function() {
+    const body = document.body;
+    const hamburgerMenu = document.querySelector('.hamburger-menu');
+    const mobileOverlay = document.querySelector('.mobile-overlay');
+    const sidebar = document.querySelector('.sidebar');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const contentPanels = document.querySelectorAll('.content-panel');
 
-            hamburgerMenu.addEventListener('click', toggleMobileMenu);
-            mobileOverlay.addEventListener('click', toggleMobileMenu);
+    if (!hamburgerMenu || !mobileOverlay || !sidebar) return;
 
-            sidebar.addEventListener('click', function (e) {
-                if (e.target && e.target.classList.contains('tab-button')) {
-                    const tabButton = e.target;
-                    const targetTabId = tabButton.dataset.tab;
+    const toggleMobileMenu = () => {
+        const isOpen = body.classList.toggle('sidebar-open');
+        hamburgerMenu.setAttribute('aria-expanded', isOpen);
+    };
 
-                    tabButtons.forEach(btn => {
-                        btn.classList.remove('active');
-                        btn.setAttribute('aria-selected', 'false');
-                    });
-                    contentPanels.forEach(panel => panel.classList.remove('active'));
+    const handleTabClick = (e) => {
+        if (!e.target.classList.contains('tab-button')) return;
 
-                    tabButton.classList.add('active');
-                    tabButton.setAttribute('aria-selected', 'true');
-                    const targetPanel = document.getElementById(targetTabId);
-                    if (targetPanel) {
-                        targetPanel.classList.add('active');
-                    }
+        const tabButton = e.target;
+        const targetTabId = tabButton.dataset.tab;
 
-                    if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
-                        toggleMobileMenu();
-                    }
-                }
-            });
-
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape' && body.classList.contains('sidebar-open')) {
-                    toggleMobileMenu();
-                }
-            });
+        // Reset all tabs
+        tabButtons.forEach(btn => {
+            btn.classList.remove('active');
+            btn.setAttribute('aria-selected', 'false');
         });
+        contentPanels.forEach(panel => panel.classList.remove('active'));
+
+        // Activate selected tab
+        tabButton.classList.add('active');
+        tabButton.setAttribute('aria-selected', 'true');
+
+        const targetPanel = document.getElementById(targetTabId);
+        if (targetPanel) {
+            targetPanel.classList.add('active');
+        }
+
+        // Close mobile menu if open
+        if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
+            toggleMobileMenu();
+        }
+    };
+
+    const handleEscapeKey = (e) => {
+        if (e.key === 'Escape' && body.classList.contains('sidebar-open')) {
+            toggleMobileMenu();
+        }
+    };
+
+    // Event listeners
+    hamburgerMenu.addEventListener('click', toggleMobileMenu);
+    mobileOverlay.addEventListener('click', toggleMobileMenu);
+    sidebar.addEventListener('click', handleTabClick);
+    document.addEventListener('keydown', handleEscapeKey);
+});
     </script>
 </body>
 
