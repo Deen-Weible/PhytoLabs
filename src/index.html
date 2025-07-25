@@ -441,8 +441,8 @@
         .sensor-settings {
             margin-top: 12px;
             margin-bottom: 12px;
-            /* display: none; */
-            display: grid;
+            display: none;
+            /* display: grid; */
             background: var(--gray-contrast);
             padding: 14px;
             border-radius: 8px;
@@ -547,6 +547,7 @@
                             <option value="Relay">Standard Relay</option>
                         </select>
                     </div>
+                    <button onclick="console.log(getAllData());">Log ze' json if you want to live!!</button>
                 </section>
             </section>
         </main>
@@ -654,6 +655,7 @@ function addSensor(sensortype, dropdown) {
 
     sensorList.push(sensor);
     renderSensors();
+    updateConditionDropdowns();
 }
 
 function addRelay(relaytype, dropdown) {
@@ -688,6 +690,71 @@ function addCondition(conditionReceiver, dropdown) {
     renderConditions(relay.id);
     resetDropdown(dropdown);
 }
+
+function getAllData() {
+    const exportData = {
+        sensors: sensorList.map(sensor => ({
+            id: sensor.id,
+            name: sensor.name,
+            pin: sensor.pin,
+        })),
+        relays: relayList.map(relay => ({
+            id: relay.id,
+            name: relay.name,
+            pin: relay.pin,
+            conditions: relay.conditions.map(condition => ({
+                id: condition.id,
+                sensor: condition.sensor,
+                sensorId: condition.sensorId,
+                operator: condition.operator,
+                type: condition.type
+            }))
+        }))
+    };
+
+    return JSON.stringify(exportData, null, 2);
+}
+
+function checkNameOrPinDuplicates() {
+    const names = [];
+    const pins = [];
+
+    // Collect names and pins from all sensors and relays
+    sensorList.forEach(sensor => {
+        names.push(sensor.name);
+        pins.push(sensor.pin);
+    });
+
+    relayList.forEach(relay => {
+        names.push(relay.name);
+        pins.push(relay.pin);
+    });
+
+    // Check for duplicate names
+    const nameSet = new Set();
+    let hasNameDuplicate = false;
+    for (const name of names) {
+        if (nameSet.has(name)) {
+            hasNameDuplicate = true;
+            break;
+        }
+        nameSet.add(name);
+    }
+
+    // Check for duplicate pins
+    const pinSet = new Set();
+    let hasPinDuplicate = false;
+    for (const pin of pins) {
+        if (pinSet.has(pin)) {
+            hasPinDuplicate = true;
+            break;
+        }
+        pinSet.add(pin);
+    }
+
+    return { hasNameDuplicate, hasPinDuplicate };
+}
+
 
 // ===== UPDATE FUNCTIONS =====
 function updateRelayName(id, newName) {
@@ -794,6 +861,30 @@ function updateConditionDropdowns() {
     });
 }
 
+function removeSensor(id) {
+    const sensor = getSensor(id);
+    if (sensor) {
+        const index = sensorList.indexOf(sensor);
+        if (index !== -1) {
+            sensorList.splice(index, 1);
+            renderSensors();
+            updateConditionDropdowns();
+        }
+    }
+}
+
+function removeRelay(id) {
+    const relay = getRelay(id);
+    if (relay) {
+        const index = relayList.indexOf(relay);
+        if (index !== -1) {
+            relayList.splice(index, 1);
+            renderRelays();
+        }
+    }
+}
+
+
 function removeCondition(relayId, conditionId) {
     const relay = getRelay(relayId);
     if (!relay) return;
@@ -879,7 +970,7 @@ function createSensorHTML(sensor) {
                     <span data-sensor-value="${sensor.id}">${sensor.value}</span>
                 </div>
                 <button onclick="toggleSensorSettings(${sensor.id})" aria-label="Toggle sensor">⚙️</button>
-                <button aria-label="Remove sensor">❌</button>
+               <button onclick="removeSensor(${sensor.id})" aria-label="Remove sensor">❌</button>
             </div>
             <div class="sensor-settings ${sensor.folded ? '' : 'grid'}" data-sensor-container="${sensor.id}">
                 <div class="input">
@@ -917,7 +1008,7 @@ function createRelayHTML(relay) {
                     <span data-relay-status="${relay.id}">${relay.status ? '🟢' : '🟥'}</span>
                 </div>
                 <button onclick="toggleRelaySettings(${relay.id})">⚙️</button>
-                <button onclick="removeRelay(${relay.name})">❌</button>
+                <button onclick="removeRelay(${relay.id})" aria-label="Remove relay">❌</button>
             </div>
             <div class="sensor-settings ${relay.folded ? '' : 'grid'}" data-relay-container="${relay.id}">
                 <div class="input">
