@@ -466,43 +466,26 @@ void loop() {
     internal_time.Tick();
     base_ui.Draw();
 
-    // Update sensors and relays periodically
-    unsigned long currentTime = millis();
-    // Update sensor values
-    // for (int i = 0; i < manager.GetNumSensors(); i++) {
-    //   Sensor *sensor = manager.GetSensorById(i + 1);
-    //   if (sensor) {
-    //     // float value = readSensorValue(sensor);
-    //     sensor->SetValue(debug_pin_value);
-    //     Serial.println("sensor value: " + String(sensor->GetValue()));
-    //     Serial.println("sensor id" + String(sensor->GetId()));
-    //   }
-    // }
-    for (int i = 0; i < sizeof(manager.GetSensorArray()); i++) {
-      Sensor sensor = manager.GetSensorArray()[i];
-
-      sensor.SetValue(debug_pin_value);
-    }
-
-    for (int i = 0; i < sizeof(manager.GetRelayArray()); i++) {
-      Relay relay = manager.GetRelayArray()[i];
-
-      bool shouldBeOn = evaluateRelayConditions(relay, manager);
-      if (shouldBeOn != relay.GetStatus()) {
-        Serial.println("updated relay " + relay.GetId());
+    // Update sensor values with debug_pin_value
+    for (int i = 0; i < manager.GetNumSensors(); i++) {
+      if (manager.sensors[i]) { // Direct array access
+        manager.sensors[i]->SetValue(debug_pin_value);
       }
     }
 
     // Process each relay
-    // for (int i = 0; i < manager.GetNumRelays(); i++) {
-    //   Relay *relay = manager.GetRelayById(i + 1);
-    //   if (relay) {
-    //     bool shouldBeOn = evaluateRelayConditions(*relay, manager);
-    //     if (shouldBeOn != relay->GetStatus()) {
-    //       Serial.println("updated relay " + relay->GetId());
-    //     }
-    //   }
-    // }
+    for (int i = 0; i < manager.GetNumRelays(); i++) {
+      if (manager.relays[i]) { // Direct array access
+        Relay &relay = *manager.relays[i];
+        bool shouldBeOn = evaluateRelayConditions(relay, manager);
+        if (shouldBeOn != relay.GetStatus()) {
+          relay.SetStatus(shouldBeOn);
+          // digitalWrite(relay.GetPin(), shouldBeOn ? HIGH : LOW);
+          Serial.print("Relay updated: ");
+          Serial.println(relay.GetStatus());
+        }
+      }
+    }
 
   } while (u8g2.nextPage());
 }

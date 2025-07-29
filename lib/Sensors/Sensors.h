@@ -180,9 +180,9 @@ public:
     uint8_t GetNumSensors() const { return num_sensors; }
     uint8_t GetNumRelays() const { return num_relays; }
 
-private:
     Sensor* sensors[MAX_SENSORS];
     Relay* relays[MAX_RELAYS];
+private:
     uint8_t num_sensors;
     uint8_t num_relays;
 };

@@ -729,7 +729,7 @@
         }
 
         function getAllData() {
-            const exportData = {
+            let exportData = {
                 sensors: sensorList.map(sensor => ({
                     id: sensor.id,
                     name: sensor.name,
@@ -744,6 +744,7 @@
                         sensor: condition.sensor,
                         sensorId: condition.sensorId,
                         operator: condition.operator,
+                        value: condition.value,
                         type: condition.type
                     }))
                 }))
@@ -790,30 +791,6 @@
             }
 
             return { hasNameDuplicate, hasPinDuplicate };
-        }
-
-
-        function getAllData() {
-            const exportData = {
-                sensors: sensorList.map(sensor => ({
-                    id: sensor.id,
-                    name: sensor.name,
-                    pin: sensor.pin,
-                })),
-                relays: relayList.map(relay => ({
-                    id: relay.id,
-                    name: relay.name,
-                    pin: relay.pin,
-                    conditions: relay.conditions.map(condition => ({
-                        id: condition.id,
-                        sensor: condition.sensor,
-                        sensorId: condition.sensorId,
-                        operator: condition.operator,
-                        type: condition.type
-                    }))
-                }))
-            };
-            return JSON.stringify(exportData, null, 2);
         }
 
         // ===== JSON IMPORT FUNCTION =====
@@ -1324,13 +1301,18 @@
                 </select>
             </div>
             <div class="input">
-                <select
-                    class="operator-select operator"
-                    onchange="updateConditionOperator(${relayId}, ${condition.id}, this.value)"
-                >
-                    <option value=">" ${condition.operator === '>' ? 'selected' : ''}>&gt;</option>
-                    <option value="<" ${condition.operator === '<' ? 'selected' : ''}>&lt;</option>
-                </select>
+<select
+    class="operator-select operator"
+    onchange="updateConditionOperator(${relayId}, ${condition.id}, this.value)"
+>
+    <option value=">" ${condition.operator === '>' ? 'selected' : ''}>&gt;</option>
+    <option value="<" ${condition.operator === '<' ? 'selected' : ''}>&lt;</option>
+    <option value=">=" ${condition.operator === '>=' ? 'selected' : ''}>&ge;</option>
+    <option value="<=" ${condition.operator === '<=' ? 'selected' : ''}>&le;</option>
+    <option value="=" ${condition.operator === '=' ? 'selected' : ''}>=</option>
+    <option value="!=" ${condition.operator === '!=' ? 'selected' : ''}>&ne;</option>
+</select>
+
             </div>
             <div class="input">
                 <input
@@ -1432,8 +1414,8 @@
 
         // ===== Submit Sensor+Relay info ======
         async function submitSensors() {
-            const data = getAllData();  // Your function that returns the JSON data (stringified or object)
-            const formData = new FormData();
+            let data = getAllData();  // Your function that returns the JSON data (stringified or object)
+            let formData = new FormData();
             formData.append('body', typeof data === 'object' ? JSON.stringify(data) : data);  // Ensure data is a string
 
             try {
