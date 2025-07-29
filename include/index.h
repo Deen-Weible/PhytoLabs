@@ -5,7 +5,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Responsive Tabbed Interface</title>
+    <title>PhytoLabs Dashboard</title>
     <style>
         /* Global Styles & Variables */
         :root {
@@ -265,7 +265,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         }
 
         /* Responsive Styles */
-        @media (max-width: 768px) {
+        @media (max-width: 1000px) {
             .page-container {
                 grid-template-columns: 1fr;
             }
@@ -322,6 +322,10 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         }
 
         /* Settings Widgets */
+        .solid-button {
+            border: 4px solid gray;
+        }
+
         button {
             padding: 5px;
             background-color: transparent;
@@ -341,7 +345,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
 
         .settings-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
             grid-column-gap: 20px;
         }
 
@@ -358,6 +362,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             background-color: var(--accent-color);
             display: grid;
             grid-auto-rows: min-content;
+            max-width: 100%;
         }
 
         .settings-widget>span:first-child {
@@ -440,8 +445,9 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
 
         .sensor-settings {
             margin-top: 12px;
-            /* display: none; */
-            display: grid;
+            margin-bottom: 12px;
+            display: none;
+            /* display: grid; */
             background: var(--gray-contrast);
             padding: 14px;
             border-radius: 8px;
@@ -494,7 +500,8 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         <!-- Header -->
         <header class="main-header">
             <div class="logo">PhytoLabs</div>
-            <div class="error-icon" title="Error: Something went wrong" aria-label="Error indicator">!</div>
+            <div class="error-icon" id="error-icon" title="Error: Something went wrong" aria-label="Error indicator">!
+            </div>
             <div class="hamburger-menu" aria-label="Toggle navigation" aria-expanded="false">
                 <span class="bar bar1"></span>
                 <span class="bar bar2"></span>
@@ -546,16 +553,65 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                             <option value="Relay">Standard Relay</option>
                         </select>
                     </div>
+                    <div class="settings-widget">
+                        <span>Debug pin value</span>
+                        <span>Debug pin value</span>
+                        <div class="sensor-settings grid">
+                            <div class="input">
+                                <label for="debugPin">pin:</label>
+                                <input type="number" id="debugPin" value="1" onchange="updateDebugPin(this.value)" />
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <div class="settings-widget">
+                        <span>Update</span>
+                        <span>Perform system update </span>
+                        <div class="sensor-settings grid">
+                            <span id="firmupdate-btn">Select .BIN file to begin</span>
+                            <form id="uploadForm" enctype="multipart/form-data">
+                                <div class="input">
+                                    <label for="file">file :</label>
+                                    <input type="file" name="file" accept=".bin" required>
+                                </div> <br>
+                                <input type="submit" value="Update Firmware" class="button">
+                            </form>
+                        </div>
+                    </div> -->
+                    <button onclick="submitSensors()" class="solid-button" id="submit-button">Submit</button>
                 </section>
             </section>
         </main>
     </div>
 
     <script>
+        // ===== DATA STORAGE =====
+        let sensorList = [];
+        let relayList = [];
+
+        // Data fetching - Initialize and set up polling
+        fetch('readCONFIG')
+            .then(response => response.text())
+            .then(data => {
+                importFromJSON(data);
+            })
         getData();
-        setInterval(function () {
-            getData();
-        }, 2000);
+        setInterval(getData, 2000);
+        setInterval(checkForDuplicates, 2000);
+
+        // ===== CLASS DEFINITIONS =====
+        class Sensor {
+            constructor(id, name, pin, value, folded = true) {
+                this.id = id;
+                this.name = name;
+                this.pin = pin;
+                this.value = value;
+                this.folded = folded;
+            }
+
+            setValue(value) {
+                this.value = value;
+            }
+        }
 
         class Condition {
             constructor(sensor, operator, value, id, type) {
@@ -567,22 +623,9 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             }
         }
 
-        class Sensor {
-            constructor(id, name, pin, value, folded) {
-                this.id = id;
-                this.name = name;
-                this.pin = pin;
-                this.value = value;
-                this.folded = folded;
-            }
-            setValue(value) {
-                this.value = value;
-            }
-        }
-
         class Relay {
-            constructor(id, name, pin, conditions, status, folded) {
-                this.id = id
+            constructor(id, name, pin, conditions = [], status = false, folded = false) {
+                this.id = id;
                 this.name = name;
                 this.pin = pin;
                 this.conditions = conditions;
@@ -597,197 +640,740 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             isOn() {
                 return this.status;
             }
+
+            moveCondition(conditionId, direction) {
+                const currentIndex = this.conditions.findIndex(c => c.id === conditionId);
+                if (currentIndex === -1) return;
+
+                const canMoveUp = direction === 'up' && currentIndex > 0;
+                const canMoveDown = direction === 'down' && currentIndex < this.conditions.length - 1;
+
+                if (canMoveUp) {
+                    this._swapConditions(currentIndex, currentIndex - 1);
+                } else if (canMoveDown) {
+                    this._swapConditions(currentIndex, currentIndex + 1);
+                }
+
+                if (canMoveUp || canMoveDown) {
+                    reloadConditions(this.id);
+                }
+            }
+
+            _swapConditions(index1, index2) {
+                [this.conditions[index1], this.conditions[index2]] =
+                    [this.conditions[index2], this.conditions[index1]];
+            }
         }
 
-        // All sensors/relays
-        var sensorList = [];
-        var relayList = [];
 
+        // ===== UTILITY FUNCTIONS =====
+        function getRelay(id) {
+            return relayList.find(r => r.id === id);
+        }
+
+        function getSensor(id) {
+            return sensorList.find(s => s.id === id);
+        }
+
+        function resetDropdown(dropdown) {
+            dropdown.value = 0;
+        }
+
+        // ===== ADD FUNCTIONS =====
         function addSensor(sensortype, dropdown) {
-            // Reset dropdown
-            dropdown.value = 0
+            resetDropdown(dropdown);
 
-            // Add new sensor
-            var sensor = new Sensor(sensorList.length + 1, "Sensor Name", 1, 0, true);
+            const sensor = new Sensor(
+                sensorList.length + 1,
+                "Sensor Name",
+                1,
+                0
+            );
+
             sensorList.push(sensor);
             renderSensors();
+            updateConditionDropdowns();
         }
 
         function addRelay(relaytype, dropdown) {
-            // Reset dropdown
-            dropdown.value = 0
+            resetDropdown(dropdown);
 
-            // Add new relay
-            var relay = new Relay(relayList.length + 1, "Relay Name", 1, [], false, false);
+            const relay = new Relay(
+                relayList.length + 1,
+                "Relay Name",
+                1
+            );
+
             relayList.push(relay);
             renderRelays();
         }
+
         function addCondition(conditionReceiver, dropdown) {
-            // Add new condition
-            const relay = relayList.find(r => r.id === conditionReceiver)
+            const relay = getRelay(conditionReceiver);
+            if (!relay) return;
 
-            relay.conditions.push(new Condition(1, ">", 1, relay.conditions.length + 1, dropdown.value));
-            console.log(relay.conditions)
+            const condition = new Condition(
+                1,
+                ">",
+                1,
+                relay.conditions.length + 1,
+                dropdown.value
+            );
 
+            // Set sensorId for compatibility with the HTML generation
+            condition.sensorId = 1;
+
+            relay.conditions.push(condition);
             renderConditions(relay.id);
-
-            // Reset dropdown
-            dropdown.value = 0
+            resetDropdown(dropdown);
         }
 
-        function renderConditions(relayId) {
-            const relay = relayList.find(r => r.id === relayId);
+        function getAllData() {
+            const exportData = {
+                sensors: sensorList.map(sensor => ({
+                    id: sensor.id,
+                    name: sensor.name,
+                    pin: sensor.pin,
+                })),
+                relays: relayList.map(relay => ({
+                    id: relay.id,
+                    name: relay.name,
+                    pin: relay.pin,
+                    conditions: relay.conditions.map(condition => ({
+                        id: condition.id,
+                        sensor: condition.sensor,
+                        sensorId: condition.sensorId,
+                        operator: condition.operator,
+                        type: condition.type
+                    }))
+                }))
+            };
 
-            const conditionContainer = document.querySelector(`[data-relay-id="${relay.id}"]`);
+            return JSON.stringify(exportData, null, 2);
+        }
 
-            let conditionHTML = ""
-            for (let index = 0; index < relay.conditions.length; index++) {
-                console.log(relay.conditions[index].type);
-                conditionHTML += createConditionHTML(relay.conditions[index], relay.id);
+        function checkNameOrPinDuplicates() {
+            const names = [];
+            const pins = [];
+
+            // Collect names and pins from all sensors and relays
+            sensorList.forEach(sensor => {
+                names.push(sensor.name);
+                pins.push(sensor.pin);
+            });
+
+            relayList.forEach(relay => {
+                names.push(relay.name);
+                pins.push(relay.pin);
+            });
+
+            // Check for duplicate names
+            const nameSet = new Set();
+            let hasNameDuplicate = false;
+            for (const name of names) {
+                if (nameSet.has(name)) {
+                    hasNameDuplicate = true;
+                    break;
+                }
+                nameSet.add(name);
             }
-            conditionContainer.innerHTML = conditionHTML;
 
+            // Check for duplicate pins
+            const pinSet = new Set();
+            let hasPinDuplicate = false;
+            for (const pin of pins) {
+                if (pinSet.has(pin)) {
+                    hasPinDuplicate = true;
+                    break;
+                }
+                pinSet.add(pin);
+            }
+
+            return { hasNameDuplicate, hasPinDuplicate };
+        }
+
+
+        function getAllData() {
+            const exportData = {
+                sensors: sensorList.map(sensor => ({
+                    id: sensor.id,
+                    name: sensor.name,
+                    pin: sensor.pin,
+                })),
+                relays: relayList.map(relay => ({
+                    id: relay.id,
+                    name: relay.name,
+                    pin: relay.pin,
+                    conditions: relay.conditions.map(condition => ({
+                        id: condition.id,
+                        sensor: condition.sensor,
+                        sensorId: condition.sensorId,
+                        operator: condition.operator,
+                        type: condition.type
+                    }))
+                }))
+            };
+            return JSON.stringify(exportData, null, 2);
+        }
+
+        // ===== JSON IMPORT FUNCTION =====
+        function importFromJSON(jsonString) {
+            try {
+                const data = JSON.parse(jsonString);
+
+                // Validate the JSON structure
+                if (!data.sensors || !data.relays || !Array.isArray(data.sensors) || !Array.isArray(data.relays)) {
+                    throw new Error('Invalid JSON structure: missing sensors or relays arrays');
+                }
+
+                // Clear existing data
+                sensorList.length = 0;
+                relayList.length = 0;
+
+                // Import sensors
+                data.sensors.forEach(sensorData => {
+                    const sensor = new Sensor(
+                        sensorData.id || sensorList.length + 1,
+                        sensorData.name || 'Unnamed Sensor',
+                        sensorData.pin || 1,
+                        sensorData.value || 0,
+                        sensorData.folded !== undefined ? sensorData.folded : true
+                    );
+                    sensorList.push(sensor);
+                });
+
+                // Import relays
+                data.relays.forEach(relayData => {
+                    const relay = new Relay(
+                        relayData.id || relayList.length + 1,
+                        relayData.name || 'Unnamed Relay',
+                        relayData.pin || 1,
+                        [], // conditions will be added below
+                        relayData.status || false,
+                        relayData.folded !== undefined ? relayData.folded : false
+                    );
+
+                    // Import conditions for this relay
+                    if (relayData.conditions && Array.isArray(relayData.conditions)) {
+                        relayData.conditions.forEach(conditionData => {
+                            const condition = new Condition(
+                                conditionData.sensor || conditionData.sensorId || 1,
+                                conditionData.operator || '>',
+                                conditionData.value || 1,
+                                conditionData.id || relay.conditions.length + 1,
+                                conditionData.type || 'sensor'
+                            );
+
+                            // Ensure sensorId is set for compatibility
+                            condition.sensorId = conditionData.sensorId || conditionData.sensor || 1;
+
+                            relay.conditions.push(condition);
+                        });
+                    }
+
+                    relayList.push(relay);
+                });
+
+                // Re-render everything
+                renderSensors();
+                renderRelays();
+
+                // Update condition dropdowns to reflect imported sensors
+                updateConditionDropdowns();
+
+                console.log(`Import completed: ${sensorList.length} sensors, ${relayList.length} relays`);
+
+                return {
+                    success: true,
+                    message: `Successfully imported ${sensorList.length} sensors and ${relayList.length} relays`,
+                    sensorsCount: sensorList.length,
+                    relaysCount: relayList.length
+                };
+
+            } catch (error) {
+                console.error('Import failed:', error);
+                return {
+                    success: false,
+                    message: `Import failed: ${error.message}`,
+                    error: error
+                };
+            }
+        }
+
+        // ===== UTILITY FUNCTIONS FOR IMPORT =====
+        function loadFromJSON(jsonString) {
+            const result = importFromJSON(jsonString);
+
+            if (result.success) {
+                alert(result.message);
+            } else {
+                alert(`Error: ${result.message}`);
+            }
+
+            return result;
+        }
+
+        // ===== VALIDATION FUNCTIONS =====
+        function checkForDuplicates() {
+            const duplicates = {
+                names: [],
+                pins: [],
+                hasConflicts: false
+            };
+
+            // Check sensor names
+            const sensorNames = {};
+            sensorList.forEach(sensor => {
+                if (sensorNames[sensor.name]) {
+                    duplicates.names.push({
+                        type: 'sensor',
+                        name: sensor.name,
+                        ids: [...sensorNames[sensor.name], sensor.id]
+                    });
+                } else {
+                    sensorNames[sensor.name] = [sensor.id];
+                }
+            });
+
+            // Check relay names
+            const relayNames = {};
+            relayList.forEach(relay => {
+                if (relayNames[relay.name]) {
+                    duplicates.names.push({
+                        type: 'relay',
+                        name: relay.name,
+                        ids: [...relayNames[relay.name], relay.id]
+                    });
+                } else {
+                    relayNames[relay.name] = [relay.id];
+                }
+            });
+
+            // Check cross-type name conflicts (sensor and relay with same name)
+            Object.keys(sensorNames).forEach(name => {
+                if (relayNames[name]) {
+                    duplicates.names.push({
+                        type: 'cross-type',
+                        name: name,
+                        sensorIds: sensorNames[name],
+                        relayIds: relayNames[name]
+                    });
+                }
+            });
+
+            // Check sensor pins
+            const sensorPins = {};
+            sensorList.forEach(sensor => {
+                if (sensorPins[sensor.pin]) {
+                    duplicates.pins.push({
+                        type: 'sensor',
+                        pin: sensor.pin,
+                        ids: [...sensorPins[sensor.pin], sensor.id]
+                    });
+                } else {
+                    sensorPins[sensor.pin] = [sensor.id];
+                }
+            });
+
+            // Check relay pins
+            const relayPins = {};
+            relayList.forEach(relay => {
+                if (relayPins[relay.pin]) {
+                    duplicates.pins.push({
+                        type: 'relay',
+                        pin: relay.pin,
+                        ids: [...relayPins[relay.pin], relay.id]
+                    });
+                } else {
+                    relayPins[relay.pin] = [relay.id];
+                }
+            });
+
+            // Check cross-type pin conflicts (sensor and relay on same pin)
+            Object.keys(sensorPins).forEach(pin => {
+                if (relayPins[pin]) {
+                    duplicates.pins.push({
+                        type: 'cross-type',
+                        pin: parseInt(pin),
+                        sensorIds: sensorPins[pin],
+                        relayIds: relayPins[pin]
+                    });
+                }
+            });
+
+            duplicates.hasConflicts = duplicates.names.length > 0 || duplicates.pins.length > 0;
+
+            let errorIcon = document.getElementById('error-icon');
+
+            if (duplicates.hasConflicts) {
+                errorIcon.classList.add('visible');
+            } else {
+                errorIcon.classList.remove('visible');
+            }
+
+            return duplicates.hasConflicts;
+        }
+
+        // ===== UPDATE FUNCTIONS =====
+        function updateRelayName(id, newName) {
+            const relay = getRelay(id);
+            if (relay) {
+                relay.name = newName;
+
+                // Update the display without re-rendering
+                const nameDisplay = document.querySelector(`[data-relay-name="${id}"]`);
+                const initialDisplay = document.querySelector(`[data-relay-initial="${id}"]`);
+
+                if (nameDisplay) nameDisplay.textContent = newName;
+                if (initialDisplay) initialDisplay.textContent = newName.charAt(0);
+
+                // Update condition dropdowns that reference this relay's sensors
+                updateConditionDropdowns();
+
+                console.log(`Relay ${id} name updated to ${newName}`);
+            }
+        }
+
+        function updateRelayPin(id, pinInput) {
+            const relay = getRelay(id);
+            if (relay) {
+                relay.pin = parseInt(pinInput.value) || 1;
+                console.log(`Relay ${id} pin updated to ${relay.pin}`);
+            }
+        }
+
+        function updateSensorName(id, newName) {
+            const sensor = getSensor(id);
+            if (sensor) {
+                sensor.name = newName;
+
+                // Update the display without re-rendering
+                const nameElement = document.querySelector(`[data-sensor-name="${id}"]`);
+                const initialDisplay = document.querySelector(`[data-sensor-initial="${id}"]`);
+
+                if (nameElement) nameElement.textContent = newName;
+                if (initialDisplay) initialDisplay.textContent = newName.charAt(0);
+
+                // Update all condition dropdowns that reference sensors
+                updateConditionDropdowns();
+
+                console.log(`Sensor ${id} name updated to ${newName}`);
+            }
+        }
+
+        function updateSensorPin(id, pin) {
+            const sensor = getSensor(id);
+            if (sensor) {
+                sensor.pin = parseInt(pin) || 1;
+                console.log(`Sensor ${id} pin updated to ${sensor.pin}`);
+            }
+        }
+
+        // ===== CONDITION UPDATE FUNCTIONS =====
+        function updateConditionSensor(relayId, conditionId, sensorId) {
+            const relay = getRelay(relayId);
+            if (!relay) return;
+
+            const condition = relay.conditions.find(c => c.id === conditionId);
+            if (condition) {
+                condition.sensor = parseInt(sensorId);
+                condition.sensorId = parseInt(sensorId); // Keep both for compatibility
+                console.log(`Condition ${conditionId} sensor updated to ${sensorId}`);
+            }
+        }
+
+        function updateConditionOperator(relayId, conditionId, operator) {
+            const relay = getRelay(relayId);
+            if (!relay) return;
+
+            const condition = relay.conditions.find(c => c.id === conditionId);
+            if (condition) {
+                condition.operator = operator;
+                console.log(`Condition ${conditionId} operator updated to ${operator}`);
+            }
+        }
+
+        function updateConditionValue(relayId, conditionId, value) {
+            const relay = getRelay(relayId);
+            if (!relay) return;
+
+            const condition = relay.conditions.find(c => c.id === conditionId);
+            if (condition) {
+                condition.value = parseFloat(value) || 0;
+                console.log(`Condition ${conditionId} value updated to ${condition.value}`);
+            }
+        }
+
+        function updateConditionDropdowns() {
+            // Update all sensor dropdowns in conditions to reflect current sensor names
+            const sensorSelects = document.querySelectorAll('.sensor-select');
+            sensorSelects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = sensorList
+                    .map(sensor => `
+                <option value="${sensor.id}" ${sensor.id == currentValue ? 'selected' : ''}>
+                    ${sensor.name}
+                </option>
+            `)
+                    .join('');
+            });
+        }
+
+        function removeSensor(id) {
+            const sensor = getSensor(id);
+            if (sensor) {
+                const index = sensorList.indexOf(sensor);
+                if (index !== -1) {
+                    sensorList.splice(index, 1);
+                    renderSensors();
+                    updateConditionDropdowns();
+                }
+            }
+        }
+
+        function removeRelay(id) {
+            const relay = getRelay(id);
+            if (relay) {
+                const index = relayList.indexOf(relay);
+                if (index !== -1) {
+                    relayList.splice(index, 1);
+                    renderRelays();
+                }
+            }
+        }
+
+
+        function removeCondition(relayId, conditionId) {
+            const relay = getRelay(relayId);
+            if (!relay) return;
+
+            const index = relay.conditions.findIndex(c => c.id === conditionId);
+            if (index !== -1) {
+                relay.conditions.splice(index, 1);
+                renderConditions(relayId);
+                console.log(`Condition ${conditionId} removed from relay ${relayId}`);
+            }
+        }
+
+        // ===== RENDER FUNCTIONS =====
+        function renderSensors() {
+            const container = document.getElementById('sensor-container');
+            if (!container) return;
+
+            container.innerHTML = sensorList.map(createSensorHTML).join('');
         }
 
         function renderRelays() {
-            const relayContainer = document.getElementById('relay-container');
-            let renderedHTML = ""
-            for (let index = 0; index < relayList.length; index++) {
-                const relay = relayList[index];
-                renderedHTML += createRelayHTML(relay);
+            const container = document.getElementById('relay-container');
+            if (!container) return;
+
+            container.innerHTML = relayList.map(createRelayHTML).join('');
+        }
+
+        function renderConditions(relayId) {
+            const relay = getRelay(relayId);
+            if (!relay) return;
+
+            const container = document.querySelector(`[data-relay-id="${relayId}"]`);
+            if (!container) return;
+
+            container.innerHTML = relay.conditions
+                .map(condition => createConditionHTML(condition, relayId))
+                .join('');
+        }
+
+        function reloadConditions(relayId) {
+            renderConditions(relayId); // Same functionality, cleaner implementation
+        }
+
+        // ===== SETTINGS TOGGLE FUNCTIONS =====
+        function toggleSensorSettings(sensorId) {
+            const sensor = getSensor(sensorId);
+            const settingsPanel = document.querySelector(`[data-sensor-container="${sensorId}"]`);
+
+            if (sensor && settingsPanel) {
+                sensor.folded = !sensor.folded;
+
+                if (sensor.folded) {
+                    settingsPanel.classList.remove('grid');
+                } else {
+                    settingsPanel.classList.add('grid');
+                }
             }
-            relayContainer.innerHTML = renderedHTML;
         }
 
-        function renderSensors() {
-            const sensorContainer = document.getElementById('sensor-container');
-            let renderedHTML = ""
-            for (let index = 0; index < sensorList.length; index++) {
-                const sensor = sensorList[index];
-                renderedHTML += createSensorHTML(sensor);
+        function toggleRelaySettings(relayId) {
+            const relay = getRelay(relayId);
+            const settingsPanel = document.querySelector(`[data-relay-container="${relayId}"]`);
+
+            if (relay && settingsPanel) {
+                relay.folded = !relay.folded;
+
+                if (relay.folded) {
+                    settingsPanel.classList.remove('grid');
+                } else {
+                    settingsPanel.classList.add('grid');
+                }
             }
-            sensorContainer.innerHTML = renderedHTML;
         }
 
-
-        function getRelay(id) {
-            return relayList.find(r => r.id === id)
+        // ===== HTML GENERATION FUNCTIONS =====
+        function createSensorHTML(sensor) {
+            return `
+        <div id="${sensor.id}">
+            <div class="sensor">
+                <div data-sensor-initial="${sensor.id}">${sensor.name.charAt(0)}</div>
+                <div>
+                    <span data-sensor-name="${sensor.id}">${sensor.name}</span>:
+                    <span data-sensor-value="${sensor.id}">${sensor.value}</span>
+                </div>
+                <button onclick="toggleSensorSettings(${sensor.id})" aria-label="Toggle sensor">⚙️</button>
+               <button onclick="removeSensor(${sensor.id})" aria-label="Remove sensor">❌</button>
+            </div>
+            <div class="sensor-settings ${sensor.folded ? '' : 'grid'}" data-sensor-container="${sensor.id}">
+                <div class="input">
+                    <label for="sensor-name">Name: </label>
+                    <input
+                        type="text"
+                        id="sensor-name"
+                        placeholder="Jeff maybe?"
+                        value="${sensor.name}"
+                        onchange="updateSensorName(${sensor.id}, this.value)"
+                    >
+                </div>
+                <div class="input">
+                    <label for="sensor-pin">Pin: </label>
+                    <input
+                        type="number"
+                        id="sensor-pin"
+                        placeholder="Devboard pin number"
+                        value="${sensor.pin}"
+                        onchange="updateSensorPin(${sensor.id}, this.value)"
+                    >
+                </div>
+            </div>
+        </div>
+    `;
         }
-
-        // function createRelayHTML(relay) {
-        //     return `
-        //         <div class="sensor" data-id="${relay.id}">
-        //             <div class="relay">
-        //                 <div>R</div>
-        //                 <div>Name: <span>${relay.name}</span></div>
-        //                 <button class="toggle-settings" aria-label="Toggle relay settings">⚙️</button>
-        //                 <button class="remove-relay" aria-label="Remove relay">❌</button>
-        //             </div>
-        //             <div class="relay-settings-panel " ${relay.folded ? 'grid;"' : ''}>
-        //                 <div class="input">
-        //                     <label for="relay-name-${relay.id}">Name: </label>
-        //                     <input type="text" id="relay-name-${relay.id}" class="relay-name" value="${relay.name}" placeholder="Relay name">
-        //                 </div>
-        //                 <div class="input">
-        //                     <label for="relay-pin-${relay.id}">Pin: </label>
-        //                     <input type="number" id="relay-pin-${relay.id}" class="relay-pin" value="${relay.pin}" placeholder="Devboard output pin">
-        //                 </div>
-        //                 <span>Conditions</span>
-        //                 ${//relay.conditions.map(condition => createConditionHTML(condition, relay.id)).join('')
-        //                 ""}
-        //                 <select class="add-condition-select">
-        //                     <option value="">Add Condition</option>
-        //                     <option value="sensor">Sensor Condition</option>
-        //                 </select>
-        //             </div>
-        //         </div>
-        //     `;
-        // }
-
-        function createConditionHTML(condition, relayId) {
-            if (condition.type === 'sensor') {
-                return `
-                    <div class="relay-settings" data-condition-id="${condition.id}">
-                        <div class="input">
-                            <select class="sensor-select">
-                                ${sensorList.map(sensor => `<option value="${sensor.id}" ${sensor.id === condition.sensorId ? 'selected' : ''}>${sensor.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="input">
-                            <select class="operator-select operator">
-                                <option value=">" ${condition.operator === '>' ? 'selected' : ''}>></option>
-                                <option value="<" ${condition.operator === '<' ? 'selected' : ''}><</option>
-                            </select>
-                        </div>
-                        <div class="input">
-                            <input type="number" class="condition-value" value="${condition.value}" placeholder="Value">
-                        </div>
-                        <div class="arrow-container">
-                            <button class="move-up">⬆️</button>
-                            <button class="move-down">⬇️</button>
-                        </div>
-                        <button class="remove-condition">❌</button>
-                    </div>
-                `;
-            }
-            return '';
-        }
-
-        function UpdateName(id, newName) {
-            getRelay(id).name = newName;
-            console.log(`Relay ${id} name updated to ${newName}`);
-        }
-        function updatePin(id, pin) {
-            getRelay(id).pin = pin;
-            console.log(`Relay ${id} pin updated to ${pin}`);
-        }
-        // function addCondition(id, condition) {
-        //     getRelay(id).conditions.push(condition);
-        //     console.log(`Condition added to relay ${id}`);
-        // }
-
 
         function createRelayHTML(relay) {
             return `
-<div id="${relay.id}">
-    <div class="sensor">
-        <div>${relay.name.charAt(0)}</div>
-        <div>${relay.name}: <span data-relay-status="${relay.id}">${relay.status ? '🟢' : '🟥'}</span></div>
-        <button
-            onclick="this.parentNode.parentNode.querySelector('.sensor-settings').classList.toggle('grid')">⚙️</button>
-        <button onclick="removeRelay(${relay.name})">❌</button>
-    </div>
-    <div class="sensor-settings">
-        <div class="input">
-            <label for="relay-name" >Name:</label>
-            <input type="text" name="relay-name" id="relay-name" placeholder="*ahem* jeff?" value="${relay.name}" onchange="UpdateName(${relay.id}, this.value)">
+        <div id="${relay.id}">
+            <div class="sensor">
+                <div data-relay-initial="${relay.id}">${relay.name.charAt(0)}</div>
+                <div>
+                    <span data-relay-name="${relay.id}">${relay.name}</span>:
+                    <span data-relay-status="${relay.id}">${relay.status ? '🟢' : '🟥'}</span>
+                </div>
+                <button onclick="toggleRelaySettings(${relay.id})">⚙️</button>
+                <button onclick="removeRelay(${relay.id})" aria-label="Remove relay">❌</button>
+            </div>
+            <div class="sensor-settings ${relay.folded ? '' : 'grid'}" data-relay-container="${relay.id}">
+                <div class="input">
+                    <label for="relay-name">Name:</label>
+                    <input
+                        type="text"
+                        name="relay-name"
+                        id="relay-name"
+                        placeholder="*ahem* jeff?"
+                        value="${relay.name}"
+                        onchange="updateRelayName(${relay.id}, this.value)"
+                    >
+                </div>
+                <div class="input">
+                    <label for="relay-pin">Pin: </label>
+                    <input
+                        type="number"
+                        id="relay-pin"
+                        placeholder="Devboard output pin"
+                        value="${relay.pin}"
+                        onchange="updateRelayPin(${relay.id}, this)"
+                    >
+                </div>
+                <span>Conditions</span>
+                <div data-relay-id="${relay.id}"></div>
+                <select onchange="addCondition(${relay.id}, this)">
+                    <option value="0">Add Condition</option>
+                    <option value="sensor">Sensor Condition</option>
+                </select>
+            </div>
         </div>
-        <div class="input">
-            <label for="relay-pin">Pin: </label>
-            <input type="number" id="relay-pin" placeholder="Devboard output pin" value="${relay.pin}">
-        </div>
-        <span>Conditions</span>
-        <div data-relay-id="${relay.id}"></div>
-        <select onchange="addCondition(${relay.id}, this)">
-            <option value="0">Add Condition</option>
-            <option value="sensor">Sensor Condition</option>
-        </select>
-    </div>
-
-</div>
-</div>
-`
+    `;
         }
 
+        function createConditionHTML(condition, relayId) {
+            if (condition.type !== 'sensor') return '';
+
+            const sensorOptions = sensorList
+                .map(sensor => `
+            <option value="${sensor.id}" ${sensor.id === condition.sensorId ? 'selected' : ''}>
+                ${sensor.name}
+            </option>
+        `)
+                .join('');
+
+            return `
+        <div class="relay-settings" data-condition-id="${condition.id}">
+            <div class="input">
+                <select
+                    class="sensor-select"
+                    data-condition-sensors="${relayId}"
+                    onchange="updateConditionSensor(${relayId}, ${condition.id}, this.value)"
+                >
+                    ${sensorOptions}
+                </select>
+            </div>
+            <div class="input">
+                <select
+                    class="operator-select operator"
+                    onchange="updateConditionOperator(${relayId}, ${condition.id}, this.value)"
+                >
+                    <option value=">" ${condition.operator === '>' ? 'selected' : ''}>&gt;</option>
+                    <option value="<" ${condition.operator === '<' ? 'selected' : ''}>&lt;</option>
+                </select>
+            </div>
+            <div class="input">
+                <input
+                    type="number"
+                    class="condition-value"
+                    value="${condition.value}"
+                    placeholder="Value"
+                    onchange="updateConditionValue(${relayId}, ${condition.id}, this.value)"
+                >
+            </div>
+            <div class="arrow-container">
+                <button
+                    class="move-up"
+                    onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'up')"
+                >⬆️</button>
+                <button
+                    class="move-down"
+                    onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'down')"
+                >⬇️</button>
+            </div>
+            <button
+                class="remove-condition"
+                onclick="removeCondition(${relayId}, ${condition.id})"
+            >❌</button>
+        </div>
+    `;
+        }
+
+        // ===== DATA FETCHING =====
         function getData() {
             fetch('readADC')
                 .then(response => response.text())
                 .then(data => {
-                    document.getElementById("DataUpdates").innerHTML = data;
+                    const element = document.getElementById("DataUpdates");
+                    if (element) {
+                        element.innerHTML = data;
+                    }
                 })
                 .catch(error => console.error('Error:', error));
+
         }
 
+        // ===== UI EVENT HANDLERS =====
         document.addEventListener('DOMContentLoaded', function () {
             const body = document.body;
             const hamburgerMenu = document.querySelector('.hamburger-menu');
@@ -796,44 +1382,128 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             const tabButtons = document.querySelectorAll('.tab-button');
             const contentPanels = document.querySelectorAll('.content-panel');
 
+            if (!hamburgerMenu || !mobileOverlay || !sidebar) return;
+
             const toggleMobileMenu = () => {
                 const isOpen = body.classList.toggle('sidebar-open');
                 hamburgerMenu.setAttribute('aria-expanded', isOpen);
             };
 
-            hamburgerMenu.addEventListener('click', toggleMobileMenu);
-            mobileOverlay.addEventListener('click', toggleMobileMenu);
+            const handleTabClick = (e) => {
+                if (!e.target.classList.contains('tab-button')) return;
 
-            sidebar.addEventListener('click', function (e) {
-                if (e.target && e.target.classList.contains('tab-button')) {
-                    const tabButton = e.target;
-                    const targetTabId = tabButton.dataset.tab;
+                const tabButton = e.target;
+                const targetTabId = tabButton.dataset.tab;
 
-                    tabButtons.forEach(btn => {
-                        btn.classList.remove('active');
-                        btn.setAttribute('aria-selected', 'false');
-                    });
-                    contentPanels.forEach(panel => panel.classList.remove('active'));
+                // Reset all tabs
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-selected', 'false');
+                });
+                contentPanels.forEach(panel => panel.classList.remove('active'));
 
-                    tabButton.classList.add('active');
-                    tabButton.setAttribute('aria-selected', 'true');
-                    const targetPanel = document.getElementById(targetTabId);
-                    if (targetPanel) {
-                        targetPanel.classList.add('active');
-                    }
+                // Activate selected tab
+                tabButton.classList.add('active');
+                tabButton.setAttribute('aria-selected', 'true');
 
-                    if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
-                        toggleMobileMenu();
-                    }
+                const targetPanel = document.getElementById(targetTabId);
+                if (targetPanel) {
+                    targetPanel.classList.add('active');
                 }
-            });
 
-            document.addEventListener('keydown', function (e) {
+                // Close mobile menu if open
+                if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
+                    toggleMobileMenu();
+                }
+            };
+
+            const handleEscapeKey = (e) => {
                 if (e.key === 'Escape' && body.classList.contains('sidebar-open')) {
                     toggleMobileMenu();
                 }
-            });
+            };
+
+            // Event listeners
+            hamburgerMenu.addEventListener('click', toggleMobileMenu);
+            mobileOverlay.addEventListener('click', toggleMobileMenu);
+            sidebar.addEventListener('click', handleTabClick);
+            document.addEventListener('keydown', handleEscapeKey);
         });
+
+        // ===== Submit Sensor+Relay info ======
+        async function submitSensors() {
+            const data = getAllData();  // Your function that returns the JSON data (stringified or object)
+            const formData = new FormData();
+            formData.append('body', typeof data === 'object' ? JSON.stringify(data) : data);  // Ensure data is a string
+
+            try {
+                const response = await fetch('/submit-sensors', {
+                    method: 'POST',
+                    body: formData  // Send as form data
+                });
+                const text = await response.text();
+                console.log(text);  // Or update your UI
+                if (response.ok) {
+                    console.log("Data sent successfully");
+                } else {
+                    console.log("Failed to send data");
+                }
+            } catch (error) {
+                console.error("Error sending data:", error);
+            }
+        }
+
+        async function updateDebugPin(debugValue) {
+            const formData = new FormData();
+            formData.append('body', typeof data === 'object' ? JSON.stringify(debugValue) : debugValue);  // Ensure data is a string
+
+            try {
+                const response = await fetch('/update-debug-pin',
+                    {
+                        method: 'POST',
+                        body: formData  // Send as form data
+                    });
+                const text = await response.text();
+                console.log(text);
+            } catch (error) {
+                console.error("Error updating debug pin:", error);
+            }
+        }
+
+        // ===== FIRMWARE UPDATE ======
+        // document.getElementById('uploadForm').onsubmit = async function (e) {
+        //     e.preventDefault();
+        //     const fileInput = document.querySelector('input[type="file"]');
+        //     const file = fileInput.files[0];
+        //     if (!file) {
+        //         alert('Please select a firmware file!');
+        //         return;
+        //     }
+
+        //     const status = document.getElementById('firmupdate-status');
+        //     status.textContent = 'Uploading...';
+
+        //     const formData = new FormData();
+        //     formData.append('file', file);
+
+        //     try {
+        //         const response = await fetch('/update', {
+        //             method: 'POST',
+        //             body: formData
+        //         });
+        //         const text = await response.text();
+        //         status.textContent = text;
+        //         if (response.ok) {
+        //             status.style.color = '#28a745';
+        //             setTimeout(() => { status.textContent += ' Device is rebooting...'; }, 1000);
+        //         } else {
+        //             status.style.color = '#dc3545';
+        //         }
+        //     } catch (error) {
+        //         status.textContent = 'Upload failed: ' + error.message;
+        //         status.style.color = '#dc3545';
+        //     }
+        // };
     </script>
 </body>
 

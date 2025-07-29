@@ -22,6 +22,7 @@
 #include <Helpers.h>        // Helper functions for the project
 #include <Icons.h>          // Icon definitions for UI
 #include <Screens.h>        // Screen management classes
+#include <Sensors.h>        // Sensor and relay data structs
 #include <UiKit.h>          // UI toolkit for display
 #include <WiFiInfo.h>       // WiFi information class
 #include <index.h>          // HTML content for the web server
@@ -31,7 +32,9 @@
  */
 String current_screen = "Settings"; // Tracks the currently displayed screen
 InternalTime internal_time;         // Manages internal time with user offset
-NavInfo nav_info(0); // Navigation info object initialized with ID 0
+NavInfo nav_info(0);         // Navigation info object initialized with ID 0
+uint8_t debug_pin_value = 0; // Debug pin value for testing
+SensorRelayManager manager;
 
 /**
  * --- Hack Screen Class (Temporary/Debugging) ---
@@ -142,16 +145,15 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
                            (Wrap(hour, 0, 23) * 3600));
   });
 
-  server
-      .on("/readADC", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(200, "text/plain", "Good");
-      });
+  server.on("/readADC", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Good");
+  });
 
-      // TEMP: Gonna put this in the main page, just for testing - template
+  // TEMP: Gonna put this in the main page, just for testing - template
 
-      // Serve the firmware update page
-      server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request) {
-        const char *update_page = R"rawliteral(
+  // Serve the firmware update page
+  server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request) {
+    const char *update_page = R"rawliteral(
   <!DOCTYPE html>
   <html lang='en'>
   <head>
@@ -214,8 +216,8 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
   </body>
   </html>
   )rawliteral";
-        request->send(200, "text/html", update_page);
-      });
+    request->send(200, "text/html", update_page);
+  });
 
   // Handle the firmware update
   server.on(
@@ -242,6 +244,138 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
           Update.end(true);
         }
       });
+
+  // // Handle updating sensors, relays
+  // server.on("/submit-sensors", HTTP_POST, [](AsyncWebServerRequest *request)
+  // {
+  //   if (request->hasParam("body", true)) {
+  //     String jsonStr = request->getParam("body", true)->value();
+  //     JsonDocument doc;
+  //     DeserializationError error = deserializeJson(doc, jsonStr);
+
+  //     if (error) {
+  //       Serial.println("Invalid JSON received");
+  //       request->send(400, "text/plain", "Invalid JSON");
+  //       return;
+  //     }
+
+  //     // Parse and print sensors
+  //     JsonArray sensorsArray = doc["sensors"];
+  //     Serial.println("Received Sensors:");
+  //     for (JsonObject sensorObj : sensorsArray) {
+  //       Serial.print("  Sensor ID: ");
+  //       Serial.print(sensorObj["id"].as<int>());
+  //       Serial.print(", Name: ");
+  //       Serial.print(sensorObj["name"].as<const char *>());
+  //       Serial.print(", Pin: ");
+  //       Serial.println(sensorObj["pin"].as<int>());
+  //     }
+
+  //     // Parse and print relays with their conditions
+  //     JsonArray relaysArray = doc["relays"];
+  //     Serial.println("Received Relays:");
+  //     for (JsonObject relayObj : relaysArray) {
+  //       Serial.print("  Relay ID: ");
+  //       Serial.print(relayObj["id"].as<int>());
+  //       Serial.print(", Name: ");
+  //       Serial.print(relayObj["name"].as<const char *>());
+  //       Serial.print(", Pin: ");
+  //       Serial.println(relayObj["pin"].as<int>());
+
+  //       // Print conditions for this relay
+  //       JsonArray conditionsArray = relayObj["conditions"];
+  //       if (conditionsArray.size() > 0) {
+  //         Serial.println("    Conditions:");
+  //         for (JsonObject conditionObj : conditionsArray) {
+  //           Serial.print("      Condition ID: ");
+  //           Serial.print(conditionObj["id"].as<int>());
+  //           Serial.print(", Sensor: ");
+  //           Serial.print(conditionObj["sensor"].as<int>());
+  //           Serial.print(", SensorId: ");
+  //           Serial.print(conditionObj["sensorId"].as<int>());
+  //           Serial.print(", Operator: ");
+  //           Serial.print(conditionObj["operator"].as<const char *>());
+  //           Serial.print(", Type: ");
+  //           Serial.println(conditionObj["type"].as<const char *>());
+  //         }
+  //       } else {
+  //         Serial.println("    No conditions");
+  //       }
+  //     }
+
+  //     request->send(200, "text/plain", "Sensors and relays received");
+  //   } else {
+  //     Serial.println("No data received in request");
+  //     request->send(400, "text/plain", "No data received");
+  //   }
+  // });
+
+  server.on("/submit-sensors", HTTP_POST, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("body", true)) {
+      String jsonStr = request->getParam("body", true)->value();
+      JsonDocument doc;
+      DeserializationError error = deserializeJson(doc, jsonStr);
+
+      if (error) {
+        request->send(400, "text/plain", "Invalid JSON");
+        return;
+      }
+
+      // Clear existing data
+      manager = SensorRelayManager();
+
+      // Parse and register sensors
+      JsonArray sensorsArray = doc["sensors"];
+      for (JsonObject sensorObj : sensorsArray) {
+        uint8_t id = sensorObj["id"].as<int>();
+        const char *name = sensorObj["name"].as<const char *>();
+        uint8_t pin = sensorObj["pin"].as<int>();
+        float value = 0.0; // Default value, updated in loop
+        bool folded = true;
+        Sensor *sensor = new Sensor(id, name, pin, value, folded);
+        manager.RegisterSensor(sensor);
+      }
+
+      // Parse and register relays with conditions
+      JsonArray relaysArray = doc["relays"];
+      for (JsonObject relayObj : relaysArray) {
+        uint8_t id = relayObj["id"].as<int>();
+        const char *name = relayObj["name"].as<const char *>();
+        uint8_t pin = relayObj["pin"].as<int>();
+        bool status = false;
+        bool folded = false;
+        Relay *relay = new Relay(id, name, pin, status, folded);
+
+        // Register conditions
+        JsonArray conditionsArray = relayObj["conditions"];
+        for (JsonObject conditionObj : conditionsArray) {
+          uint8_t conditionId = conditionObj["id"].as<int>();
+          uint8_t sensor = conditionObj["sensor"].as<int>();
+          uint8_t sensorId = conditionObj["sensorId"].as<int>();
+          const char *op = conditionObj["operator"].as<const char *>();
+          float value = conditionObj["value"].as<float>();
+          const char *type = conditionObj["type"].as<const char *>();
+          Condition *condition =
+              new Condition(sensor, sensorId, op, value, conditionId, type);
+          relay->AddCondition(condition);
+        }
+
+        manager.RegisterRelay(relay);
+        pinMode(pin, OUTPUT);
+        digitalWrite(pin, status ? HIGH : LOW);
+      }
+
+      request->send(200, "text/plain", "Sensors and relays updated");
+    } else {
+      request->send(400, "text/plain", "No data received");
+    }
+  });
+
+  server.on("/update-debug-pin", HTTP_POST, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("body", true)) {
+      debug_pin_value = request->getParam("body", true)->value().toInt();
+    }
+  });
 }
 
 /**
@@ -301,7 +435,24 @@ uint8_t input_result;
 /**
  * @brief Main loop function for the Arduino sketch
  */
+
+// Function to check if the button is pressed
+bool buttonPressed() {
+  if (upButton.isPressed() || downButton.isPressed() ||
+      selectButton.isPressed()) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+unsigned long previousMillis = 0; // Store the last time the display was updated
+const long interval = 5000;       // Interval at which to update (5 seconds)
+
 void loop() {
+  static unsigned long lastUpdate = 0;
+  const unsigned long updateInterval = 1000; // 1 second
+
   u8g2.firstPage();
   do {
     input = getInput();
@@ -314,5 +465,44 @@ void loop() {
 
     internal_time.Tick();
     base_ui.Draw();
+
+    // Update sensors and relays periodically
+    unsigned long currentTime = millis();
+    // Update sensor values
+    // for (int i = 0; i < manager.GetNumSensors(); i++) {
+    //   Sensor *sensor = manager.GetSensorById(i + 1);
+    //   if (sensor) {
+    //     // float value = readSensorValue(sensor);
+    //     sensor->SetValue(debug_pin_value);
+    //     Serial.println("sensor value: " + String(sensor->GetValue()));
+    //     Serial.println("sensor id" + String(sensor->GetId()));
+    //   }
+    // }
+    for (int i = 0; i < sizeof(manager.GetSensorArray()); i++) {
+      Sensor sensor = manager.GetSensorArray()[i];
+
+      sensor.SetValue(debug_pin_value);
+    }
+
+    for (int i = 0; i < sizeof(manager.GetRelayArray()); i++) {
+      Relay relay = manager.GetRelayArray()[i];
+
+      bool shouldBeOn = evaluateRelayConditions(relay, manager);
+      if (shouldBeOn != relay.GetStatus()) {
+        Serial.println("updated relay " + relay.GetId());
+      }
+    }
+
+    // Process each relay
+    // for (int i = 0; i < manager.GetNumRelays(); i++) {
+    //   Relay *relay = manager.GetRelayById(i + 1);
+    //   if (relay) {
+    //     bool shouldBeOn = evaluateRelayConditions(*relay, manager);
+    //     if (shouldBeOn != relay->GetStatus()) {
+    //       Serial.println("updated relay " + relay->GetId());
+    //     }
+    //   }
+    // }
+
   } while (u8g2.nextPage());
 }
