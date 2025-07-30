@@ -400,7 +400,7 @@ void SetupDNS(DNSServer &dnsServer, const IPAddress &localIP) {
 /**
  * --- UI Initialization ---
  */
-BaseUi base_ui("title", "desc", &internal_time);
+BaseUi base_ui("title", "desc", &internal_time); // No clue what the warning is about..
 SettingsList settings_menu(1, 8, menuItems, &nav_info);
 
 /**
@@ -478,6 +478,7 @@ void loop() {
       if (manager.relays[i]) { // Direct array access
         Relay &relay = *manager.relays[i];
         bool shouldBeOn = evaluateRelayConditions(relay, manager);
+        Serial.println(shouldBeOn);
         if (shouldBeOn != relay.GetStatus()) {
           relay.SetStatus(shouldBeOn);
           // digitalWrite(relay.GetPin(), shouldBeOn ? HIGH : LOW);

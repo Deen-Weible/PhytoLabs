@@ -516,8 +516,10 @@
         <nav class="sidebar" role="tablist">
             <button id="tab-dashboard" class="tab-button active" data-tab="dashboard" role="tab"
                 aria-selected="true">Dashboard</button>
-            <button id="tab-profile" class="tab-button" data-tab="profile" role="tab"
-                aria-selected="false">Settings</button>
+            <button id="tab-sensor-relations" class="tab-button" data-tab="sensor-relations" role="tab"
+                aria-selected="false">Sensor Relations</button>
+            <button id="tab-system-settings" class="tab-button" data-tab="system-settings" role="tab"
+                aria-selected="false">System Settings</button>
         </nav>
 
         <!-- Main Content Area -->
@@ -528,8 +530,9 @@
                     recent notifications.</p>
             </section>
 
-            <section id="profile" class="content-panel active" role="tabpanel" aria-labelledby="tab-profile">
-                <h2>Settings</h2>
+            <section id="sensor-relations" class="content-panel " role="tabpanel"
+                aria-labelledby="tab-sensor-relations">
+                <h2>Sensor Relations</h2>
                 <section class="settings-grid">
                     <div class="settings-widget">
                         <span>Sensors</span>
@@ -580,7 +583,21 @@
                     <button onclick="submitSensors()" class="solid-button" id="submit-button">Submit</button>
                 </section>
             </section>
-        </main>
+
+            <section id="system-settings" class="content-panel active" role="tabpanel"
+                aria-labelledby="tab-system-settings">
+                <h2>System Settings</h2>
+                <section class="settings-grid">
+                    <div class="settings-widget">
+                        <span>Time</span>
+                        <span>Current system time</span>
+                        <div class="sensor-settings grid">
+                            <div class="input">
+                                <label for="time">Time:</label>
+                                <input type="time" id="time-input" name="time" value="12:34">
+                            </div>
+                        </div>
+                    </div>
     </div>
 
     <script>
@@ -1354,7 +1371,6 @@
                 .catch(error => console.error('Error:', error));
 
         }
-
         // ===== UI EVENT HANDLERS =====
         document.addEventListener('DOMContentLoaded', function () {
             const body = document.body;
@@ -1393,7 +1409,7 @@
                     targetPanel.classList.add('active');
                 }
 
-                // Close mobile menu if open
+                // Close mobile menu only on small screens
                 if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
                     toggleMobileMenu();
                 }
@@ -1411,7 +1427,6 @@
             sidebar.addEventListener('click', handleTabClick);
             document.addEventListener('keydown', handleEscapeKey);
         });
-
         // ===== Submit Sensor+Relay info ======
         async function submitSensors() {
             let data = getAllData();  // Your function that returns the JSON data (stringified or object)
