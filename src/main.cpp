@@ -400,7 +400,8 @@ void SetupDNS(DNSServer &dnsServer, const IPAddress &localIP) {
 /**
  * --- UI Initialization ---
  */
-BaseUi base_ui("title", "desc", &internal_time); // No clue what the warning is about..
+BaseUi base_ui("title", "desc",
+               &internal_time); // No clue what the warning is about..
 SettingsList settings_menu(1, 8, menuItems, &nav_info);
 
 /**
@@ -449,44 +450,60 @@ bool buttonPressed() {
 unsigned long previousMillis = 0; // Store the last time the display was updated
 const long interval = 5000;       // Interval at which to update (5 seconds)
 
+/**
+ * Main loop of the system.
+ *
+ * all the logic for updating the UI, handling inputs,
+ * and managing sensor and relay states. It also includes a simple debug pin
+ * value update mechanism.
+ */
 void loop() {
   static unsigned long lastUpdate = 0;
   const unsigned long updateInterval = 1000; // 1 second
 
   u8g2.firstPage();
   do {
-    input = getInput();
-    input_result = nav_info.GetCurrentScreen()->HandleInput(input);
-    nav_info.GetCurrentScreen()->Draw();
+    input = getInput(); // Get input from the user interface
+    // if (millis() - lastUpdate >= updateInterval || input != NO_INPUT) {
+    //   lastUpdate = millis();
+      Serial.println("update");
+      input_result =
+          nav_info.GetCurrentScreen()->HandleInput(input); // Handle input
+      nav_info.GetCurrentScreen()->Draw(); // Draw the current screen
 
-    if (input_result != NO_INPUT) {
-      nav_info.SetScreenById(input_result);
-    }
-
-    internal_time.Tick();
-    base_ui.Draw();
-
-    // Update sensor values with debug_pin_value
-    for (int i = 0; i < manager.GetNumSensors(); i++) {
-      if (manager.sensors[i]) { // Direct array access
-        manager.sensors[i]->SetValue(debug_pin_value);
+      if (input_result !=
+          NO_INPUT) { // If there is a valid input, set the new screen
+        nav_info.SetScreenById(input_result);
       }
-    }
 
-    // Process each relay
-    for (int i = 0; i < manager.GetNumRelays(); i++) {
-      if (manager.relays[i]) { // Direct array access
-        Relay &relay = *manager.relays[i];
-        bool shouldBeOn = evaluateRelayConditions(relay, manager);
-        Serial.println(shouldBeOn);
-        if (shouldBeOn != relay.GetStatus()) {
-          relay.SetStatus(shouldBeOn);
-          // digitalWrite(relay.GetPin(), shouldBeOn ? HIGH : LOW);
-          Serial.print("Relay updated: ");
-          Serial.println(relay.GetStatus());
+      internal_time.Tick(); // Update the internal time
+      base_ui.Draw();       // Draw the base UI
+
+      // Update sensor values with debug_pin_value
+      for (int i = 0; i < manager.GetNumSensors(); i++) {
+        if (manager.sensors[i]) { // Direct array access
+          manager.sensors[i]->SetValue(
+              debug_pin_value); // Set the value of the sensor
         }
       }
-    }
 
+      // Process each relay
+      for (int i = 0; i < manager.GetNumRelays(); i++) {
+        if (manager.relays[i]) { // Direct array access
+          Relay &relay = *manager.relays[i];
+          bool shouldBeOn = evaluateRelayConditions(
+              relay, manager);        // Evaluate the relay conditions
+          Serial.println(shouldBeOn); // Print the current state of the relay
+          if (shouldBeOn !=
+              relay.GetStatus()) {       // If the relay needs to be updated
+            relay.SetStatus(shouldBeOn); // Set the new status of the relay
+            // digitalWrite(relay.GetPin(), shouldBeOn ? HIGH : LOW); // Update
+            // the pin
+            Serial.print("Relay updated: ");
+            Serial.println(relay.GetStatus()); // Print the updated state
+          }
+        }
+      }
+    // };
   } while (u8g2.nextPage());
 }

@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PhytoLabs Dashboard</title>
     <style>
-        /* Global Styles & Variables */
+        /* CSS Variables */
         :root {
             --primary-color: #2e4d3b;
             --secondary-color: #3a604a;
@@ -21,6 +19,7 @@
             --transition-speed: 0.3s;
         }
 
+        /* Reset & Base Styles */
         * {
             margin: 0;
             padding: 0;
@@ -34,12 +33,7 @@
             overflow-x: hidden;
         }
 
-        span {
-            color: var(--text-color);
-            text-align: center;
-        }
-
-        /* Main Layout Structure */
+        /* Layout */
         .page-container {
             display: grid;
             grid-template-columns: var(--sidebar-width) 1fr;
@@ -50,7 +44,6 @@
         /* Header */
         .main-header {
             grid-column: 1 / -1;
-            grid-row: 1 / 2;
             display: flex;
             align-items: center;
             padding: 0 20px;
@@ -59,6 +52,16 @@
             z-index: 1000;
         }
 
+        .main-header > :first-child {
+            margin-right: auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Loading & Error States */
         .floater {
             width: 60px;
             height: 60px;
@@ -89,22 +92,33 @@
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .main-header> :first-child {
-            margin-right: auto;
+        .error-icon {
+            color: yellow;
+            display: none;
+            animation: flashYellowAndRed 2s infinite;
+            font-size: xx-large;
+            border: 2px solid var(--accent-color);
+            padding-inline: 12px;
         }
 
-        .main-header .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
+        .error-icon.visible {
+            display: block;
+        }
+
+        @keyframes flashYellowAndRed {
+            0%, 100% { color: yellow; }
+            50% { color: red; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .error-icon {
+                animation: none;
+                color: red;
+            }
         }
 
         /* Hamburger Menu */
@@ -128,18 +142,9 @@
             transition: all var(--transition-speed) ease-in-out;
         }
 
-        .hamburger-menu .bar1 {
-            top: 0;
-        }
-
-        .hamburger-menu .bar2 {
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        .hamburger-menu .bar3 {
-            bottom: 0;
-        }
+        .hamburger-menu .bar1 { top: 0; }
+        .hamburger-menu .bar2 { top: 50%; transform: translateY(-50%); }
+        .hamburger-menu .bar3 { bottom: 0; }
 
         .sidebar-open .hamburger-menu .bar1 {
             top: 50%;
@@ -155,7 +160,7 @@
             transform: translateY(50%) rotate(-45deg);
         }
 
-        /* Sidebar / Navigation Tabs */
+        /* Sidebar Navigation */
         .sidebar {
             grid-column: 1 / 2;
             grid-row: 2 / 3;
@@ -190,6 +195,22 @@
             font-weight: bold;
         }
 
+        /* Mobile Overlay */
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        .sidebar-open .mobile-overlay {
+            display: block;
+        }
+
         /* Content Area */
         .content-area {
             grid-column: 2 / 3;
@@ -216,55 +237,173 @@
             margin-bottom: 15px;
         }
 
-        .error-icon {
-            color: yellow;
-            display: none;
-            animation: flashYellowAndRed 2s infinite;
-            font-size: xx-large;
-            border: 2px solid var(--accent-color);
-            padding-inline: 12px;
+        /* Form Elements */
+        button {
+            padding: 5px;
+            background-color: transparent;
+            border: none;
+            transition: all 0.05s ease-in-out;
         }
 
-        .error-icon.visible {
-            display: block;
+        button:hover {
+            background-color: rgba(242, 199, 199, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        @keyframes flashYellowAndRed {
-
-            0%,
-            100% {
-                color: yellow;
-            }
-
-            50% {
-                color: red;
-            }
+        button:active {
+            transform: translateY(2px);
+            scale: 0.95;
         }
 
-        @media (prefers-reduced-motion: reduce) {
-            .error-icon {
-                animation: none;
-                color: red;
-            }
+        .solid-button {
+            border: 4px solid gray;
         }
 
-        /* Mobile Overlay */
-        .mobile-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
+        input, select {
+            padding: 8px;
+            border-right: 2px solid var(--gray);
+            color: var(--gray);
+            border-radius: 8px;
+            margin-right: 5px;
+            min-width: 60px;
+            outline: none;
+            background: var(--bg-color);
+            font-size: 11pt;
+            border: none;
             width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1;
         }
 
-        .sidebar-open .mobile-overlay {
-            display: block;
+        input:focus-within, select:focus-within {
+            outline: 2px solid var(--gray);
         }
 
-        /* Responsive Styles */
+        /* Settings Widgets */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
+            grid-column-gap: 20px;
+        }
+
+        .settings-widget {
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px;
+            background-color: var(--accent-color);
+            display: grid;
+            grid-auto-rows: min-content;
+            max-width: 100%;
+        }
+
+        .settings-widget > span:first-child {
+            color: var(--primary-color);
+            font-size: 14pt;
+        }
+
+        .settings-widget > span:nth-child(2) {
+            color: var(--gray);
+            font-size: 10pt;
+            margin-bottom: 8px;
+        }
+
+        .input {
+            display: flex;
+            width: fit-content;
+            color: var(--text-color);
+            align-items: center;
+        }
+
+        .input label {
+            width: min-content;
+            margin-right: 12px;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* Sensor & Relay Components */
+        .sensor {
+            background: var(--gray);
+            color: var(--text-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+        }
+
+        .sensor > div:not(:first-child) {
+            margin-right: 8px;
+        }
+
+        .sensor > div:first-child {
+            border-right: solid 2px var(--accent-color);
+            width: min-content;
+            padding: 10px;
+            margin-right: 12px;
+            color: var(--accent-color);
+        }
+
+        .sensor span {
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        .sensor button:first-of-type {
+            margin-left: auto;
+        }
+
+        .sensor button {
+            margin-right: 8px;
+        }
+
+        .sensor-settings {
+            margin-top: 12px;
+            margin-bottom: 12px;
+            display: none;
+            background: var(--gray-contrast);
+            padding: 14px;
+            border-radius: 8px;
+            gap: 18px;
+        }
+
+        .sensor-settings * {
+            width: 100%;
+        }
+
+        .relay-settings {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto auto;
+        }
+
+        .operator {
+            background: var(--gray-contrast);
+            font-size: large;
+            border: 2px solid var(--gray);
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .relay-settings .input {
+            padding: 0 4px;
+        }
+
+        .arrow-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .arrow-container button {
+            padding: 2px;
+        }
+
+        .add-selector {
+            margin-top: 12px;
+            border: 2px solid var(--gray);
+        }
+
+        span {
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        /* Responsive Design */
         @media (max-width: 1000px) {
             .page-container {
                 grid-template-columns: 1fr;
@@ -315,193 +454,30 @@
             }
         }
 
-        @media (max-width: 480px) {
-            .tab-button {
-                width: 100%;
-            }
-        }
-
-        /* Settings Widgets */
-        .solid-button {
-            border: 4px solid gray;
-        }
-
-        button {
-            padding: 5px;
-            background-color: transparent;
-            border: none;
-            transition: all 0.05s ease-in-out;
-        }
-
-        button:hover {
-            background-color: rgba(242, 199, 199, 0.1);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        button:active {
-            transform: translateY(2px);
-            scale: 0.95;
-        }
-
-        .settings-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
-            grid-column-gap: 20px;
-        }
-
         @media (max-width: 768px) {
             .settings-grid {
                 grid-template-columns: repeat(1, 1fr);
             }
         }
 
-        .settings-widget {
-            border-radius: 12px;
-            padding: 20px;
-            margin: 10px;
-            background-color: var(--accent-color);
-            display: grid;
-            grid-auto-rows: min-content;
-            max-width: 100%;
-        }
-
-        .settings-widget>span:first-child {
-            color: var(--primary-color);
-            font-size: 14pt;
-        }
-
-        .settings-widget>span:nth-child(2) {
-            color: var(--gray);
-            font-size: 10pt;
-            margin-bottom: 8px;
-        }
-
-        .input {
-            display: flex;
-            width: fit-content;
-            color: var(--text-color);
-            align-items: center;
-        }
-
-        .input label {
-            width: min-content;
-            margin-right: 12px;
-            min-width: 50px;
-            text-align: right;
-        }
-
-        input:focus-within,
-        select:focus-within {
-            outline: 2px solid var(--gray);
-        }
-
-        input,
-        select {
-            padding: 8px;
-            border-right: 2px solid var(--gray);
-            color: var(--gray);
-            border-radius: 8px;
-            margin-right: 5px;
-            min-width: 60px;
-            outline: none;
-            background: var(--bg-color);
-            font-size: 11pt;
-            border: none;
-            width: 100%;
-        }
-
-        .sensor {
-            background: var(--gray);
-            color: var(--text-color);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-        }
-
-        .sensor>div:not(:first-child) {
-            margin-right: 8px;
-        }
-
-        .sensor>div:first-child {
-            border-right: solid 2px var(--accent-color);
-            width: min-content;
-            padding: 10px;
-            margin-right: 12px;
-            color: var(--accent-color);
-        }
-
-        .sensor span {
-            color: var(--text-color);
-            font-weight: bold;
-        }
-
-        .sensor button:first-of-type {
-            margin-left: auto;
-        }
-
-        .sensor button {
-            margin-right: 8px;
-        }
-
-        .sensor-settings {
-            margin-top: 12px;
-            margin-bottom: 12px;
-            display: none;
-            /* display: grid; */
-            background: var(--gray-contrast);
-            padding: 14px;
-            border-radius: 8px;
-            gap: 18px;
-        }
-
-        .sensor-settings * {
-            width: 100%;
-
-        }
-
-        .relay-settings {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr auto auto;
-        }
-
-        .operator {
-            background: var(--gray-contrast);
-            font-size: large;
-            border: 2px solid var(--gray);
-            color: var(--text-color);
-            text-align: center;
-        }
-
-        .relay-settings .input {
-            padding: 0 4px;
-        }
-
-        .arrow-container {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .arrow-container button {
-            padding: 2px;
-        }
-
-        .add-selector {
-            margin-top: 12px;
-            border: 2px solid var(--gray);
+        @media (max-width: 480px) {
+            .tab-button {
+                width: 100%;
+            }
         }
     </style>
 </head>
-
 <body>
+    <!-- Loading Indicator -->
     <div class="floater hidden">
         <div class="loader"></div>
     </div>
+
     <div class="page-container">
         <!-- Header -->
         <header class="main-header">
             <div class="logo">PhytoLabs</div>
-            <div class="error-icon" id="error-icon" title="Error: Something went wrong" aria-label="Error indicator">!
-            </div>
+            <div class="error-icon" id="error-icon" title="Error: Something went wrong" aria-label="Error indicator">!</div>
             <div class="hamburger-menu" aria-label="Toggle navigation" aria-expanded="false">
                 <span class="bar bar1"></span>
                 <span class="bar bar2"></span>
@@ -512,28 +488,26 @@
         <!-- Mobile Overlay -->
         <div class="mobile-overlay"></div>
 
-        <!-- Sidebar with Tabs -->
+        <!-- Sidebar Navigation -->
         <nav class="sidebar" role="tablist">
-            <button id="tab-dashboard" class="tab-button active" data-tab="dashboard" role="tab"
-                aria-selected="true">Dashboard</button>
-            <button id="tab-sensor-relations" class="tab-button" data-tab="sensor-relations" role="tab"
-                aria-selected="false">Sensor Relations</button>
-            <button id="tab-system-settings" class="tab-button" data-tab="system-settings" role="tab"
-                aria-selected="false">System Settings</button>
+            <button id="tab-dashboard" class="tab-button active" data-tab="dashboard" role="tab" aria-selected="true">Dashboard</button>
+            <button id="tab-sensor-relations" class="tab-button" data-tab="sensor-relations" role="tab" aria-selected="false">Sensor Relations</button>
+            <button id="tab-system-settings" class="tab-button" data-tab="system-settings" role="tab" aria-selected="false">System Settings</button>
         </nav>
 
         <!-- Main Content Area -->
         <main class="content-area">
+            <!-- Dashboard Panel -->
             <section id="dashboard" class="content-panel" role="tabpanel" aria-labelledby="tab-dashboard">
                 <h2>Dashboard</h2>
-                <p id="DataUpdates">Welcome to your dashboard. Here you can see an overview of your account activity and
-                    recent notifications.</p>
+                <p id="DataUpdates">Welcome to your dashboard. Here you can see an overview of your account activity and recent notifications.</p>
             </section>
 
-            <section id="sensor-relations" class="content-panel " role="tabpanel"
-                aria-labelledby="tab-sensor-relations">
+            <!-- Sensor Relations Panel -->
+            <section id="sensor-relations" class="content-panel" role="tabpanel" aria-labelledby="tab-sensor-relations">
                 <h2>Sensor Relations</h2>
                 <section class="settings-grid">
+                    <!-- Sensors Widget -->
                     <div class="settings-widget">
                         <span>Sensors</span>
                         <span>Add/Remove/Configure sensors (inputs)</span>
@@ -543,19 +517,19 @@
                             <option value="Soil">Soil Moisture</option>
                         </select>
                     </div>
+
+                    <!-- Relays Widget -->
                     <div class="settings-widget">
                         <span>Relays</span>
                         <span>Add/Remove/Configure relays (outputs)</span>
-                        <div id="relay-container">No relays added (or loaded yet)
-                            <!-- Start of relay -->
-
-                            <!-- End of relay -->
-                        </div>
+                        <div id="relay-container">No relays added (or loaded yet)</div>
                         <select class="add-selector" onchange="addRelay(this.value, this)">
                             <option value="0">Add Relay</option>
                             <option value="Relay">Standard Relay</option>
                         </select>
                     </div>
+
+                    <!-- Debug Widget -->
                     <div class="settings-widget">
                         <span>Debug pin value</span>
                         <span>Debug pin value</span>
@@ -566,26 +540,14 @@
                             </div>
                         </div>
                     </div>
-                    <!-- <div class="settings-widget">
-                        <span>Update</span>
-                        <span>Perform system update </span>
-                        <div class="sensor-settings grid">
-                            <span id="firmupdate-btn">Select .BIN file to begin</span>
-                            <form id="uploadForm" enctype="multipart/form-data">
-                                <div class="input">
-                                    <label for="file">file :</label>
-                                    <input type="file" name="file" accept=".bin" required>
-                                </div> <br>
-                                <input type="submit" value="Update Firmware" class="button">
-                            </form>
-                        </div>
-                    </div> -->
+
+                    <!-- Submit Button -->
                     <button onclick="submitSensors()" class="solid-button" id="submit-button">Submit</button>
                 </section>
             </section>
 
-            <section id="system-settings" class="content-panel active" role="tabpanel"
-                aria-labelledby="tab-system-settings">
+            <!-- System Settings Panel -->
+            <section id="system-settings" class="content-panel active" role="tabpanel" aria-labelledby="tab-system-settings">
                 <h2>System Settings</h2>
                 <section class="settings-grid">
                     <div class="settings-widget">
@@ -593,27 +555,22 @@
                         <span>Current system time</span>
                         <div class="sensor-settings grid">
                             <div class="input">
-                                <label for="time">Time:</label>
+                                <label for="time-input">Time:</label>
                                 <input type="time" id="time-input" name="time" value="12:34">
                             </div>
                         </div>
                     </div>
+                </section>
+            </section>
+        </main>
     </div>
 
     <script>
+        'use strict';
+
         // ===== DATA STORAGE =====
         let sensorList = [];
         let relayList = [];
-
-        // Data fetching - Initialize and set up polling
-        fetch('readCONFIG')
-            .then(response => response.text())
-            .then(data => {
-                importFromJSON(data);
-            })
-        getData();
-        setInterval(getData, 2000);
-        setInterval(checkForDuplicates, 2000);
 
         // ===== CLASS DEFINITIONS =====
         class Sensor {
@@ -677,76 +634,57 @@
             }
 
             _swapConditions(index1, index2) {
-                [this.conditions[index1], this.conditions[index2]] =
-                    [this.conditions[index2], this.conditions[index1]];
+                [this.conditions[index1], this.conditions[index2]] = [this.conditions[index2], this.conditions[index1]];
             }
         }
 
-
         // ===== UTILITY FUNCTIONS =====
-        function getRelay(id) {
-            return relayList.find(r => r.id === id);
-        }
+        const getRelay = (id) => relayList.find(r => r.id === id);
+        const getSensor = (id) => sensorList.find(s => s.id === id);
+        const resetDropdown = (dropdown) => { dropdown.value = 0; };
 
-        function getSensor(id) {
-            return sensorList.find(s => s.id === id);
-        }
+        // ===== INITIALIZATION =====
+        const initializeApp = () => {
+            fetch('readCONFIG')
+                .then(response => response.text())
+                .then(data => importFromJSON(data))
+                .catch(error => console.error('Config loading failed:', error));
 
-        function resetDropdown(dropdown) {
-            dropdown.value = 0;
-        }
+            getData();
+            setInterval(getData, 2000);
+            setInterval(checkForDuplicates, 2000);
+        };
 
         // ===== ADD FUNCTIONS =====
-        function addSensor(sensortype, dropdown) {
+        const addSensor = (sensortype, dropdown) => {
             resetDropdown(dropdown);
-
-            const sensor = new Sensor(
-                sensorList.length + 1,
-                "Sensor Name",
-                1,
-                0
-            );
-
+            const sensor = new Sensor(sensorList.length + 1, "Sensor Name", 1, 0);
             sensorList.push(sensor);
             renderSensors();
             updateConditionDropdowns();
-        }
+        };
 
-        function addRelay(relaytype, dropdown) {
+        const addRelay = (relaytype, dropdown) => {
             resetDropdown(dropdown);
-
-            const relay = new Relay(
-                relayList.length + 1,
-                "Relay Name",
-                1
-            );
-
+            const relay = new Relay(relayList.length + 1, "Relay Name", 1);
             relayList.push(relay);
             renderRelays();
-        }
+        };
 
-        function addCondition(conditionReceiver, dropdown) {
+        const addCondition = (conditionReceiver, dropdown) => {
             const relay = getRelay(conditionReceiver);
             if (!relay) return;
 
-            const condition = new Condition(
-                1,
-                ">",
-                1,
-                relay.conditions.length + 1,
-                dropdown.value
-            );
-
-            // Set sensorId for compatibility with the HTML generation
-            condition.sensorId = 1;
-
+            const condition = new Condition(1, ">", 1, relay.conditions.length + 1, dropdown.value);
+            condition.sensorId = 1; // Compatibility
             relay.conditions.push(condition);
             renderConditions(relay.id);
             resetDropdown(dropdown);
-        }
+        };
 
-        function getAllData() {
-            let exportData = {
+        // ===== DATA EXPORT/IMPORT =====
+        const getAllData = () => {
+            const exportData = {
                 sensors: sensorList.map(sensor => ({
                     id: sensor.id,
                     name: sensor.name,
@@ -766,56 +704,12 @@
                     }))
                 }))
             };
-
             return JSON.stringify(exportData, null, 2);
-        }
+        };
 
-        function checkNameOrPinDuplicates() {
-            const names = [];
-            const pins = [];
-
-            // Collect names and pins from all sensors and relays
-            sensorList.forEach(sensor => {
-                names.push(sensor.name);
-                pins.push(sensor.pin);
-            });
-
-            relayList.forEach(relay => {
-                names.push(relay.name);
-                pins.push(relay.pin);
-            });
-
-            // Check for duplicate names
-            const nameSet = new Set();
-            let hasNameDuplicate = false;
-            for (const name of names) {
-                if (nameSet.has(name)) {
-                    hasNameDuplicate = true;
-                    break;
-                }
-                nameSet.add(name);
-            }
-
-            // Check for duplicate pins
-            const pinSet = new Set();
-            let hasPinDuplicate = false;
-            for (const pin of pins) {
-                if (pinSet.has(pin)) {
-                    hasPinDuplicate = true;
-                    break;
-                }
-                pinSet.add(pin);
-            }
-
-            return { hasNameDuplicate, hasPinDuplicate };
-        }
-
-        // ===== JSON IMPORT FUNCTION =====
-        function importFromJSON(jsonString) {
+        const importFromJSON = (jsonString) => {
             try {
                 const data = JSON.parse(jsonString);
-
-                // Validate the JSON structure
                 if (!data.sensors || !data.relays || !Array.isArray(data.sensors) || !Array.isArray(data.relays)) {
                     throw new Error('Invalid JSON structure: missing sensors or relays arrays');
                 }
@@ -842,7 +736,7 @@
                         relayData.id || relayList.length + 1,
                         relayData.name || 'Unnamed Relay',
                         relayData.pin || 1,
-                        [], // conditions will be added below
+                        [],
                         relayData.status || false,
                         relayData.folded !== undefined ? relayData.folded : false
                     );
@@ -857,33 +751,24 @@
                                 conditionData.id || relay.conditions.length + 1,
                                 conditionData.type || 'sensor'
                             );
-
-                            // Ensure sensorId is set for compatibility
                             condition.sensorId = conditionData.sensorId || conditionData.sensor || 1;
-
                             relay.conditions.push(condition);
                         });
                     }
-
                     relayList.push(relay);
                 });
 
-                // Re-render everything
                 renderSensors();
                 renderRelays();
-
-                // Update condition dropdowns to reflect imported sensors
                 updateConditionDropdowns();
 
                 console.log(`Import completed: ${sensorList.length} sensors, ${relayList.length} relays`);
-
                 return {
                     success: true,
                     message: `Successfully imported ${sensorList.length} sensors and ${relayList.length} relays`,
                     sensorsCount: sensorList.length,
                     relaysCount: relayList.length
                 };
-
             } catch (error) {
                 console.error('Import failed:', error);
                 return {
@@ -892,28 +777,11 @@
                     error: error
                 };
             }
-        }
+        };
 
-        // ===== UTILITY FUNCTIONS FOR IMPORT =====
-        function loadFromJSON(jsonString) {
-            const result = importFromJSON(jsonString);
-
-            if (result.success) {
-                alert(result.message);
-            } else {
-                alert(`Error: ${result.message}`);
-            }
-
-            return result;
-        }
-
-        // ===== VALIDATION FUNCTIONS =====
-        function checkForDuplicates() {
-            const duplicates = {
-                names: [],
-                pins: [],
-                hasConflicts: false
-            };
+        // ===== VALIDATION =====
+        const checkForDuplicates = () => {
+            const duplicates = { names: [], pins: [], hasConflicts: false };
 
             // Check sensor names
             const sensorNames = {};
@@ -943,7 +811,7 @@
                 }
             });
 
-            // Check cross-type name conflicts (sensor and relay with same name)
+            // Check cross-type name conflicts
             Object.keys(sensorNames).forEach(name => {
                 if (relayNames[name]) {
                     duplicates.names.push({
@@ -983,7 +851,7 @@
                 }
             });
 
-            // Check cross-type pin conflicts (sensor and relay on same pin)
+            // Check cross-type pin conflicts
             Object.keys(sensorPins).forEach(pin => {
                 if (relayPins[pin]) {
                     duplicates.pins.push({
@@ -997,147 +865,112 @@
 
             duplicates.hasConflicts = duplicates.names.length > 0 || duplicates.pins.length > 0;
 
-            let errorIcon = document.getElementById('error-icon');
-
-            if (duplicates.hasConflicts) {
-                errorIcon.classList.add('visible');
-            } else {
-                errorIcon.classList.remove('visible');
-            }
+            const errorIcon = document.getElementById('error-icon');
+            errorIcon.classList.toggle('visible', duplicates.hasConflicts);
 
             return duplicates.hasConflicts;
-        }
+        };
 
         // ===== UPDATE FUNCTIONS =====
-        function updateRelayName(id, newName) {
+        const updateRelayName = (id, newName) => {
             const relay = getRelay(id);
-            if (relay) {
-                relay.name = newName;
+            if (!relay) return;
 
-                // Update the display without re-rendering
-                const nameDisplay = document.querySelector(`[data-relay-name="${id}"]`);
-                const initialDisplay = document.querySelector(`[data-relay-initial="${id}"]`);
+            relay.name = newName;
+            const nameDisplay = document.querySelector(`[data-relay-name="${id}"]`);
+            const initialDisplay = document.querySelector(`[data-relay-initial="${id}"]`);
 
-                if (nameDisplay) nameDisplay.textContent = newName;
-                if (initialDisplay) initialDisplay.textContent = newName.charAt(0);
+            if (nameDisplay) nameDisplay.textContent = newName;
+            if (initialDisplay) initialDisplay.textContent = newName.charAt(0);
+            updateConditionDropdowns();
+        };
 
-                // Update condition dropdowns that reference this relay's sensors
-                updateConditionDropdowns();
-
-                console.log(`Relay ${id} name updated to ${newName}`);
-            }
-        }
-
-        function updateRelayPin(id, pinInput) {
+        const updateRelayPin = (id, pinInput) => {
             const relay = getRelay(id);
-            if (relay) {
-                relay.pin = parseInt(pinInput.value) || 1;
-                console.log(`Relay ${id} pin updated to ${relay.pin}`);
-            }
-        }
+            if (relay) relay.pin = parseInt(pinInput.value) || 1;
+        };
 
-        function updateSensorName(id, newName) {
+        const updateSensorName = (id, newName) => {
             const sensor = getSensor(id);
-            if (sensor) {
-                sensor.name = newName;
+            if (!sensor) return;
 
-                // Update the display without re-rendering
-                const nameElement = document.querySelector(`[data-sensor-name="${id}"]`);
-                const initialDisplay = document.querySelector(`[data-sensor-initial="${id}"]`);
+            sensor.name = newName;
+            const nameElement = document.querySelector(`[data-sensor-name="${id}"]`);
+            const initialDisplay = document.querySelector(`[data-sensor-initial="${id}"]`);
 
-                if (nameElement) nameElement.textContent = newName;
-                if (initialDisplay) initialDisplay.textContent = newName.charAt(0);
+            if (nameElement) nameElement.textContent = newName;
+            if (initialDisplay) initialDisplay.textContent = newName.charAt(0);
+            updateConditionDropdowns();
+        };
 
-                // Update all condition dropdowns that reference sensors
-                updateConditionDropdowns();
-
-                console.log(`Sensor ${id} name updated to ${newName}`);
-            }
-        }
-
-        function updateSensorPin(id, pin) {
+        const updateSensorPin = (id, pin) => {
             const sensor = getSensor(id);
-            if (sensor) {
-                sensor.pin = parseInt(pin) || 1;
-                console.log(`Sensor ${id} pin updated to ${sensor.pin}`);
-            }
-        }
+            if (sensor) sensor.pin = parseInt(pin) || 1;
+        };
 
         // ===== CONDITION UPDATE FUNCTIONS =====
-        function updateConditionSensor(relayId, conditionId, sensorId) {
+        const updateConditionSensor = (relayId, conditionId, sensorId) => {
             const relay = getRelay(relayId);
             if (!relay) return;
 
             const condition = relay.conditions.find(c => c.id === conditionId);
             if (condition) {
                 condition.sensor = parseInt(sensorId);
-                condition.sensorId = parseInt(sensorId); // Keep both for compatibility
-                console.log(`Condition ${conditionId} sensor updated to ${sensorId}`);
+                condition.sensorId = parseInt(sensorId);
             }
-        }
+        };
 
-        function updateConditionOperator(relayId, conditionId, operator) {
+        const updateConditionOperator = (relayId, conditionId, operator) => {
             const relay = getRelay(relayId);
             if (!relay) return;
 
             const condition = relay.conditions.find(c => c.id === conditionId);
-            if (condition) {
-                condition.operator = operator;
-                console.log(`Condition ${conditionId} operator updated to ${operator}`);
-            }
-        }
+            if (condition) condition.operator = operator;
+        };
 
-        function updateConditionValue(relayId, conditionId, value) {
+        const updateConditionValue = (relayId, conditionId, value) => {
             const relay = getRelay(relayId);
             if (!relay) return;
 
             const condition = relay.conditions.find(c => c.id === conditionId);
-            if (condition) {
-                condition.value = parseFloat(value) || 0;
-                console.log(`Condition ${conditionId} value updated to ${condition.value}`);
-            }
-        }
+            if (condition) condition.value = parseFloat(value) || 0;
+        };
 
-        function updateConditionDropdowns() {
-            // Update all sensor dropdowns in conditions to reflect current sensor names
+        const updateConditionDropdowns = () => {
             const sensorSelects = document.querySelectorAll('.sensor-select');
             sensorSelects.forEach(select => {
                 const currentValue = select.value;
                 select.innerHTML = sensorList
-                    .map(sensor => `
-                <option value="${sensor.id}" ${sensor.id == currentValue ? 'selected' : ''}>
-                    ${sensor.name}
-                </option>
-            `)
+                    .map(sensor => `<option value="${sensor.id}" ${sensor.id == currentValue ? 'selected' : ''}>${sensor.name}</option>`)
                     .join('');
             });
-        }
+        };
 
-        function removeSensor(id) {
+        // ===== REMOVE FUNCTIONS =====
+        const removeSensor = (id) => {
             const sensor = getSensor(id);
-            if (sensor) {
-                const index = sensorList.indexOf(sensor);
-                if (index !== -1) {
-                    sensorList.splice(index, 1);
-                    renderSensors();
-                    updateConditionDropdowns();
-                }
-            }
-        }
+            if (!sensor) return;
 
-        function removeRelay(id) {
+            const index = sensorList.indexOf(sensor);
+            if (index !== -1) {
+                sensorList.splice(index, 1);
+                renderSensors();
+                updateConditionDropdowns();
+            }
+        };
+
+        const removeRelay = (id) => {
             const relay = getRelay(id);
-            if (relay) {
-                const index = relayList.indexOf(relay);
-                if (index !== -1) {
-                    relayList.splice(index, 1);
-                    renderRelays();
-                }
+            if (!relay) return;
+
+            const index = relayList.indexOf(relay);
+            if (index !== -1) {
+                relayList.splice(index, 1);
+                renderRelays();
             }
-        }
+        };
 
-
-        function removeCondition(relayId, conditionId) {
+        const removeCondition = (relayId, conditionId) => {
             const relay = getRelay(relayId);
             if (!relay) return;
 
@@ -1145,234 +978,194 @@
             if (index !== -1) {
                 relay.conditions.splice(index, 1);
                 renderConditions(relayId);
-                console.log(`Condition ${conditionId} removed from relay ${relayId}`);
             }
-        }
+        };
 
         // ===== RENDER FUNCTIONS =====
-        function renderSensors() {
+        const renderSensors = () => {
             const container = document.getElementById('sensor-container');
-            if (!container) return;
+            if (container) container.innerHTML = sensorList.map(createSensorHTML).join('');
+        };
 
-            container.innerHTML = sensorList.map(createSensorHTML).join('');
-        }
-
-        function renderRelays() {
+        const renderRelays = () => {
             const container = document.getElementById('relay-container');
-            if (!container) return;
+            if (container) container.innerHTML = relayList.map(createRelayHTML).join('');
+        };
 
-            container.innerHTML = relayList.map(createRelayHTML).join('');
-        }
-
-        function renderConditions(relayId) {
+        const renderConditions = (relayId) => {
             const relay = getRelay(relayId);
             if (!relay) return;
 
             const container = document.querySelector(`[data-relay-id="${relayId}"]`);
-            if (!container) return;
+            if (container) {
+                container.innerHTML = relay.conditions
+                    .map(condition => createConditionHTML(condition, relayId))
+                    .join('');
+            }
+        };
 
-            container.innerHTML = relay.conditions
-                .map(condition => createConditionHTML(condition, relayId))
-                .join('');
-        }
-
-        function reloadConditions(relayId) {
-            renderConditions(relayId); // Same functionality, cleaner implementation
-        }
+        const reloadConditions = (relayId) => renderConditions(relayId);
 
         // ===== SETTINGS TOGGLE FUNCTIONS =====
-        function toggleSensorSettings(sensorId) {
+        const toggleSensorSettings = (sensorId) => {
             const sensor = getSensor(sensorId);
             const settingsPanel = document.querySelector(`[data-sensor-container="${sensorId}"]`);
 
             if (sensor && settingsPanel) {
                 sensor.folded = !sensor.folded;
-
-                if (sensor.folded) {
-                    settingsPanel.classList.remove('grid');
-                } else {
-                    settingsPanel.classList.add('grid');
-                }
+                settingsPanel.classList.toggle('grid', !sensor.folded);
             }
-        }
+        };
 
-        function toggleRelaySettings(relayId) {
+        const toggleRelaySettings = (relayId) => {
             const relay = getRelay(relayId);
             const settingsPanel = document.querySelector(`[data-relay-container="${relayId}"]`);
 
             if (relay && settingsPanel) {
                 relay.folded = !relay.folded;
-
-                if (relay.folded) {
-                    settingsPanel.classList.remove('grid');
-                } else {
-                    settingsPanel.classList.add('grid');
-                }
+                settingsPanel.classList.toggle('grid', !relay.folded);
             }
-        }
+        };
 
         // ===== HTML GENERATION FUNCTIONS =====
-        function createSensorHTML(sensor) {
-            return `
-        <div id="${sensor.id}">
-            <div class="sensor">
-                <div data-sensor-initial="${sensor.id}">${sensor.name.charAt(0)}</div>
-                <div>
-                    <span data-sensor-name="${sensor.id}">${sensor.name}</span>:
-                    <span data-sensor-value="${sensor.id}">${sensor.value}</span>
+        const createSensorHTML = (sensor) => `
+            <div id="${sensor.id}">
+                <div class="sensor">
+                    <div data-sensor-initial="${sensor.id}">${sensor.name.charAt(0)}</div>
+                    <div>
+                        <span data-sensor-name="${sensor.id}">${sensor.name}</span>:
+                        <span data-sensor-value="${sensor.id}">${sensor.value}</span>
+                    </div>
+                    <button onclick="toggleSensorSettings(${sensor.id})" aria-label="Toggle sensor">⚙️</button>
+                    <button onclick="removeSensor(${sensor.id})" aria-label="Remove sensor">❌</button>
                 </div>
-                <button onclick="toggleSensorSettings(${sensor.id})" aria-label="Toggle sensor">⚙️</button>
-               <button onclick="removeSensor(${sensor.id})" aria-label="Remove sensor">❌</button>
-            </div>
-            <div class="sensor-settings ${sensor.folded ? '' : 'grid'}" data-sensor-container="${sensor.id}">
-                <div class="input">
-                    <label for="sensor-name">Name: </label>
-                    <input
-                        type="text"
-                        id="sensor-name"
-                        placeholder="Jeff maybe?"
-                        value="${sensor.name}"
-                        onchange="updateSensorName(${sensor.id}, this.value)"
-                    >
-                </div>
-                <div class="input">
-                    <label for="sensor-pin">Pin: </label>
-                    <input
-                        type="number"
-                        id="sensor-pin"
-                        placeholder="Devboard pin number"
-                        value="${sensor.pin}"
-                        onchange="updateSensorPin(${sensor.id}, this.value)"
-                    >
+                <div class="sensor-settings ${sensor.folded ? '' : 'grid'}" data-sensor-container="${sensor.id}">
+                    <div class="input">
+                        <label for="sensor-name">Name: </label>
+                        <input type="text" id="sensor-name" placeholder="Jeff maybe?" value="${sensor.name}" onchange="updateSensorName(${sensor.id}, this.value)">
+                    </div>
+                    <div class="input">
+                        <label for="sensor-pin">Pin: </label>
+                        <input type="number" id="sensor-pin" placeholder="Devboard pin number" value="${sensor.pin}" onchange="updateSensorPin(${sensor.id}, this.value)">
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
-        }
+        `;
 
-        function createRelayHTML(relay) {
-            return `
-        <div id="${relay.id}">
-            <div class="sensor">
-                <div data-relay-initial="${relay.id}">${relay.name.charAt(0)}</div>
-                <div>
-                    <span data-relay-name="${relay.id}">${relay.name}</span>:
-                    <span data-relay-status="${relay.id}">${relay.status ? '🟢' : '🟥'}</span>
+        const createRelayHTML = (relay) => `
+            <div id="${relay.id}">
+                <div class="sensor">
+                    <div data-relay-initial="${relay.id}">${relay.name.charAt(0)}</div>
+                    <div>
+                        <span data-relay-name="${relay.id}">${relay.name}</span>:
+                        <span data-relay-status="${relay.id}">${relay.status ? '🟢' : '🟥'}</span>
+                    </div>
+                    <button onclick="toggleRelaySettings(${relay.id})">⚙️</button>
+                    <button onclick="removeRelay(${relay.id})" aria-label="Remove relay">❌</button>
                 </div>
-                <button onclick="toggleRelaySettings(${relay.id})">⚙️</button>
-                <button onclick="removeRelay(${relay.id})" aria-label="Remove relay">❌</button>
+                <div class="sensor-settings ${relay.folded ? '' : 'grid'}" data-relay-container="${relay.id}">
+                    <div class="input">
+                        <label for="relay-name">Name:</label>
+                        <input type="text" name="relay-name" id="relay-name" placeholder="*ahem* jeff?" value="${relay.name}" onchange="updateRelayName(${relay.id}, this.value)">
+                    </div>
+                    <div class="input">
+                        <label for="relay-pin">Pin: </label>
+                        <input type="number" id="relay-pin" placeholder="Devboard output pin" value="${relay.pin}" onchange="updateRelayPin(${relay.id}, this)">
+                    </div>
+                    <span>Conditions</span>
+                    <div data-relay-id="${relay.id}"></div>
+                    <select onchange="addCondition(${relay.id}, this)">
+                        <option value="0">Add Condition</option>
+                        <option value="sensor">Sensor Condition</option>
+                    </select>
+                </div>
             </div>
-            <div class="sensor-settings ${relay.folded ? '' : 'grid'}" data-relay-container="${relay.id}">
-                <div class="input">
-                    <label for="relay-name">Name:</label>
-                    <input
-                        type="text"
-                        name="relay-name"
-                        id="relay-name"
-                        placeholder="*ahem* jeff?"
-                        value="${relay.name}"
-                        onchange="updateRelayName(${relay.id}, this.value)"
-                    >
-                </div>
-                <div class="input">
-                    <label for="relay-pin">Pin: </label>
-                    <input
-                        type="number"
-                        id="relay-pin"
-                        placeholder="Devboard output pin"
-                        value="${relay.pin}"
-                        onchange="updateRelayPin(${relay.id}, this)"
-                    >
-                </div>
-                <span>Conditions</span>
-                <div data-relay-id="${relay.id}"></div>
-                <select onchange="addCondition(${relay.id}, this)">
-                    <option value="0">Add Condition</option>
-                    <option value="sensor">Sensor Condition</option>
-                </select>
-            </div>
-        </div>
-    `;
-        }
+        `;
 
-        function createConditionHTML(condition, relayId) {
+        const createConditionHTML = (condition, relayId) => {
             if (condition.type !== 'sensor') return '';
 
             const sensorOptions = sensorList
-                .map(sensor => `
-            <option value="${sensor.id}" ${sensor.id === condition.sensorId ? 'selected' : ''}>
-                ${sensor.name}
-            </option>
-        `)
+                .map(sensor => `<option value="${sensor.id}" ${sensor.id === condition.sensorId ? 'selected' : ''}>${sensor.name}</option>`)
                 .join('');
 
             return `
-        <div class="relay-settings" data-condition-id="${condition.id}">
-            <div class="input">
-                <select
-                    class="sensor-select"
-                    data-condition-sensors="${relayId}"
-                    onchange="updateConditionSensor(${relayId}, ${condition.id}, this.value)"
-                >
-                    ${sensorOptions}
-                </select>
-            </div>
-            <div class="input">
-<select
-    class="operator-select operator"
-    onchange="updateConditionOperator(${relayId}, ${condition.id}, this.value)"
->
-    <option value=">" ${condition.operator === '>' ? 'selected' : ''}>&gt;</option>
-    <option value="<" ${condition.operator === '<' ? 'selected' : ''}>&lt;</option>
-    <option value=">=" ${condition.operator === '>=' ? 'selected' : ''}>&ge;</option>
-    <option value="<=" ${condition.operator === '<=' ? 'selected' : ''}>&le;</option>
-    <option value="=" ${condition.operator === '=' ? 'selected' : ''}>=</option>
-    <option value="!=" ${condition.operator === '!=' ? 'selected' : ''}>&ne;</option>
-</select>
-
-            </div>
-            <div class="input">
-                <input
-                    type="number"
-                    class="condition-value"
-                    value="${condition.value}"
-                    placeholder="Value"
-                    onchange="updateConditionValue(${relayId}, ${condition.id}, this.value)"
-                >
-            </div>
-            <div class="arrow-container">
-                <button
-                    class="move-up"
-                    onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'up')"
-                >⬆️</button>
-                <button
-                    class="move-down"
-                    onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'down')"
-                >⬇️</button>
-            </div>
-            <button
-                class="remove-condition"
-                onclick="removeCondition(${relayId}, ${condition.id})"
-            >❌</button>
-        </div>
-    `;
-        }
+                <div class="relay-settings" data-condition-id="${condition.id}">
+                    <div class="input">
+                        <select class="sensor-select" data-condition-sensors="${relayId}" onchange="updateConditionSensor(${relayId}, ${condition.id}, this.value)">
+                            ${sensorOptions}
+                        </select>
+                    </div>
+                    <div class="input">
+                        <select class="operator-select operator" onchange="updateConditionOperator(${relayId}, ${condition.id}, this.value)">
+                            <option value=">" ${condition.operator === '>' ? 'selected' : ''}>&gt;</option>
+                            <option value="<" ${condition.operator === '<' ? 'selected' : ''}>&lt;</option>
+                            <option value=">=" ${condition.operator === '>=' ? 'selected' : ''}>&ge;</option>
+                            <option value="<=" ${condition.operator === '<=' ? 'selected' : ''}>&le;</option>
+                            <option value="=" ${condition.operator === '=' ? 'selected' : ''}>=</option>
+                            <option value="!=" ${condition.operator === '!=' ? 'selected' : ''}>&ne;</option>
+                        </select>
+                    </div>
+                    <div class="input">
+                        <input type="number" class="condition-value" value="${condition.value}" placeholder="Value" onchange="updateConditionValue(${relayId}, ${condition.id}, this.value)">
+                    </div>
+                    <div class="arrow-container">
+                        <button class="move-up" onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'up')">⬆️</button>
+                        <button class="move-down" onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'down')">⬇️</button>
+                    </div>
+                    <button class="remove-condition" onclick="removeCondition(${relayId}, ${condition.id})">❌</button>
+                </div>
+            `;
+        };
 
         // ===== DATA FETCHING =====
-        function getData() {
+        const getData = () => {
             fetch('readADC')
                 .then(response => response.text())
                 .then(data => {
                     const element = document.getElementById("DataUpdates");
-                    if (element) {
-                        element.innerHTML = data;
-                    }
+                    if (element) element.innerHTML = data;
                 })
                 .catch(error => console.error('Error:', error));
+        };
 
-        }
+        // ===== SUBMISSION FUNCTIONS =====
+        const submitSensors = async () => {
+            const data = getAllData();
+            const formData = new FormData();
+            formData.append('body', typeof data === 'object' ? JSON.stringify(data) : data);
+
+            try {
+                const response = await fetch('/submit-sensors', {
+                    method: 'POST',
+                    body: formData
+                });
+                const text = await response.text();
+                console.log(response.ok ? "Data sent successfully" : "Failed to send data");
+                console.log(text);
+            } catch (error) {
+                console.error("Error sending data:", error);
+            }
+        };
+
+        const updateDebugPin = async (debugValue) => {
+            const formData = new FormData();
+            formData.append('body', typeof debugValue === 'object' ? JSON.stringify(debugValue) : debugValue);
+
+            try {
+                const response = await fetch('/update-debug-pin', {
+                    method: 'POST',
+                    body: formData
+                });
+                const text = await response.text();
+                console.log(text);
+            } catch (error) {
+                console.error("Error updating debug pin:", error);
+            }
+        };
+
         // ===== UI EVENT HANDLERS =====
-        document.addEventListener('DOMContentLoaded', function () {
+        const initializeEventHandlers = () => {
             const body = document.body;
             const hamburgerMenu = document.querySelector('.hamburger-menu');
             const mobileOverlay = document.querySelector('.mobile-overlay');
@@ -1405,11 +1198,9 @@
                 tabButton.setAttribute('aria-selected', 'true');
 
                 const targetPanel = document.getElementById(targetTabId);
-                if (targetPanel) {
-                    targetPanel.classList.add('active');
-                }
+                if (targetPanel) targetPanel.classList.add('active');
 
-                // Close mobile menu only on small screens
+                // Close mobile menu on small screens
                 if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
                     toggleMobileMenu();
                 }
@@ -1426,82 +1217,13 @@
             mobileOverlay.addEventListener('click', toggleMobileMenu);
             sidebar.addEventListener('click', handleTabClick);
             document.addEventListener('keydown', handleEscapeKey);
+        };
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            initializeEventHandlers();
         });
-        // ===== Submit Sensor+Relay info ======
-        async function submitSensors() {
-            let data = getAllData();  // Your function that returns the JSON data (stringified or object)
-            let formData = new FormData();
-            formData.append('body', typeof data === 'object' ? JSON.stringify(data) : data);  // Ensure data is a string
-
-            try {
-                const response = await fetch('/submit-sensors', {
-                    method: 'POST',
-                    body: formData  // Send as form data
-                });
-                const text = await response.text();
-                console.log(text);  // Or update your UI
-                if (response.ok) {
-                    console.log("Data sent successfully");
-                } else {
-                    console.log("Failed to send data");
-                }
-            } catch (error) {
-                console.error("Error sending data:", error);
-            }
-        }
-
-        async function updateDebugPin(debugValue) {
-            const formData = new FormData();
-            formData.append('body', typeof data === 'object' ? JSON.stringify(debugValue) : debugValue);  // Ensure data is a string
-
-            try {
-                const response = await fetch('/update-debug-pin',
-                    {
-                        method: 'POST',
-                        body: formData  // Send as form data
-                    });
-                const text = await response.text();
-                console.log(text);
-            } catch (error) {
-                console.error("Error updating debug pin:", error);
-            }
-        }
-
-        // ===== FIRMWARE UPDATE ======
-        // document.getElementById('uploadForm').onsubmit = async function (e) {
-        //     e.preventDefault();
-        //     const fileInput = document.querySelector('input[type="file"]');
-        //     const file = fileInput.files[0];
-        //     if (!file) {
-        //         alert('Please select a firmware file!');
-        //         return;
-        //     }
-
-        //     const status = document.getElementById('firmupdate-status');
-        //     status.textContent = 'Uploading...';
-
-        //     const formData = new FormData();
-        //     formData.append('file', file);
-
-        //     try {
-        //         const response = await fetch('/update', {
-        //             method: 'POST',
-        //             body: formData
-        //         });
-        //         const text = await response.text();
-        //         status.textContent = text;
-        //         if (response.ok) {
-        //             status.style.color = '#28a745';
-        //             setTimeout(() => { status.textContent += ' Device is rebooting...'; }, 1000);
-        //         } else {
-        //             status.style.color = '#dc3545';
-        //         }
-        //     } catch (error) {
-        //         status.textContent = 'Upload failed: ' + error.message;
-        //         status.style.color = '#dc3545';
-        //     }
-        // };
     </script>
 </body>
-
 </html>
