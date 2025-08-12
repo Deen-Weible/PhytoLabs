@@ -53,7 +53,7 @@
             z-index: 1000;
         }
 
-        .main-header> :first-child {
+        .main-header > :first-child {
             margin-right: auto;
         }
 
@@ -273,8 +273,7 @@
         }
 
         button:active {
-            transform: translateY(2px);
-            scale: 0.95;
+            transform: translateY(2px) scale(0.95);
         }
 
         .solid-button {
@@ -318,12 +317,12 @@
             max-width: 100%;
         }
 
-        .settings-widget>span:first-child {
+        .settings-widget > span:first-child {
             color: var(--primary-color);
             font-size: 14pt;
         }
 
-        .settings-widget>span:nth-child(2) {
+        .settings-widget > span:nth-child(2) {
             color: var(--gray);
             font-size: 10pt;
             margin-bottom: 8px;
@@ -352,11 +351,11 @@
             align-items: center;
         }
 
-        .sensor>div:not(:first-child) {
+        .sensor > div:not(:first-child) {
             margin-right: 8px;
         }
 
-        .sensor>div:first-child {
+        .sensor > div:first-child {
             border-right: solid 2px var(--accent-color);
             width: min-content;
             padding: 10px;
@@ -595,20 +594,20 @@
                         <span>OTA Update</span>
                         <span id="firmware-status">WARNING: Updates aren't verified</span>
                         <div class="sensor-settings grid">
-                                <span id="firmupdate-btn">Select .BIN file to begin</span>
-                                <form id="uploadForm" enctype="multipart/form-data">
-                                    <div class="input">
-                                        <label for="file">file :</label>
-                                        <input type="file" name="file" accept=".bin" required>
-                                    </div> <br>
-                                    <input type="submit" value="Update Firmware" class="button">
-                                </form>
+                            <span id="firmupdate-btn">Select .BIN file to begin</span>
+                            <form id="uploadForm" enctype="multipart/form-data">
+                                <div class="input">
+                                    <label for="file">file :</label>
+                                    <input type="file" name="file" accept=".bin" required>
+                                </div> <br>
+                                <input type="submit" value="Update Firmware" class="button">
+                            </form>
                         </div>
                     </div>
                 </section>
-                </section>
-                </main>
-                </div>
+            </section>
+        </main>
+    </div>
 
     <script>
         'use strict';
@@ -1210,61 +1209,7 @@
         };
 
         // ===== UI EVENT HANDLERS =====
-        const initializeEventHandlers = () => {
-            const body = document.body;
-            const hamburgerMenu = document.querySelector('.hamburger-menu');
-            const mobileOverlay = document.querySelector('.mobile-overlay');
-            const sidebar = document.querySelector('.sidebar');
-            const tabButtons = document.querySelectorAll('.tab-button');
-            const contentPanels = document.querySelectorAll('.content-panel');
-
-            if (!hamburgerMenu || !mobileOverlay || !sidebar) return;
-
-            const toggleMobileMenu = () => {
-                const isOpen = body.classList.toggle('sidebar-open');
-                hamburgerMenu.setAttribute('aria-expanded', isOpen);
-            };
-
-            const handleTabClick = (e) => {
-                if (!e.target.classList.contains('tab-button')) return;
-
-                const tabButton = e.target;
-                const targetTabId = tabButton.dataset.tab;
-
-                // Reset all tabs
-                tabButtons.forEach(btn => {
-                    btn.classList.remove('active');
-                    btn.setAttribute('aria-selected', 'false');
-                });
-                contentPanels.forEach(panel => panel.classList.remove('active'));
-
-                // Activate selected tab
-                tabButton.classList.add('active');
-                tabButton.setAttribute('aria-selected', 'true');
-
-                const targetPanel = document.getElementById(targetTabId);
-                if (targetPanel) targetPanel.classList.add('active');
-
-                // Close mobile menu on small screens
-                if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
-                    toggleMobileMenu();
-                }
-            };
-
-            const handleEscapeKey = (e) => {
-                if (e.key === 'Escape' && body.classList.contains('sidebar-open')) {
-                    toggleMobileMenu();
-                }
-            };
-
-            // Event listeners
-            hamburgerMenu.addEventListener('click', toggleMobileMenu);
-            mobileOverlay.addEventListener('click', toggleMobileMenu);
-            sidebar.addEventListener('click', handleTabClick);
-            document.addEventListener('keydown', handleEscapeKey);
-        };
-
-  document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', () => {
             const body = document.body;
             const hamburgerMenu = document.querySelector('.hamburger-menu');
             const mobileOverlay = document.querySelector('.mobile-overlay');
@@ -1280,7 +1225,7 @@
             hamburgerMenu.addEventListener('click', toggleMobileMenu);
             mobileOverlay.addEventListener('click', toggleMobileMenu);
 
-            sidebar.addEventListener('click', function (e) {
+            sidebar.addEventListener('click', (e) => {
                 if (e.target && e.target.classList.contains('tab-button')) {
                     const tabButton = e.target;
                     const targetTabId = tabButton.dataset.tab;
@@ -1304,51 +1249,48 @@
                 }
             });
 
-            document.addEventListener('keydown', function (e) {
+            document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && body.classList.contains('sidebar-open')) {
                     toggleMobileMenu();
                 }
             });
-        });
 
-         document.getElementById('uploadForm').onsubmit = async function(e) {
-              e.preventDefault();
-              const fileInput = document.querySelector('input[type="file"]');
-              const file = fileInput.files[0];
-              if (!file) {
-                  alert('Please select a firmware file!');
-                  return;
-              }
+            // Upload form handler
+            document.getElementById('uploadForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const fileInput = document.querySelector('input[type="file"]');
+                const file = fileInput.files[0];
+                if (!file) {
+                    alert('Please select a firmware file!');
+                    return;
+                }
 
-              const status = document.getElementById('firmware-status');
-              status.textContent = 'Uploading...';
+                const status = document.getElementById('firmware-status');
+                status.textContent = 'Uploading...';
 
-              const formData = new FormData();
-              formData.append('file', file);
+                const formData = new FormData();
+                formData.append('file', file);
 
-              try {
-                  const response = await fetch('/update', {
-                      method: 'POST',
-                      body: formData
-                  });
-                  const text = await response.text();
-                  status.textContent = text;
-                  if (response.ok) {
-                      status.style.color = '#28a745';
-                      setTimeout(() => { status.textContent += ' Device is rebooting...'; }, 1000);
-                  } else {
-                      status.style.color = '#dc3545';
-                  }
-              } catch (error) {
-                  status.textContent = 'Upload failed: ' + error.message;
-                  status.style.color = '#dc3545';
-              }
-          };
+                try {
+                    const response = await fetch('/update', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const text = await response.text();
+                    status.textContent = text;
+                    if (response.ok) {
+                        status.style.color = '#28a745';
+                        setTimeout(() => { status.textContent += ' Device is rebooting...'; }, 1000);
+                    } else {
+                        status.style.color = '#dc3545';
+                    }
+                } catch (error) {
+                    status.textContent = 'Upload failed: ' + error.message;
+                    status.style.color = '#dc3545';
+                }
+            };
 
-        // ===== INITIALIZATION =====
-        document.addEventListener('DOMContentLoaded', () => {
             initializeApp();
-            initializeEventHandlers();
         });
     </script>
 </body>
