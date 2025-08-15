@@ -1,5 +1,6 @@
 const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -92,8 +93,13 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .error-icon {
@@ -110,8 +116,15 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         }
 
         @keyframes flashYellowAndRed {
-            0%, 100% { color: yellow; }
-            50% { color: red; }
+
+            0%,
+            100% {
+                color: yellow;
+            }
+
+            50% {
+                color: red;
+            }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -142,9 +155,18 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             transition: all var(--transition-speed) ease-in-out;
         }
 
-        .hamburger-menu .bar1 { top: 0; }
-        .hamburger-menu .bar2 { top: 50%; transform: translateY(-50%); }
-        .hamburger-menu .bar3 { bottom: 0; }
+        .hamburger-menu .bar1 {
+            top: 0;
+        }
+
+        .hamburger-menu .bar2 {
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .hamburger-menu .bar3 {
+            bottom: 0;
+        }
 
         .sidebar-open .hamburger-menu .bar1 {
             top: 50%;
@@ -251,15 +273,15 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         }
 
         button:active {
-            transform: translateY(2px);
-            scale: 0.95;
+            transform: translateY(2px) scale(0.95);
         }
 
         .solid-button {
             border: 4px solid gray;
         }
 
-        input, select {
+        input,
+        select {
             padding: 8px;
             border-right: 2px solid var(--gray);
             color: var(--gray);
@@ -273,7 +295,8 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             width: 100%;
         }
 
-        input:focus-within, select:focus-within {
+        input:focus-within,
+        select:focus-within {
             outline: 2px solid var(--gray);
         }
 
@@ -467,6 +490,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         }
     </style>
 </head>
+
 <body>
     <!-- Loading Indicator -->
     <div class="floater hidden">
@@ -477,7 +501,8 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         <!-- Header -->
         <header class="main-header">
             <div class="logo">PhytoLabs</div>
-            <div class="error-icon" id="error-icon" title="Error: Something went wrong" aria-label="Error indicator">!</div>
+            <div class="error-icon" id="error-icon" title="Error: Something went wrong" aria-label="Error indicator">!
+            </div>
             <div class="hamburger-menu" aria-label="Toggle navigation" aria-expanded="false">
                 <span class="bar bar1"></span>
                 <span class="bar bar2"></span>
@@ -490,9 +515,12 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
 
         <!-- Sidebar Navigation -->
         <nav class="sidebar" role="tablist">
-            <button id="tab-dashboard" class="tab-button active" data-tab="dashboard" role="tab" aria-selected="true">Dashboard</button>
-            <button id="tab-sensor-relations" class="tab-button" data-tab="sensor-relations" role="tab" aria-selected="false">Sensor Relations</button>
-            <button id="tab-system-settings" class="tab-button" data-tab="system-settings" role="tab" aria-selected="false">System Settings</button>
+            <button id="tab-dashboard" class="tab-button active" data-tab="dashboard" role="tab"
+                aria-selected="true">Dashboard</button>
+            <button id="tab-sensor-relations" class="tab-button" data-tab="sensor-relations" role="tab"
+                aria-selected="false">Sensor Relations</button>
+            <button id="tab-system-settings" class="tab-button" data-tab="system-settings" role="tab"
+                aria-selected="false">System Settings</button>
         </nav>
 
         <!-- Main Content Area -->
@@ -500,7 +528,8 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             <!-- Dashboard Panel -->
             <section id="dashboard" class="content-panel" role="tabpanel" aria-labelledby="tab-dashboard">
                 <h2>Dashboard</h2>
-                <p id="DataUpdates">Welcome to your dashboard. Here you can see an overview of your account activity and recent notifications.</p>
+                <p id="DataUpdates">Welcome to your dashboard. Here you can see an overview of your account activity and
+                    recent notifications.</p>
             </section>
 
             <!-- Sensor Relations Panel -->
@@ -547,7 +576,8 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             </section>
 
             <!-- System Settings Panel -->
-            <section id="system-settings" class="content-panel active" role="tabpanel" aria-labelledby="tab-system-settings">
+            <section id="system-settings" class="content-panel active" role="tabpanel"
+                aria-labelledby="tab-system-settings">
                 <h2>System Settings</h2>
                 <section class="settings-grid">
                     <div class="settings-widget">
@@ -558,6 +588,20 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                                 <label for="time-input">Time:</label>
                                 <input type="time" id="time-input" name="time" value="12:34">
                             </div>
+                        </div>
+                    </div>
+                    <div class="settings-widget">
+                        <span>OTA Update</span>
+                        <span id="firmware-status">WARNING: Updates aren't verified</span>
+                        <div class="sensor-settings grid">
+                            <span id="firmupdate-btn">Select .BIN file to begin</span>
+                            <form id="uploadForm" enctype="multipart/form-data">
+                                <div class="input">
+                                    <label for="file">file :</label>
+                                    <input type="file" name="file" accept=".bin" required>
+                                </div> <br>
+                                <input type="submit" value="Update Firmware" class="button">
+                            </form>
                         </div>
                     </div>
                 </section>
@@ -651,7 +695,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                 .catch(error => console.error('Config loading failed:', error));
 
             getData();
-            setInterval(getData, 2000);
+            setInterval(getData, 4000);
             setInterval(checkForDuplicates, 2000);
         };
 
@@ -1165,7 +1209,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         };
 
         // ===== UI EVENT HANDLERS =====
-        const initializeEventHandlers = () => {
+        document.addEventListener('DOMContentLoaded', () => {
             const body = document.body;
             const hamburgerMenu = document.querySelector('.hamburger-menu');
             const mobileOverlay = document.querySelector('.mobile-overlay');
@@ -1173,57 +1217,82 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             const tabButtons = document.querySelectorAll('.tab-button');
             const contentPanels = document.querySelectorAll('.content-panel');
 
-            if (!hamburgerMenu || !mobileOverlay || !sidebar) return;
-
             const toggleMobileMenu = () => {
                 const isOpen = body.classList.toggle('sidebar-open');
                 hamburgerMenu.setAttribute('aria-expanded', isOpen);
             };
 
-            const handleTabClick = (e) => {
-                if (!e.target.classList.contains('tab-button')) return;
+            hamburgerMenu.addEventListener('click', toggleMobileMenu);
+            mobileOverlay.addEventListener('click', toggleMobileMenu);
 
-                const tabButton = e.target;
-                const targetTabId = tabButton.dataset.tab;
+            sidebar.addEventListener('click', (e) => {
+                if (e.target && e.target.classList.contains('tab-button')) {
+                    const tabButton = e.target;
+                    const targetTabId = tabButton.dataset.tab;
 
-                // Reset all tabs
-                tabButtons.forEach(btn => {
-                    btn.classList.remove('active');
-                    btn.setAttribute('aria-selected', 'false');
-                });
-                contentPanels.forEach(panel => panel.classList.remove('active'));
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.setAttribute('aria-selected', 'false');
+                    });
+                    contentPanels.forEach(panel => panel.classList.remove('active'));
 
-                // Activate selected tab
-                tabButton.classList.add('active');
-                tabButton.setAttribute('aria-selected', 'true');
+                    tabButton.classList.add('active');
+                    tabButton.setAttribute('aria-selected', 'true');
+                    const targetPanel = document.getElementById(targetTabId);
+                    if (targetPanel) {
+                        targetPanel.classList.add('active');
+                    }
 
-                const targetPanel = document.getElementById(targetTabId);
-                if (targetPanel) targetPanel.classList.add('active');
-
-                // Close mobile menu on small screens
-                if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
-                    toggleMobileMenu();
+                    if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
+                        toggleMobileMenu();
+                    }
                 }
-            };
+            });
 
-            const handleEscapeKey = (e) => {
+            document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && body.classList.contains('sidebar-open')) {
                     toggleMobileMenu();
                 }
+            });
+
+            // Upload form handler
+            document.getElementById('uploadForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const fileInput = document.querySelector('input[type="file"]');
+                const file = fileInput.files[0];
+                if (!file) {
+                    alert('Please select a firmware file!');
+                    return;
+                }
+
+                const status = document.getElementById('firmware-status');
+                status.textContent = 'Uploading...';
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch('/update', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const text = await response.text();
+                    status.textContent = text;
+                    if (response.ok) {
+                        status.style.color = '#28a745';
+                        setTimeout(() => { status.textContent += ' Device is rebooting...'; }, 1000);
+                    } else {
+                        status.style.color = '#dc3545';
+                    }
+                } catch (error) {
+                    status.textContent = 'Upload failed: ' + error.message;
+                    status.style.color = '#dc3545';
+                }
             };
 
-            // Event listeners
-            hamburgerMenu.addEventListener('click', toggleMobileMenu);
-            mobileOverlay.addEventListener('click', toggleMobileMenu);
-            sidebar.addEventListener('click', handleTabClick);
-            document.addEventListener('keydown', handleEscapeKey);
-        };
-
-        // ===== INITIALIZATION =====
-        document.addEventListener('DOMContentLoaded', () => {
             initializeApp();
-            initializeEventHandlers();
         });
     </script>
 </body>
+
 </html>)=====";
