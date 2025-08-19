@@ -597,7 +597,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                             <span id="firmupdate-btn">Select .BIN file to begin</span>
                             <form id="uploadForm" enctype="multipart/form-data">
                                 <div class="input">
-                                    <label for="file">file :</label>
+                                    <label for="file">File :</label>
                                     <input type="file" name="file" accept=".bin" required>
                                 </div> <br>
                                 <input type="submit" value="Update Firmware" class="button">
@@ -605,15 +605,34 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                         </div>
                     </div>
                     <div class="settings-widget">
-                        <span>Wifi</span>
-                        <span>Network connection</span>
+                        <span>Network</span>
+                        <span>Manage connected network or hotspot security</span>
                         <div class="sensor-settings grid">
+                            <div class="input">
+                                <span>Wi-Fi</span>
+                                <input type="radio" name="connection" id="wifi" value="wifi">
+                            </div>
 
+                            <div class="input">
+                                <span>HotSpot</span>
+                                <input type="radio" name="connection" id="hotspot" value="hotspot">
+                            </div>
+
+                            <!-- Wi-Fi Configuration Inputs -->
+                            <div class="input wifi-config">
+                                <label for="ssid">Ssid:</label>
+                                <input type="text" id="ssid" placeholder="Enter your WiFi SSID (Name)">
+                            </div>
+                            <div class="input wifi-config">
+                                <label for="password">Pass:</label>
+                                <input type="password" id="password" placeholder="Enter your WiFi password">
+                            </div>
                         </div>
                     </div>
-                </section>
-            </section>
-        </main>
+    </div>
+    </section>
+    </section>
+    </main>
     </div>
 
     <script>

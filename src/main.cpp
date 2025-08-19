@@ -273,22 +273,23 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
       DeserializationError error = deserializeJson(doc, jsonStr);
 
       if (error) {
+        Serial.println("Invalid JSON received: " + String(error.c_str()));
         request->send(400, "text/plain", "Invalid JSON");
         return;
       }
 
-      // Clear existing data
-      manager = SensorRelayManager();
+      // Clear existing data to prevent memory leaks
+      manager.Clear();
 
       // Parse and register sensors
       JsonArray sensorsArray = doc["sensors"];
       for (JsonObject sensorObj : sensorsArray) {
         uint8_t id = sensorObj["id"].as<int>();
-        const char *name = sensorObj["name"].as<const char *>();
+        String name = sensorObj["name"].as<String>();
         uint8_t pin = sensorObj["pin"].as<int>();
-        float value = 0.0; // Default value, updated in loop
-        bool folded = true;
-        Sensor *sensor = new Sensor(id, name, pin, value, folded);
+        float value = 0.0;  // Default value, updated in loop
+        bool folded = true; // Default as in original code
+        Sensor *sensor = new Sensor(id, name.c_str(), pin, value, folded);
         manager.RegisterSensor(sensor);
       }
 
@@ -296,11 +297,11 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
       JsonArray relaysArray = doc["relays"];
       for (JsonObject relayObj : relaysArray) {
         uint8_t id = relayObj["id"].as<int>();
-        const char *name = relayObj["name"].as<const char *>();
+        String name = relayObj["name"].as<String>();
         uint8_t pin = relayObj["pin"].as<int>();
-        bool status = false;
-        bool folded = false;
-        Relay *relay = new Relay(id, name, pin, status, folded);
+        bool status = false; // Default as in original code
+        bool folded = false; // Default as in original code
+        Relay *relay = new Relay(id, name.c_str(), pin, status, folded);
 
         // Register conditions
         JsonArray conditionsArray = relayObj["conditions"];
@@ -308,11 +309,11 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
           uint8_t conditionId = conditionObj["id"].as<int>();
           uint8_t sensor = conditionObj["sensor"].as<int>();
           uint8_t sensorId = conditionObj["sensorId"].as<int>();
-          const char *op = conditionObj["operator"].as<const char *>();
+          String op = conditionObj["operator"].as<String>();
           float value = conditionObj["value"].as<float>();
-          const char *type = conditionObj["type"].as<const char *>();
-          Condition *condition =
-              new Condition(sensor, sensorId, op, value, conditionId, type);
+          String type = conditionObj["type"].as<String>();
+          Condition *condition = new Condition(
+              sensor, sensorId, op.c_str(), value, conditionId, type.c_str());
           relay->AddCondition(condition);
         }
 
@@ -321,15 +322,13 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
         digitalWrite(pin, status ? HIGH : LOW);
       }
 
+      // Save the new configuration to Preferences
+      manager.SaveToPreferences();
+
       request->send(200, "text/plain", "Sensors and relays updated");
     } else {
+      Serial.println("No data received in request");
       request->send(400, "text/plain", "No data received");
-    }
-  });
-
-  server.on("/update-debug-pin", HTTP_POST, [](AsyncWebServerRequest *request) {
-    if (request->hasParam("body", true)) {
-      debug_pin_value = request->getParam("body", true)->value().toInt();
     }
   });
 }
@@ -381,6 +380,30 @@ void setup() {
   nav_info.RegisterScreen(&time_menu);
   nav_info.RegisterScreen(&slider_menu);
   nav_info.SetCurrentScreen(&settings_menu);
+
+  manager.LoadFromPreferences();
+  for (int i = 0; i < manager.GetNumSensors(); i++) {
+    Sensor *sensor = manager.sensors[i];
+    if (sensor) {
+      Serial.print("  Sensor ID: ");
+      Serial.print(sensor->GetId());
+      Serial.print(", Name: ");
+      Serial.print(sensor->GetName());
+      float value = sensor->GetValue();
+      Serial.print(", Value: ");
+      Serial.println(value);
+    }
+  }
+
+  for (int i = 0; i < manager.GetNumRelays(); i++) {
+    Relay *relay = manager.relays[i];
+    if (relay) {
+      Serial.println("  Relay ID: ");
+      Serial.print(relay->GetId());
+      Serial.println(" Relay Name: ");
+      Serial.println(relay->GetName());
+    }
+  }
 
   Serial.println(WiFi.localIP());
 }
