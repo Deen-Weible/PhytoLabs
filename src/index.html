@@ -53,7 +53,7 @@
             z-index: 1000;
         }
 
-        .main-header > :first-child {
+        .main-header> :first-child {
             margin-right: auto;
         }
 
@@ -317,12 +317,12 @@
             max-width: 100%;
         }
 
-        .settings-widget > span:first-child {
+        .settings-widget>span:first-child {
             color: var(--primary-color);
             font-size: 14pt;
         }
 
-        .settings-widget > span:nth-child(2) {
+        .settings-widget>span:nth-child(2) {
             color: var(--gray);
             font-size: 10pt;
             margin-bottom: 8px;
@@ -351,11 +351,11 @@
             align-items: center;
         }
 
-        .sensor > div:not(:first-child) {
+        .sensor>div:not(:first-child) {
             margin-right: 8px;
         }
 
-        .sensor > div:first-child {
+        .sensor>div:first-child {
             border-right: solid 2px var(--accent-color);
             width: min-content;
             padding: 10px;
@@ -597,16 +597,42 @@
                             <span id="firmupdate-btn">Select .BIN file to begin</span>
                             <form id="uploadForm" enctype="multipart/form-data">
                                 <div class="input">
-                                    <label for="file">file :</label>
+                                    <label for="file">File :</label>
                                     <input type="file" name="file" accept=".bin" required>
                                 </div> <br>
                                 <input type="submit" value="Update Firmware" class="button">
                             </form>
                         </div>
                     </div>
-                </section>
-            </section>
-        </main>
+                    <div class="settings-widget">
+                        <span>Network</span>
+                        <span>Manage connected network or hotspot security</span>
+                        <div class="sensor-settings grid">
+                            <div class="input">
+                                <span>Wi-Fi</span>
+                                <input type="radio" name="connection" id="wifi" value="wifi">
+                            </div>
+
+                            <div class="input">
+                                <span>HotSpot</span>
+                                <input type="radio" name="connection" id="hotspot" value="hotspot">
+                            </div>
+
+                            <!-- Wi-Fi Configuration Inputs -->
+                            <div class="input wifi-config">
+                                <label for="ssid">Ssid:</label>
+                                <input type="text" id="ssid" placeholder="Enter your WiFi SSID (Name)">
+                            </div>
+                            <div class="input wifi-config">
+                                <label for="password">Pass:</label>
+                                <input type="password" id="password" placeholder="Enter your WiFi password">
+                            </div>
+                        </div>
+                    </div>
+    </div>
+    </section>
+    </section>
+    </main>
     </div>
 
     <script>
@@ -1256,7 +1282,7 @@
             });
 
             // Upload form handler
-            document.getElementById('uploadForm').onsubmit = async function(e) {
+            document.getElementById('uploadForm').onsubmit = async function (e) {
                 e.preventDefault();
                 const fileInput = document.querySelector('input[type="file"]');
                 const file = fileInput.files[0];

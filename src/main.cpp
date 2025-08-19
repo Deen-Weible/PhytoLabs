@@ -146,78 +146,34 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
   });
 
   server.on("/readADC", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", "Good");
+    // Create a JSON object to hold the list of sensors
+    JsonDocument doc;
+
+    // Array to store sensor data
+    JsonArray sensorsArray = doc.createNestedArray("sensors");
+
+    // Iterate through all registered sensors in manager
+    for (int i = 0; i < manager.GetNumSensors(); i++) {
+      Sensor *sensor = manager.sensors[i];
+      if (sensor) {
+        JsonDocument sensorDoc;
+        sensorDoc["id"] = sensor->GetId();
+        sensorDoc["name"] = String(sensor->GetName());
+        float value = sensor->GetValue();
+        sensorDoc["value"] = value;
+
+        sensorsArray.add(sensorDoc);
+      }
+    }
+
+    // Serialize the JSON document to a string
+    String jsonString;
+    serializeJson(doc, jsonString);
+
+    request->send(200, "application/json", jsonString);
   });
 
   // TEMP: Gonna put this in the main page, just for testing - template
-
-  // Serve the firmware update page
-  server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request) {
-    const char *update_page = R"rawliteral(
-  <!DOCTYPE html>
-  <html lang='en'>
-  <head>
-      <meta charset='UTF-8'>
-      <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-      <title>Firmware Update</title>
-      <style>
-          body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-          h1 { color: #333; }
-          #status { margin: 20px 0; color: #666; }
-          .button { padding: 10px 20px; background-color: #007BFF; color: white; border: none; cursor: pointer; }
-          .button:hover { background-color: #0056b3; }
-          input[type='file'] { margin: 10px 0; }
-      </style>
-  </head>
-  <body>
-      <h1>Firmware Update</h1>
-      <form id='uploadForm' enctype='multipart/form-data'>
-          <input type='file' name='file' accept='.bin' required>
-          <br>
-          <input type='submit' value='Update Firmware' class='button'>
-      </form>
-      <div id='status'>Select a .bin file to begin.</div>
-
-      <script>
-          document.getElementById('uploadForm').onsubmit = async function(e) {
-              e.preventDefault();
-              const fileInput = document.querySelector('input[type="file"]');
-              const file = fileInput.files[0];
-              if (!file) {
-                  alert('Please select a firmware file!');
-                  return;
-              }
-
-              const status = document.getElementById('status');
-              status.textContent = 'Uploading...';
-
-              const formData = new FormData();
-              formData.append('file', file);
-
-              try {
-                  const response = await fetch('/update', {
-                      method: 'POST',
-                      body: formData
-                  });
-                  const text = await response.text();
-                  status.textContent = text;
-                  if (response.ok) {
-                      status.style.color = '#28a745';
-                      setTimeout(() => { status.textContent += ' Device is rebooting...'; }, 1000);
-                  } else {
-                      status.style.color = '#dc3545';
-                  }
-              } catch (error) {
-                  status.textContent = 'Upload failed: ' + error.message;
-                  status.style.color = '#dc3545';
-              }
-          };
-      </script>
-  </body>
-  </html>
-  )rawliteral";
-    request->send(200, "text/html", update_page);
-  });
 
   // Handle the firmware update
   server.on(

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SVG Grid Container Example</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+
+    .grid-container {
+      width: 90%;
+      max-width: 800px;
+      height: 90%;
+      max-height: 600px;
+      position: relative;
+      border: 1px solid #ccc;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .grid-container svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    button {
+      margin: 10px;
+      padding: 12px 24px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .vertical {
+      width: 90vw;
+      height: 90vh;
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+		svg {
+			width:100%;
+			height: 100%;
+		}
+
+  </style>
+</head>
+<body>
+  <div class="vertical">
+    <!-- Grid Container -->
+    <div class="grid-container" id="gridcont">
+      <svg xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <!-- Controls -->
+    <div>
+      <button id="btn1">Add Random Point</button>
+      <button id="btn2">Remove Random Point</button>
+      <button id="btn3">Clear All Points</button>
+    </div>
+  </div>
+
+  <!-- JavaScript to use the library -->
+  <script>
+		/**
+ * SVG Grid Container Library
+ * A reusable JavaScript library to create an interactive SVG-based grid with dynamic point plotting.
+ * Supports adding, removing, and clearing points. All operations update the visual display in real-time.
+ */
+
+class SVGGridContainer {
+  /**
+   * Creates a new SVG grid container instance.
+   * @param {Object} options - Configuration options
+   * @param {number} [options.width=90] - Width percentage of parent (e.g., 90)
+   * @param {number} [options.height=90] - Height percentage of parent (e.g., 90)
+   * @param {string} [options.containerClass='grid-container'] - CSS class for container
+   * @param {string} [options.svgNS='http://www.w3.org/2000/svg'] - SVG namespace
+   * @param {number} [options.yRange=6] - Maximum y-value (points from 0 to yRange)
+   */
+  constructor(options = {}) {
+    const defaults = {
+      width: 90,
+      height: 90,
+      containerClass: 'grid-container',
+      svgNS: 'http://www.w3.org/2000/svg',
+      yRange: 6
+    };
+
+    this.options = { ...defaults, ...options };
+    this.yRange = options.yRange || defaults.yRange;
+    this.containerClass = options.containerClass || defaults.containerClass;
+    this.widthPercent = options.width !== undefined ? options.width : defaults.width;
+    this.heightPercent = options.height !== undefined ? options.height : defaults.height;
+
+    // Internal data store: list of y-values (0 to yRange)
+    this.pointlist = [];
+  }
+
+  /**
+   * Adds a new point with given y-value.
+   * @param {number} y - Y value between 0 and yRange inclusive
+   */
+  addPoint(y) {
+    if (y >= 0 && y <= this.yRange) {
+      this.pointlist.push({ y });
+    } else {
+      console.warn(`Invalid y value: ${y}. Must be in range [0, ${this.yRange}]`);
+    }
+  }
+
+  /**
+   * Removes a random point from the list.
+   */
+  subtractPoint() {
+    if (this.pointlist.length > 0) {
+      const index = Math.floor(Math.random() * this.pointlist.length);
+      this.pointlist.splice(index, 1);
+    }
+  }
+
+  /**
+   * Clears all points.
+   */
+  clearAll() {
+    this.pointlist = [];
+  }
+
+  /**
+   * Returns the list of y-values (0 to yRange).
+   * @returns {Array} List of y-values
+   */
+  getPoints() {
+    return this.pointlist.map(p => p.y);
+  }
+
+  /**
+   * Updates the SVG display with current points.
+   * @param {Element} container - The DOM element containing the grid container (e.g., div#gridcont)
+   */
+  updateDisplay(container) {
+    if (!container || !container.querySelector) return;
+
+    const svg = container.querySelector('svg');
+    if (!svg) {
+      console.error("No SVG found in container.");
+      return;
+    }
+
+    // Clear existing content
+    svg.innerHTML = '';
+
+    // Set dimensions to fill container (width and height)
+    const rectWidth = svg.clientWidth;
+    const rectHeight = svg.clientHeight;
+
+    svg.setAttribute('width', rectWidth);
+    svg.setAttribute('height', rectHeight);
+
+    // Generate path if points exist and more than one
+    const points = this.getPoints();
+    if (points.length > 1) {
+      const scaledPoints = points.map((y, index) => ({
+        x: (index / (points.length - 1)) * rectWidth,
+        y: y * (rectHeight / this.yRange)
+      }));
+
+      const path = document.createElementNS(this.options.svgNS, 'path');
+      path.setAttribute('d', this.generatePathString(scaledPoints));
+      path.setAttribute('stroke', 'green');
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('fill', 'none');
+      svg.appendChild(path);
+    }
+
+    // Add circles for each point
+    points.forEach((y, index) => {
+      const x = (index / (points.length - 1)) * rectWidth;
+      const cy = y * (rectHeight / this.yRange);
+      const circle = document.createElementNS(this.options.svgNS, 'circle');
+      circle.setAttribute('cx', x);
+      circle.setAttribute('cy', cy);
+      circle.setAttribute('r', 5);
+      circle.setAttribute('fill', 'blue');
+      svg.appendChild(circle);
+    });
+  }
+
+  /**
+   * Generates a path string from array of scaled points.
+   * @param {Array} points - Array of objects with x and y properties
+   * @returns {string} SVG path string
+   */
+  generatePathString(points) {
+    let path = 'M ';
+    points.forEach((point, i) => {
+      if (i === 0) {
+        path += point.x + ' ' + point.y;
+      } else {
+        path += ' L ' + point.x + ' ' + point.y;
+      }
+    });
+    return path;
+  }
+
+  /**
+   * Returns the current state of the graph data.
+   * @returns {Object} Object with points and options
+   */
+  getState() {
+    return {
+      pointlist: this.pointlist.map(p => p.y),
+      yRange: this.yRange,
+      width: this.widthPercent,
+      height: this.heightPercent
+    };
+  }
+
+  /**
+   * Sets the state of the graph (for reinitialization or persistence).
+   * @param {Object} state - The state object from getState()
+   */
+  setState(state) {
+    if (!state || !Array.isArray(state.pointlist)) return;
+
+    const points = state.pointlist.map(y => ({ y }));
+    this.pointlist = points;
+    this.yRange = state.yRange || this.yRange;
+    this.widthPercent = state.width || this.widthPercent;
+    this.heightPercent = state.height || this.heightPercent;
+  }
+}
+
+// Expose the class globally for use in HTML or other scripts
+if (typeof window !== 'undefined') {
+  window.SVGGridContainer = SVGGridContainer;
+}
+
+	</script>
+  <script>
+    // Initialize the SVG grid container
+    const myGraph = new SVGGridContainer({
+      width: 90,
+      height: 90,
+      yRange: 6
+    });
+
+    // Event listeners for buttons
+    document.getElementById('btn1').addEventListener('click', () => {
+      const y = Math.floor(Math.random() * 7);
+      myGraph.addPoint(y);
+      myGraph.updateDisplay(document.getElementById('gridcont'));
+    });
+
+    document.getElementById('btn2').addEventListener('click', () => {
+      myGraph.subtractPoint();
+      myGraph.updateDisplay(document.getElementById('gridcont'));
+    });
+
+    document.getElementById('btn3').addEventListener('click', () => {
+      myGraph.clearAll();
+      myGraph.updateDisplay(document.getElementById('gridcont'));
+    });
+
+		window.addEventListener('resize', () => {
+      myGraph.updateDisplay(document.getElementById('gridcont'));
+		})
+
+    // Optional: Show current state in console
+    setInterval(() => {
+      console.log("Current points:", myGraph.getPoints());
+    }, 1000);
+
+    // Example: Restore from saved state (optional)
+    // const savedState = { pointlist: [2, 4], yRange: 6 };
+    // myGraph.setState(savedState);
+    // myGraph.updateDisplay(document.getElementById('gridcont'));
+  </script>
+</body>
+</html>

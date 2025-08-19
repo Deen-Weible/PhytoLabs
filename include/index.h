@@ -53,7 +53,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             z-index: 1000;
         }
 
-        .main-header > :first-child {
+        .main-header> :first-child {
             margin-right: auto;
         }
 
@@ -317,12 +317,12 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             max-width: 100%;
         }
 
-        .settings-widget > span:first-child {
+        .settings-widget>span:first-child {
             color: var(--primary-color);
             font-size: 14pt;
         }
 
-        .settings-widget > span:nth-child(2) {
+        .settings-widget>span:nth-child(2) {
             color: var(--gray);
             font-size: 10pt;
             margin-bottom: 8px;
@@ -351,11 +351,11 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             align-items: center;
         }
 
-        .sensor > div:not(:first-child) {
+        .sensor>div:not(:first-child) {
             margin-right: 8px;
         }
 
-        .sensor > div:first-child {
+        .sensor>div:first-child {
             border-right: solid 2px var(--accent-color);
             width: min-content;
             padding: 10px;
@@ -602,6 +602,13 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                                 </div> <br>
                                 <input type="submit" value="Update Firmware" class="button">
                             </form>
+                        </div>
+                    </div>
+                    <div class="settings-widget">
+                        <span>Wifi</span>
+                        <span>Network connection</span>
+                        <div class="sensor-settings grid">
+
                         </div>
                     </div>
                 </section>
@@ -1256,7 +1263,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             });
 
             // Upload form handler
-            document.getElementById('uploadForm').onsubmit = async function(e) {
+            document.getElementById('uploadForm').onsubmit = async function (e) {
                 e.preventDefault();
                 const fileInput = document.querySelector('input[type="file"]');
                 const file = fileInput.files[0];
