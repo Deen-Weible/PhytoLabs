@@ -145,12 +145,15 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
                            (Wrap(hour, 0, 23) * 3600));
   });
 
-  server.on("/readADC", HTTP_GET, [](AsyncWebServerRequest *request) {
+  server.on("/readValues", HTTP_GET, [](AsyncWebServerRequest *request) {
     // Create a JSON object to hold the list of sensors
     JsonDocument doc;
 
     // Array to store sensor data
     JsonArray sensorsArray = doc.createNestedArray("sensors");
+
+    // Array to store relay data
+    JsonArray relaysArray = doc.createNestedArray("relays");
 
     // Iterate through all registered sensors in manager
     for (int i = 0; i < manager.GetNumSensors(); i++) {
@@ -158,11 +161,20 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
       if (sensor) {
         JsonDocument sensorDoc;
         sensorDoc["id"] = sensor->GetId();
-        sensorDoc["name"] = String(sensor->GetName());
         float value = sensor->GetValue();
         sensorDoc["value"] = value;
-
         sensorsArray.add(sensorDoc);
+      }
+    }
+
+    for (int i = 0; i < manager.GetNumRelays(); i++) {
+      Relay *relay = manager.relays[i];
+      if (relay) {
+        JsonDocument relayDoc;
+        relayDoc["id"] = relay->GetId();
+        bool status = relay->IsOn();
+        relayDoc["status"] = status;
+        relaysArray.add(relayDoc);
       }
     }
 
@@ -170,6 +182,64 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
     String jsonString;
     serializeJson(doc, jsonString);
 
+    request->send(200, "application/json", jsonString);
+  });
+
+  server.on("/readADC", HTTP_GET, [](AsyncWebServerRequest *request) {
+    // Create a JSON object to hold the list of sensors
+    JsonDocument doc;
+
+    // Array to store sensor data
+    JsonArray sensorsArray = doc.createNestedArray("sensors");
+
+    // Array to store relay data
+    JsonArray relaysArray = doc.createNestedArray("relays");
+
+    // Iterate through all registered sensors in manager
+    for (int i = 0; i < manager.GetNumSensors(); i++) {
+      Sensor *sensor = manager.sensors[i];
+      if (sensor) {
+        JsonDocument sensorDoc;
+        sensorDoc["id"] = sensor->GetId();
+        sensorDoc["pin"] = sensor->GetPin();
+        sensorDoc["name"] = sensor->GetName();
+        float value = sensor->GetValue();
+        sensorDoc["value"] = value;
+        sensorsArray.add(sensorDoc);
+      }
+    }
+
+    for (int i = 0; i < manager.GetNumRelays(); i++) {
+      Relay *relay = manager.relays[i];
+      if (relay) {
+        JsonDocument relayDoc;
+        relayDoc["id"] = relay->GetId();
+        relayDoc["name"] = relay->GetName();
+        relayDoc["pin"] = relay->GetPin();
+        // relayDoc["conditions"] = relay->conditions;
+        JsonArray conditionsArray = relayDoc.createNestedArray("conditions");
+        for (int j = 0; j < MAX_CONDITIONS; j++) {
+          Condition *condition = relay->GetCondition(j);
+          if (condition) {
+            JsonDocument condDoc;
+            condDoc["id"] = condition->GetId();
+            condDoc["sensor"] = condition->GetSensor();
+            condDoc["sensorId"] = condition->GetSensorId();
+            condDoc["operator"] = condition->GetOperator();
+            condDoc["value"] = condition->GetValue();
+            condDoc["type"] = condition->GetType();
+            conditionsArray.add(condDoc);
+          } else {
+            break; // Stop if we hit a null condition (assuming contiguous)
+          }
+        }
+
+        relaysArray.add(relayDoc);
+      }
+    }
+    // Serialize the JSON document to a string
+    String jsonString;
+    serializeJson(doc, jsonString);
     request->send(200, "application/json", jsonString);
   });
 
@@ -200,71 +270,6 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
           Update.end(true);
         }
       });
-
-  // // Handle updating sensors, relays
-  // server.on("/submit-sensors", HTTP_POST, [](AsyncWebServerRequest *request)
-  // {
-  //   if (request->hasParam("body", true)) {
-  //     String jsonStr = request->getParam("body", true)->value();
-  //     JsonDocument doc;
-  //     DeserializationError error = deserializeJson(doc, jsonStr);
-
-  //     if (error) {
-  //       Serial.println("Invalid JSON received");
-  //       request->send(400, "text/plain", "Invalid JSON");
-  //       return;
-  //     }
-
-  //     // Parse and print sensors
-  //     JsonArray sensorsArray = doc["sensors"];
-  //     Serial.println("Received Sensors:");
-  //     for (JsonObject sensorObj : sensorsArray) {
-  //       Serial.print("  Sensor ID: ");
-  //       Serial.print(sensorObj["id"].as<int>());
-  //       Serial.print(", Name: ");
-  //       Serial.print(sensorObj["name"].as<const char *>());
-  //       Serial.print(", Pin: ");
-  //       Serial.println(sensorObj["pin"].as<int>());
-  //     }
-
-  //     // Parse and print relays with their conditions
-  //     JsonArray relaysArray = doc["relays"];
-  //     Serial.println("Received Relays:");
-  //     for (JsonObject relayObj : relaysArray) {
-  //       Serial.print("  Relay ID: ");
-  //       Serial.print(relayObj["id"].as<int>());
-  //       Serial.print(", Name: ");
-  //       Serial.print(relayObj["name"].as<const char *>());
-  //       Serial.print(", Pin: ");
-  //       Serial.println(relayObj["pin"].as<int>());
-
-  //       // Print conditions for this relay
-  //       JsonArray conditionsArray = relayObj["conditions"];
-  //       if (conditionsArray.size() > 0) {
-  //         Serial.println("    Conditions:");
-  //         for (JsonObject conditionObj : conditionsArray) {
-  //           Serial.print("      Condition ID: ");
-  //           Serial.print(conditionObj["id"].as<int>());
-  //           Serial.print(", Sensor: ");
-  //           Serial.print(conditionObj["sensor"].as<int>());
-  //           Serial.print(", SensorId: ");
-  //           Serial.print(conditionObj["sensorId"].as<int>());
-  //           Serial.print(", Operator: ");
-  //           Serial.print(conditionObj["operator"].as<const char *>());
-  //           Serial.print(", Type: ");
-  //           Serial.println(conditionObj["type"].as<const char *>());
-  //         }
-  //       } else {
-  //         Serial.println("    No conditions");
-  //       }
-  //     }
-
-  //     request->send(200, "text/plain", "Sensors and relays received");
-  //   } else {
-  //     Serial.println("No data received in request");
-  //     request->send(400, "text/plain", "No data received");
-  //   }
-  // });
 
   server.on("/submit-sensors", HTTP_POST, [](AsyncWebServerRequest *request) {
     if (request->hasParam("body", true)) {

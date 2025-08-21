@@ -132,13 +132,13 @@ public:
     return (index < MAX_CONDITIONS) ? conditions[index] : nullptr;
   }
 
+  Condition *conditions[MAX_CONDITIONS];
 private:
   uint8_t id;
   String name;
   uint8_t pin;
   bool status;
   bool folded;
-  Condition *conditions[MAX_CONDITIONS];
 };
 
 /**
