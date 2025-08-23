@@ -317,16 +317,17 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             max-width: 100%;
         }
 
+        .settings-widget>span {
+            color: var(--gray);
+            font-size: 10pt;
+            margin-bottom: 8px;
+        }
+
         .settings-widget>span:first-child {
             color: var(--primary-color);
             font-size: 14pt;
         }
 
-        .settings-widget>span:nth-child(2) {
-            color: var(--gray);
-            font-size: 10pt;
-            margin-bottom: 8px;
-        }
 
         .input {
             display: flex;
@@ -607,6 +608,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                     <div class="settings-widget">
                         <span>Network</span>
                         <span>Manage connected network or hotspot security</span>
+                        <span>If connection fails, a hotspot with the same password will be used</span>
                         <div class="sensor-settings grid">
                             <div class="input">
                                 <span>Wi-Fi</span>
