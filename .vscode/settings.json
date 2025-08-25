@@ -19,5 +19,6 @@
 		"string_view": "cpp",
 		"initializer_list": "cpp",
 		"cmath": "cpp"
-	}
+	},
+	"git.enabled": false
 }

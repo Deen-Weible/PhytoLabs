@@ -608,7 +608,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                     <div class="settings-widget">
                         <span>Network</span>
                         <span>Manage connected network or hotspot security</span>
-                        <span>If connection fails, a hotspot with the same password will be used</span>
+                        <span>If connection fails, a hotspot with the same password will be used </span>
                         <div class="sensor-settings grid">
                             <div class="input">
                                 <span>Wi-Fi</span>
@@ -631,10 +631,6 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                             </div>
                         </div>
                     </div>
-    </div>
-    </section>
-    </section>
-    </main>
     </div>
 
     <script>
@@ -670,7 +666,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
         }
 
         class Relay {
-            constructor(id, name, pin, conditions = [], status = false, folded = false) {
+            constructor(id, name, pin, conditions = [], status = false, folded = true) {
                 this.id = id;
                 this.name = name;
                 this.pin = pin;
@@ -723,7 +719,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                 .catch(error => console.error('Config loading failed:', error));
 
             getData();
-            setInterval(getData, 4000);
+            // setInterval(getData, 4000);
             setInterval(checkForDuplicates, 2000);
         };
 
@@ -797,7 +793,6 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                         sensorData.name || 'Unnamed Sensor',
                         sensorData.pin || 1,
                         sensorData.value || 0,
-                        sensorData.folded !== undefined ? sensorData.folded : true
                     );
                     sensorList.push(sensor);
                 });
@@ -810,7 +805,6 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                         relayData.pin || 1,
                         [],
                         relayData.status || false,
-                        relayData.folded !== undefined ? relayData.folded : false
                     );
 
                     // Import conditions for this relay
@@ -1197,6 +1191,7 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                 .then(data => {
                     const element = document.getElementById("DataUpdates");
                     if (element) element.innerHTML = data;
+                    importFromJSON('{"sensors":[{"id":1,"pin":1,"name":"Sensor Name","value":0}],"relays":[{"id":1,"name":"Relay Name","pin":21,"conditions":[{"id":1,"sensor":1,"sensorId":1,"operator":"<","value":1,"type":"sensor"},{"id":2,"sensor":1,"sensorId":1,"operator":"=","value":4,"type":"sensor"}]}]}');
                 })
                 .catch(error => console.error('Error:', error));
         };

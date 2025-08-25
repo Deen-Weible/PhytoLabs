@@ -203,7 +203,7 @@ const long interval = 5000;       // Interval at which to update (5 seconds)
 void loop() {
   static unsigned long lastUpdate = 0;
   const unsigned long updateInterval = 1000; // 1 second
-  static bool displayDirty = true; // Flag to track if display needs updating
+  static bool displayDirty = false; // Flag to track if display needs updating
 
   input = getInput();
 
