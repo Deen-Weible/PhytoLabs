@@ -21,6 +21,9 @@ const char WIFI_PASSWORD[] PROGMEM = "YourPasswordHere";
 ## 📚 Project Overview
 PhytoLabs is an open-source automated farming system built for ESP32 microcontrollers. It's designed for easy, flexible control and configuration of sensors and relays.
 
+## Whats with the weird commit history!?
+I've been playing with alternatives to git, that also happen to work with git, namely [Jujutsu](https://github.com/jj-vcs/jj). Its fun!
+
 ## License
 This project is licensed under the GNU General Public License v3.0 (GPLv3).
 See [LICENSE](LICENSE) for full terms.
