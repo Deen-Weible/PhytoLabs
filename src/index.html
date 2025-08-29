@@ -706,6 +706,31 @@
             }
         }
 
+        class Network {
+            constructor(isHotSpot, SSID, Password) {
+                this.isHotSpot = isHotSpot;
+                this.SSID = SSID;
+                this.Password = Password;
+            }
+
+            getMode() {
+                return isHotSpot;
+            }
+
+            getPass() {
+                return Password;
+            }
+
+            getSSID() {
+                return SSID;
+            }
+
+            setNetwork(SSID, Password) {
+                this.SSID = SSID;
+                this.Password = Password;
+            }
+        }
+
         // ===== UTILITY FUNCTIONS =====
         const getRelay = (id) => relayList.find(r => r.id === id);
         const getSensor = (id) => sensorList.find(s => s.id === id);
