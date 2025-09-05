@@ -2,6 +2,8 @@
 #define SENSORS_H
 
 #include <Arduino.h>
+#include <Preferences.h> // Ensure Preferences.h is included for SaveToPreferences
+#include <ArduinoJson.h> // Ensure ArduinoJson.h is included
 
 /**
  * @brief Maximum number of sensors, relays, and conditions
@@ -22,22 +24,18 @@ public:
 
   uint8_t GetSensor() const { return sensor; }
   uint8_t GetSensorId() const { return sensorId; }
-  const char *GetOperator() const {
-    return operator_.c_str();
-  } // Changed to return c_str()
+  const char *GetOperator() const { return operator_.c_str(); }
   float GetValue() const { return value; }
   uint8_t GetId() const { return id; }
-  const char *GetType() const {
-    return type_.c_str();
-  } // Changed to return c_str()
+  const char *GetType() const { return type_.c_str(); }
 
 private:
   uint8_t sensor;
   uint8_t sensorId;
-  String operator_; // Changed to String
+  String operator_;
   float value;
   uint8_t id;
-  String type_; // Changed to String
+  String type_;
 };
 
 /**
@@ -47,21 +45,18 @@ class Sensor {
 public:
   Sensor(uint8_t id, const char *name, uint8_t pin, float value,
          bool folded = true)
-      : id(id), name(name ? name : ""), pin(pin), value(value), folded(folded) {
-  } // String ctor handles copy
+      : id(id), name(name ? name : ""), pin(pin), value(value), folded(folded) {}
 
   void SetValue(float newValue) { value = newValue; }
   uint8_t GetId() const { return id; }
-  const char *GetName() const {
-    return name.c_str();
-  } // Changed to return c_str()
+  const char *GetName() const { return name.c_str(); }
   uint8_t GetPin() const { return pin; }
   float GetValue() const { return value; }
   bool GetFolded() const { return folded; }
 
 private:
   uint8_t id;
-  String name; // Changed to String
+  String name;
   uint8_t pin;
   float value;
   bool folded;
@@ -75,7 +70,7 @@ public:
   Relay(uint8_t id, const char *name, uint8_t pin, bool status = false,
         bool folded = false)
       : id(id), name(name ? name : ""), pin(pin), status(status),
-        folded(folded) { // String ctor handles copy
+        folded(folded) {
     for (int i = 0; i < MAX_CONDITIONS; i++) {
       conditions[i] = nullptr;
     }
@@ -122,9 +117,7 @@ public:
   }
 
   uint8_t GetId() const { return id; }
-  const char *GetName() const {
-    return name.c_str();
-  } // Changed to return c_str()
+  const char *GetName() const { return name.c_str(); }
   uint8_t GetPin() const { return pin; }
   bool GetStatus() const { return status; }
   bool GetFolded() const { return folded; }
@@ -160,17 +153,14 @@ public:
     }
 
     void Clear() {
-        // Delete all sensors
         for (int i = 0; i < MAX_SENSORS; i++) {
             delete sensors[i];
             sensors[i] = nullptr;
         }
         num_sensors = 0;
 
-        // Delete all relays and their conditions
         for (int i = 0; i < MAX_RELAYS; i++) {
             if (relays[i]) {
-                // Delete all conditions for this relay
                 for (int j = 0; j < MAX_CONDITIONS; j++) {
                     delete relays[i]->GetCondition(j);
                 }
@@ -234,38 +224,38 @@ private:
     uint8_t num_sensors;
     uint8_t num_relays;
 };
+
 void SensorRelayManager::SaveToPreferences() {
   Preferences prefs;
-  prefs.begin("sensor_relay", false); // Namespace for isolation
+  prefs.begin("sensor_relay", false);
 
-  StaticJsonDocument<2048> doc; // Adjust size if needed (should be plenty)
+ JsonDocument doc;
 
-  JsonArray sensorsArray = doc.createNestedArray("sensors");
+  JsonArray sensorsArray = doc["sensors"].to<JsonArray>(); // Updated
   for (int i = 0; i < num_sensors; i++) {
     if (sensors[i]) {
-      JsonObject obj = sensorsArray.createNestedObject();
+      JsonObject obj = sensorsArray.add<JsonObject>(); // Updated
       obj["id"] = sensors[i]->GetId();
       obj["name"] = sensors[i]->GetName();
       obj["pin"] = sensors[i]->GetPin();
-      obj["folded"] =
-          sensors[i]->GetFolded(); // Optional: Save UI state if needed
+      obj["folded"] = sensors[i]->GetFolded();
     }
   }
 
-  JsonArray relaysArray = doc.createNestedArray("relays");
+  JsonArray relaysArray = doc["relays"].to<JsonArray>(); // Updated
   for (int i = 0; i < num_relays; i++) {
     if (relays[i]) {
-      JsonObject obj = relaysArray.createNestedObject();
+      JsonObject obj = relaysArray.add<JsonObject>(); // Updated
       obj["id"] = relays[i]->GetId();
       obj["name"] = relays[i]->GetName();
       obj["pin"] = relays[i]->GetPin();
-      obj["folded"] = relays[i]->GetFolded(); // Optional
+      obj["folded"] = relays[i]->GetFolded();
 
-      JsonArray conds = obj.createNestedArray("conditions");
+      JsonArray conds = obj["conditions"].to<JsonArray>(); // Updated
       for (int j = 0; j < MAX_CONDITIONS; j++) {
         Condition *c = relays[i]->GetCondition(j);
         if (c) {
-          JsonObject condObj = conds.createNestedObject();
+          JsonObject condObj = conds.add<JsonObject>(); // Updated
           condObj["sensor"] = c->GetSensor();
           condObj["sensorId"] = c->GetSensorId();
           condObj["operator"] = c->GetOperator();
@@ -273,7 +263,7 @@ void SensorRelayManager::SaveToPreferences() {
           condObj["id"] = c->GetId();
           condObj["type"] = c->GetType();
         } else {
-          break; // Assume conditions are contiguous
+          break;
         }
       }
     }
@@ -292,7 +282,7 @@ void SensorRelayManager::SaveToPreferences() {
 
 void SensorRelayManager::LoadFromPreferences() {
   Preferences prefs;
-  prefs.begin("sensor_relay", true); // Read-only mode for safety
+  prefs.begin("sensor_relay", true);
 
   String jsonStr = prefs.getString("config", "");
   if (jsonStr.isEmpty()) {
@@ -301,19 +291,7 @@ void SensorRelayManager::LoadFromPreferences() {
     return;
   }
 
-  // Clear existing data (safe for reloads)
-  for (int i = 0; i < MAX_SENSORS; i++) {
-    delete sensors[i];
-    sensors[i] = nullptr;
-  }
-  num_sensors = 0;
-  for (int i = 0; i < MAX_RELAYS; i++) {
-    delete relays[i];
-    relays[i] = nullptr;
-  }
-  num_relays = 0;
-
-  StaticJsonDocument<2048> doc;
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, jsonStr);
   if (error) {
     Serial.print("Failed to parse saved JSON: ");
@@ -325,12 +303,11 @@ void SensorRelayManager::LoadFromPreferences() {
   JsonArray sensorsArray = doc["sensors"];
   for (JsonObject obj : sensorsArray) {
     uint8_t id = obj["id"];
-    const char *name = obj["name"]; // ArduinoJson handles as const char*
+    const char *name = obj["name"];
     uint8_t pin = obj["pin"];
-    bool folded = obj["folded"] | true; // Default to true if missing
+    bool folded = obj["folded"] | true;
 
-    Sensor *sensor = new Sensor(id, name, pin, 0.0f,
-                                folded); // Value starts at 0, updated in loop
+    Sensor *sensor = new Sensor(id, name, pin, 0.0f, folded);
     RegisterSensor(sensor);
   }
 
@@ -339,10 +316,9 @@ void SensorRelayManager::LoadFromPreferences() {
     uint8_t id = obj["id"];
     const char *name = obj["name"];
     uint8_t pin = obj["pin"];
-    bool folded = obj["folded"] | false; // Default to false
+    bool folded = obj["folded"] | false;
 
-    Relay *relay = new Relay(id, name, pin, false,
-                             folded); // Status starts false, evaluated in loop
+    Relay *relay = new Relay(id, name, pin, false, folded);
     JsonArray conditionsArray = obj["conditions"];
     for (JsonObject condObj : conditionsArray) {
       uint8_t sensor = condObj["sensor"];
@@ -358,9 +334,8 @@ void SensorRelayManager::LoadFromPreferences() {
     }
     RegisterRelay(relay);
 
-    // Set up pin (as in your submit handler)
     pinMode(pin, OUTPUT);
-    digitalWrite(pin, LOW); // Initial off
+    digitalWrite(pin, LOW);
   }
 
   Serial.println("Config loaded successfully");
@@ -374,7 +349,7 @@ void SensorRelayManager::LoadFromPreferences() {
  */
 float readSensorValue(Sensor *sensor) {
   int rawValue = analogRead(sensor->GetPin());
-  return rawValue * 0.0048828125; // Example scaling: 0-1023 to 0-5V
+  return rawValue * 0.0048828125;
 }
 
 /**

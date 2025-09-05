@@ -59,28 +59,26 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
 
   server.on("/readValues", HTTP_GET, [](AsyncWebServerRequest *request) {
     JsonDocument doc;
-    JsonArray sensorsArray = doc.createNestedArray("sensors");
-    JsonArray relaysArray = doc.createNestedArray("relays");
+    JsonArray sensorsArray = doc["sensors"].to<JsonArray>(); // Updated
+    JsonArray relaysArray = doc["relays"].to<JsonArray>();   // Updated
 
     for (int i = 0; i < manager.GetNumSensors(); i++) {
       Sensor *sensor = manager.sensors[i];
       if (sensor) {
-        JsonDocument sensorDoc;
-        sensorDoc["id"] = sensor->GetId();
+        JsonObject sensorObj = sensorsArray.add<JsonObject>(); // Updated
+        sensorObj["id"] = sensor->GetId();
         float value = sensor->GetValue();
-        sensorDoc["value"] = value;
-        sensorsArray.add(sensorDoc);
+        sensorObj["value"] = value;
       }
     }
 
     for (int i = 0; i < manager.GetNumRelays(); i++) {
       Relay *relay = manager.relays[i];
       if (relay) {
-        JsonDocument relayDoc;
-        relayDoc["id"] = relay->GetId();
+        JsonObject relayObj = relaysArray.add<JsonObject>(); // Updated
+        relayObj["id"] = relay->GetId();
         bool status = relay->IsOn();
-        relayDoc["status"] = status;
-        relaysArray.add(relayDoc);
+        relayObj["status"] = status;
       }
     }
 
@@ -91,46 +89,43 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
 
   server.on("/readADC", HTTP_GET, [](AsyncWebServerRequest *request) {
     JsonDocument doc;
-    JsonArray sensorsArray = doc.createNestedArray("sensors");
-    JsonArray relaysArray = doc.createNestedArray("relays");
+    JsonArray sensorsArray = doc["sensors"].to<JsonArray>(); // Updated
+    JsonArray relaysArray = doc["relays"].to<JsonArray>();   // Updated
 
     for (int i = 0; i < manager.GetNumSensors(); i++) {
       Sensor *sensor = manager.sensors[i];
       if (sensor) {
-        JsonDocument sensorDoc;
-        sensorDoc["id"] = sensor->GetId();
-        sensorDoc["pin"] = sensor->GetPin();
-        sensorDoc["name"] = sensor->GetName();
+        JsonObject sensorObj = sensorsArray.add<JsonObject>(); // Updated
+        sensorObj["id"] = sensor->GetId();
+        sensorObj["pin"] = sensor->GetPin();
+        sensorObj["name"] = sensor->GetName();
         float value = sensor->GetValue();
-        sensorDoc["value"] = value;
-        sensorsArray.add(sensorDoc);
+        sensorObj["value"] = value;
       }
     }
 
     for (int i = 0; i < manager.GetNumRelays(); i++) {
       Relay *relay = manager.relays[i];
       if (relay) {
-        JsonDocument relayDoc;
-        relayDoc["id"] = relay->GetId();
-        relayDoc["name"] = relay->GetName();
-        relayDoc["pin"] = relay->GetPin();
-        JsonArray conditionsArray = relayDoc.createNestedArray("conditions");
+        JsonObject relayObj = relaysArray.add<JsonObject>(); // Updated
+        relayObj["id"] = relay->GetId();
+        relayObj["name"] = relay->GetName();
+        relayObj["pin"] = relay->GetPin();
+        JsonArray conditionsArray = relayObj["conditions"].to<JsonArray>(); // Updated
         for (int j = 0; j < MAX_CONDITIONS; j++) {
           Condition *condition = relay->GetCondition(j);
           if (condition) {
-            JsonDocument condDoc;
-            condDoc["id"] = condition->GetId();
-            condDoc["sensor"] = condition->GetSensor();
-            condDoc["sensorId"] = condition->GetSensorId();
-            condDoc["operator"] = condition->GetOperator();
-            condDoc["value"] = condition->GetValue();
-            condDoc["type"] = condition->GetType();
-            conditionsArray.add(condDoc);
+            JsonObject condObj = conditionsArray.add<JsonObject>(); // Updated
+            condObj["id"] = condition->GetId();
+            condObj["sensor"] = condition->GetSensor();
+            condObj["sensorId"] = condition->GetSensorId();
+            condObj["operator"] = condition->GetOperator();
+            condObj["value"] = condition->GetValue();
+            condObj["type"] = condition->GetType();
           } else {
             break;
           }
         }
-        relaysArray.add(relayDoc);
       }
     }
     String jsonString;

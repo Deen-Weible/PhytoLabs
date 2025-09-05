@@ -625,10 +625,13 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
                                 <label for="ssid">Ssid:</label>
                                 <input type="text" id="ssid" placeholder="Enter your WiFi SSID (Name)">
                             </div>
+                            <form  id="networkForm" enctype="multipart/form-data">
                             <div class="input wifi-config">
                                 <label for="password">Pass:</label>
                                 <input type="password" id="password" placeholder="Enter your WiFi password">
-                            </div>
+                            </div> <br>
+                            <input type="submit" value="Update Network" class="button" onclick="updateNetwork()">
+                            </form>
                         </div>
                     </div>
     </div>
@@ -706,19 +709,49 @@ const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
             }
         }
 
+        class Network {
+            constructor(isHotSpot, SSID, Password) {
+                this.isHotSpot = isHotSpot; // 0 for Wi-Fi, 1 for Hotspot
+                this.SSID = SSID;
+                this.Password = Password;
+            }
+
+            getMode() {
+                return this.isHotSpot === 1 ? 'hotspot' : 'wifi';
+            }
+
+            getPass() {
+                return this.Password;
+            }
+
+            getSSID() {
+                return this.SSID;
+            }
+
+            setNetwork(SSID, Password) {
+                this.SSID = SSID;
+                this.Password = Password;
+            }
+
+            setMode(newMode) {
+                if (newMode === 'hotspot') {
+                    this.isHotSpot = 1;
+                } else {
+                    this.isHotSpot = 0;
+                }
+            }
+        }
+
         // ===== UTILITY FUNCTIONS =====
         const getRelay = (id) => relayList.find(r => r.id === id);
         const getSensor = (id) => sensorList.find(s => s.id === id);
         const resetDropdown = (dropdown) => { dropdown.value = 0; };
 
+
         // ===== INITIALIZATION =====
         const initializeApp = () => {
-            fetch('readCONFIG')
-                .then(response => response.text())
-                .then(data => importFromJSON(data))
-                .catch(error => console.error('Config loading failed:', error));
-
             getData();
+            getNetwork();
             // setInterval(getData, 4000);
             setInterval(checkForDuplicates, 2000);
         };
