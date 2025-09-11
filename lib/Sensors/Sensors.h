@@ -427,6 +427,9 @@ bool evaluateRelayConditions(Relay &relay, SensorRelayManager &manager) {
     float conditionValue = condition->GetValue();
     const char *op = condition->GetOperator();
 
+    Serial.println(sensorValue);
+    Serial.println(conditionValue);
+
     if (!evaluateCondition(op, sensorValue, conditionValue)) {
       allConditionsTrue = false;
       break;
