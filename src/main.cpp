@@ -26,6 +26,7 @@
 #include <UiKit.h>          // UI toolkit for display
 #include <WiFiInfo.h>       // WiFi information class
 #include <WebServer.h>      // All webserver logic, to keep this file "tidy"
+#include "WifiSettings.h"   // WiFi management functions
 
 /**
  * --- Global Variables ---
@@ -83,25 +84,6 @@ uint8_t getInput() {
 }
 
 /**
- * @brief Starts Wi-Fi Access Point
- */
-void StartAP(const wifi_mode_t mode, const char *ssid, const char *password,
-             const IPAddress &localIP, const IPAddress &gatewayIP) {
-  WiFi.mode(mode);
-  WiFi.softAPConfig(localIP, gatewayIP, subnetMask);
-  WiFi.softAP(ssid, password, WIFI_CHANNEL, 0, MAX_CLIENTS);
-  vTaskDelay(100 / portTICK_PERIOD_MS);
-}
-
-/**
- * @brief Setup DNS server for captive portal functionality
- */
-void SetupDNS(DNSServer &dnsServer, const IPAddress &localIP) {
-  dnsServer.setTTL(3600);
-  dnsServer.start(53, "*", WiFi.softAPIP());
-}
-
-/**
  * --- UI Initialization ---
  */
 BaseUi base_ui("title", "desc",
@@ -112,8 +94,8 @@ SettingsList settings_menu(1, 8, menuItems, &nav_info);
  * @brief Setup function for the Arduino sketch
  */
 void setup() {
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  // Assuming WIFI_SSID and WIFI_PASSWORD are defined in WiFiInfo.h
+  StartWiFi(WIFI_STA, WIFI_SSID, WIFI_PASSWORD);
 
   SetupServer(server, localIP);
   server.begin();
