@@ -347,6 +347,7 @@
     .sensor {
       background: var(--gray);
       color: var(--text-color);
+      margin-top: 12px;
       border-radius: 6px;
       display: flex;
       align-items: center;
@@ -379,7 +380,6 @@
 
     .sensor-settings {
       margin-top: 12px;
-      margin-bottom: 12px;
       display: none;
       background: var(--gray-contrast);
       padding: 14px;
@@ -502,7 +502,7 @@
     <!-- Header -->
     <header class="main-header">
       <div class="logo">PhytoLabs</div>
-      <div class="error-icon" id="error-icon" title="Error: Something went wrong" aria-label="Error indicator">!
+      <div class="error-icon" id="error-icon" title="Duplicates detected - double check your sensors/relays" aria-label="Error indicator">!
       </div>
       <div class="hamburger-menu" aria-label="Toggle navigation" aria-expanded="false">
         <span class="bar bar1"></span>
@@ -570,12 +570,14 @@
         <section class="settings-grid">
           <div class="settings-widget">
             <span>Time</span>
-            <span>Current system time</span>
+            <span>Set the current system time (not reflected)</span>
             <div class="sensor-settings grid">
-              <div class="input">
-                <label for="time-input">Time:</label>
-                <input type="time" id="time-input" name="time" value="12:34">
-              </div>
+              <form name="TimeSettings" id="TimeForm">
+                <div class="input">
+                  <label for="time-input">Time:</label>
+                  <input type="time" id="time-input" name="time" value="12:34">
+                </div>
+              </form>
             </div>
           </div>
           <div class="settings-widget">
@@ -696,55 +698,20 @@
       }
     }
 
-    class Network {
-      constructor(isHotSpot, SSID, Password) {
-        this.isHotSpot = isHotSpot; // 0 for Wi-Fi, 1 for Hotspot
-        this.SSID = SSID;
-        this.Password = Password;
-      }
-
-      getMode() {
-        return this.isHotSpot === 1 ? 'hotspot' : 'wifi';
-      }
-
-      getPass() {
-        return this.Password;
-      }
-
-      getSSID() {
-        return this.SSID;
-      }
-
-      setNetwork(SSID, Password) {
-        this.SSID = SSID;
-        this.Password = Password;
-      }
-
-      setMode(newMode) {
-        if (newMode === 'hotspot') {
-          this.isHotSpot = 1;
-        } else {
-          this.isHotSpot = 0;
-        }
-      }
-    }
-
     // ===== UTILITY FUNCTIONS =====
     const getRelay = (id) => relayList.find(r => r.id === id);
     const getSensor = (id) => sensorList.find(s => s.id === id);
     const resetDropdown = (dropdown) => {dropdown.value = 0;};
 
-
     // ===== INITIALIZATION =====
     const initializeApp = () => {
       getData();
-      getNetwork();
       // setInterval(getData, 4000);
       setInterval(checkForDuplicates, 2000);
     };
 
     // ===== ADD FUNCTIONS =====
-    const addSensor = (sensortype, dropdown) => {
+    const addSensor = (sensorType, dropdown) => {
       resetDropdown(dropdown);
       const sensor = new Sensor(sensorList.length + 1, "Sensor Name", 1, 0);
       sensorList.push(sensor);
@@ -752,7 +719,7 @@
       updateConditionDropdowns();
     };
 
-    const addRelay = (relaytype, dropdown) => {
+    const addRelay = (relayType, dropdown) => {
       resetDropdown(dropdown);
       const relay = new Relay(relayList.length + 1, "Relay Name", 1);
       relayList.push(relay);
@@ -848,9 +815,9 @@
         renderRelays();
         updateConditionDropdowns();
 
-        for (var i = 0; i < relayList.length; i++) {
-          renderConditions(i);
-        }
+        relayList.forEach(relay => {
+          renderConditions(relay.id);
+        });
 
         console.log(`Import completed: ${sensorList.length} sensors, ${relayList.length} relays`);
         return {
@@ -998,7 +965,6 @@
       if (sensor) sensor.pin = parseInt(pin) || 1;
     };
 
-    // ===== CONDITION UPDATE FUNCTIONS =====
     const updateConditionSensor = (relayId, conditionId, sensorId) => {
       const relay = getRelay(relayId);
       if (!relay) return;
@@ -1119,58 +1085,58 @@
 
     // ===== HTML GENERATION FUNCTIONS =====
     const createSensorHTML = (sensor) => `
-            <div id="${sensor.id}">
-                <div class="sensor">
-                    <div data-sensor-initial="${sensor.id}">${sensor.name.charAt(0)}</div>
-                    <div>
-                        <span data-sensor-name="${sensor.id}">${sensor.name}</span>:
-                        <span data-sensor-value="${sensor.id}">${sensor.value}</span>
-                    </div>
-                    <button onclick="toggleSensorSettings(${sensor.id})" aria-label="Toggle sensor">⚙️</button>
-                    <button onclick="removeSensor(${sensor.id})" aria-label="Remove sensor">❌</button>
-                </div>
-                <div class="sensor-settings ${sensor.folded ? '' : 'grid'}" data-sensor-container="${sensor.id}">
-                    <div class="input">
-                        <label for="sensor-name">Name: </label>
-                        <input type="text" id="sensor-name" placeholder="Jeff maybe?" value="${sensor.name}" onchange="updateSensorName(${sensor.id}, this.value)">
-                    </div>
-                    <div class="input">
-                        <label for="sensor-pin">Pin: </label>
-                        <input type="number" id="sensor-pin" placeholder="Devboard pin number" value="${sensor.pin}" onchange="updateSensorPin(${sensor.id}, this.value)">
-                    </div>
-                </div>
-            </div>
-        `;
+      <div id="${sensor.id}">
+        <div class="sensor">
+          <div data-sensor-initial="${sensor.id}">${sensor.name.charAt(0)}</div>
+          <div>
+            <span data-sensor-name="${sensor.id}">${sensor.name}</span>:
+            <span data-sensor-value="${sensor.id}">${sensor.value}</span>
+          </div>
+          <button onclick="toggleSensorSettings(${sensor.id})" aria-label="Toggle sensor">⚙️</button>
+          <button onclick="removeSensor(${sensor.id})" aria-label="Remove sensor">❌</button>
+        </div>
+        <div class="sensor-settings ${sensor.folded ? '' : 'grid'}" data-sensor-container="${sensor.id}">
+          <div class="input">
+            <label for="sensor-name">Name: </label>
+            <input type="text" id="sensor-name" placeholder="Jeff maybe?" value="${sensor.name}" onchange="updateSensorName(${sensor.id}, this.value)">
+          </div>
+          <div class="input">
+            <label for="sensor-pin">Pin: </label>
+            <input type="number" id="sensor-pin" placeholder="Devboard pin number" value="${sensor.pin}" onchange="updateSensorPin(${sensor.id}, this.value)">
+          </div>
+        </div>
+      </div>
+    `;
 
     const createRelayHTML = (relay) => `
-            <div id="${relay.id}">
-                <div class="sensor">
-                    <div data-relay-initial="${relay.id}">${relay.name.charAt(0)}</div>
-                    <div>
-                        <span data-relay-name="${relay.id}">${relay.name}</span>:
-                        <span data-relay-status="${relay.id}">${relay.status ? '🟢' : '🟥'}</span>
-                    </div>
-                    <button onclick="toggleRelaySettings(${relay.id})">⚙️</button>
-                    <button onclick="removeRelay(${relay.id})" aria-label="Remove relay">❌</button>
-                </div>
-                <div class="sensor-settings ${relay.folded ? '' : 'grid'}" data-relay-container="${relay.id}">
-                    <div class="input">
-                        <label for="relay-name">Name:</label>
-                        <input type="text" name="relay-name" id="relay-name" placeholder="*ahem* jeff?" value="${relay.name}" onchange="updateRelayName(${relay.id}, this.value)">
-                    </div>
-                    <div class="input">
-                        <label for="relay-pin">Pin: </label>
-                        <input type="number" id="relay-pin" placeholder="Devboard output pin" value="${relay.pin}" onchange="updateRelayPin(${relay.id}, this)">
-                    </div>
-                    <span>Conditions</span>
-                    <div data-relay-id="${relay.id}"></div>
-                    <select onchange="addCondition(${relay.id}, this)">
-                        <option value="0">Add Condition</option>
-                        <option value="sensor">Sensor Condition</option>
-                    </select>
-                </div>
-            </div>
-        `;
+      <div id="${relay.id}">
+        <div class="sensor">
+          <div data-relay-initial="${relay.id}">${relay.name.charAt(0)}</div>
+          <div>
+            <span data-relay-name="${relay.id}">${relay.name}</span>:
+            <span data-relay-status="${relay.id}">${relay.status ? '🟢' : '🟥'}</span>
+          </div>
+          <button onclick="toggleRelaySettings(${relay.id})">⚙️</button>
+          <button onclick="removeRelay(${relay.id})" aria-label="Remove relay">❌</button>
+        </div>
+        <div class="sensor-settings ${relay.folded ? '' : 'grid'}" data-relay-container="${relay.id}">
+          <div class="input">
+            <label for="relay-name">Name:</label>
+            <input type="text" name="relay-name" id="relay-name" placeholder="*ahem* jeff?" value="${relay.name}" onchange="updateRelayName(${relay.id}, this.value)">
+          </div>
+          <div class="input">
+            <label for="relay-pin">Pin: </label>
+            <input type="number" id="relay-pin" placeholder="Devboard output pin" value="${relay.pin}" onchange="updateRelayPin(${relay.id}, this)">
+          </div>
+          <span>Conditions</span>
+          <div data-relay-id="${relay.id}"></div>
+          <select onchange="addCondition(${relay.id}, this)">
+            <option value="0">Add Condition</option>
+            <option value="sensor">Sensor Condition</option>
+          </select>
+        </div>
+      </div>
+    `;
 
     const createConditionHTML = (condition, relayId) => {
       if (condition.type !== 'sensor') return '';
@@ -1180,32 +1146,32 @@
         .join('');
 
       return `
-                <div class="relay-settings" data-condition-id="${condition.id}">
-                    <div class="input">
-                        <select class="sensor-select" data-condition-sensors="${relayId}" onchange="updateConditionSensor(${relayId}, ${condition.id}, this.value)">
-                            ${sensorOptions}
-                        </select>
-                    </div>
-                    <div class="input">
-                        <select class="operator-select operator" onchange="updateConditionOperator(${relayId}, ${condition.id}, this.value)">
-                            <option value=">" ${condition.operator === '>' ? 'selected' : ''}>&gt;</option>
-                            <option value="<" ${condition.operator === '<' ? 'selected' : ''}>&lt;</option>
-                            <option value=">=" ${condition.operator === '>=' ? 'selected' : ''}>&ge;</option>
-                            <option value="<=" ${condition.operator === '<=' ? 'selected' : ''}>&le;</option>
-                            <option value="=" ${condition.operator === '=' ? 'selected' : ''}>=</option>
-                            <option value="!=" ${condition.operator === '!=' ? 'selected' : ''}>&ne;</option>
-                        </select>
-                    </div>
-                    <div class="input">
-                        <input type="number" class="condition-value" value="${condition.value}" placeholder="Value" onchange="updateConditionValue(${relayId}, ${condition.id}, this.value)">
-                    </div>
-                    <div class="arrow-container">
-                        <button class="move-up" onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'up')">⬆️</button>
-                        <button class="move-down" onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'down')">⬇️</button>
-                    </div>
-                    <button class="remove-condition" onclick="removeCondition(${relayId}, ${condition.id})">❌</button>
-                </div>
-            `;
+        <div class="relay-settings" data-condition-id="${condition.id}">
+          <div class="input">
+            <select class="sensor-select" data-condition-sensors="${relayId}" onchange="updateConditionSensor(${relayId}, ${condition.id}, this.value)">
+              ${sensorOptions}
+            </select>
+          </div>
+          <div class="input">
+            <select class="operator-select operator" onchange="updateConditionOperator(${relayId}, ${condition.id}, this.value)">
+              <option value=">" ${condition.operator === '>' ? 'selected' : ''}>&gt;</option>
+              <option value="<" ${condition.operator === '<' ? 'selected' : ''}>&lt;</option>
+              <option value=">=" ${condition.operator === '>=' ? 'selected' : ''}>&ge;</option>
+              <option value="<=" ${condition.operator === '<=' ? 'selected' : ''}>&le;</option>
+              <option value="=" ${condition.operator === '=' ? 'selected' : ''}>=</option>
+              <option value="!=" ${condition.operator === '!=' ? 'selected' : ''}>&ne;</option>
+            </select>
+          </div>
+          <div class="input">
+            <input type="number" class="condition-value" value="${condition.value}" placeholder="Value" onchange="updateConditionValue(${relayId}, ${condition.id}, this.value)">
+          </div>
+          <div class="arrow-container">
+            <button class="move-up" onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'up')">⬆️</button>
+            <button class="move-down" onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'down')">⬇️</button>
+          </div>
+          <button class="remove-condition" onclick="removeCondition(${relayId}, ${condition.id})">❌</button>
+        </div>
+      `;
     };
 
     // ===== DATA FETCHING =====
@@ -1286,19 +1252,31 @@
         }
       });
 
-      document.getElementById("WifiForm").onsubmit = async function (e) {
+      // Form upload handlersi
+      document.getElementById("TimeForm").onchange = async function (e) {
         e.preventDefault();
 
-        const data = document.forms["WifiSettings"] 
-        const formData = new FormData(WifiSettings);
-        // // formData.append('body', typeof data === 'object' ? JSON.stringify(data) : data);
-        console.log(formData);
+        const form = document.forms["TimeSettings"];
+        const formData = new FormData();
+
+        // ----- AM/PM handling -----
+        const rawTime = form["time"].value.trim();               // e.g. "2:30 PM" or "14:30"
+       console.log(rawTime);
+        let [hours, minutes] = rawTime.split(':').map(Number);
+
+        // ----- Store as milliseconds -----
+        const ms = (hours * 3600) + (minutes * 60);
+        console.log(hours);
+        console.log(minutes);
+        console.log(ms);
+        formData.append("time", ms); // time in milliseconds
+
+
         try {
-          const response = await fetch('/submit-wifi', {
+          const response = await fetch('/submit-time', {
             method: 'POST',
             body: formData
           });
-
 
           const text = await response.text();
           console.log(response.ok ? "Data sent successfully" : "Failed to send data");
@@ -1306,7 +1284,25 @@
         } catch (error) {
           console.error("Error sending data:", error);
         }
-        // return false
+      };
+
+      document.getElementById("WifiForm").onsubmit = async function (e) {
+        e.preventDefault();
+
+        const form = document.forms["WifiSettings"];
+        const formData = new FormData(form);
+        try {
+          const response = await fetch('/submit-wifi', {
+            method: 'POST',
+            body: formData
+          });
+
+          const text = await response.text();
+          console.log(response.ok ? "Data sent successfully" : "Failed to send data");
+          console.log(text);
+        } catch (error) {
+          console.error("Error sending data:", error);
+        }
       };
 
       // Upload form handler
@@ -1350,4 +1346,3 @@
 </body>
 
 </html>
-

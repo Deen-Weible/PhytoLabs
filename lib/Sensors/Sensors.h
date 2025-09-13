@@ -362,28 +362,28 @@ float readSensorValue(Sensor *sensor) {
 bool evaluateCondition(const char *op, float sensorValue,
                        float conditionValue) {
   if (strcmp(op, ">") == 0) {
-    Serial.println("Sensor Value: " + String(sensorValue));
-    Serial.println("Condition Threshold: " + String(conditionValue));
+    // Serial.println("Sensor Value: " + String(sensorValue));
+    // Serial.println("Condition Threshold: " + String(conditionValue));
     return sensorValue > conditionValue;
   } else if (strcmp(op, "<") == 0) {
-    Serial.println("Sensor Value: " + String(sensorValue));
-    Serial.println("Condition Threshold: " + String(conditionValue));
+    // Serial.println("Sensor Value: " + String(sensorValue));
+    // Serial.println("Condition Threshold: " + String(conditionValue));
     return sensorValue < conditionValue;
   } else if (strcmp(op, "=") == 0) {
-    Serial.println("Sensor Value: " + String(sensorValue));
-    Serial.println("Condition Threshold: " + String(conditionValue));
+    // Serial.println("Sensor Value: " + String(sensorValue));
+    // Serial.println("Condition Threshold: " + String(conditionValue));
     return sensorValue == conditionValue;
   } else if (strcmp(op, ">=") == 0) {
-    Serial.println("Sensor Value: " + String(sensorValue));
-    Serial.println("Condition Threshold: " + String(conditionValue));
+    // Serial.println("Sensor Value: " + String(sensorValue));
+    // Serial.println("Condition Threshold: " + String(conditionValue));
     return sensorValue >= conditionValue;
   } else if (strcmp(op, "<=") == 0) {
-    Serial.println("Sensor Value: " + String(sensorValue));
-    Serial.println("Condition Threshold: " + String(conditionValue));
+    // Serial.println("Sensor Value: " + String(sensorValue));
+    // Serial.println("Condition Threshold: " + String(conditionValue));
     return sensorValue <= conditionValue;
-  } else if (strcmp(op, "!=") == 0) {
-    Serial.println("Sensor Value: " + String(sensorValue));
-    Serial.println("Condition Threshold: " + String(conditionValue));
+  // } else if (strcmp(op, "!=") == 0) {
+  //   Serial.println("Sensor Value: " + String(sensorValue));
+  //   Serial.println("Condition Threshold: " + String(conditionValue));
     return sensorValue != conditionValue;
   } else {
     Serial.println("Invalid operator");

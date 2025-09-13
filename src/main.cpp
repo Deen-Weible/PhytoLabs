@@ -36,21 +36,6 @@ NavInfo nav_info(0);         // Navigation info object initialized with ID 0
 uint8_t debug_pin_value = 0; // Debug pin value for testing
 SensorRelayManager manager;
 
-/**
- * --- Hack Screen Class (Temporary/Debugging) ---
- * @brief A temporary screen class for debugging purposes
- */
-class hack_screen : public Screen {
-public:
-  hack_screen() : Screen(0) {}
-  void Draw() override { Serial.println("Hack Screen has been summoned"); }
-  uint8_t HandleInput(uint8_t input) override {
-    Serial.println("Hack Screen input: " + String(input));
-    return 0;
-  }
-};
-
-hack_screen new_hack_screen;                      // Instance of hack_screen
 TimeMenu time_menu(&internal_time, &nav_info, 2); // Time menu screen
 SliderMenu slider_menu(&nav_info, 3);
 
@@ -238,11 +223,11 @@ void loop() {
       if (manager.relays[i]) {
         Relay &relay = *manager.relays[i];
         bool shouldBeOn = evaluateRelayConditions(relay, manager);
-        Serial.println(shouldBeOn);
+        // Serial.println(shouldBeOn);
         if (shouldBeOn != relay.GetStatus()) {
           relay.SetStatus(shouldBeOn);
-          Serial.print("Relay updated: ");
-          Serial.println(relay.GetStatus());
+          // Serial.print("Relay updated: ");
+          // Serial.println(relay.GetStatus());
           relayChanged = true;
         }
       }
@@ -257,6 +242,6 @@ void loop() {
       base_ui.Draw();
     } while (u8g2.nextPage());
     displayDirty = false;
-    Serial.println("Display updated");
+    // Serial.println("Display updated");
   }
 }

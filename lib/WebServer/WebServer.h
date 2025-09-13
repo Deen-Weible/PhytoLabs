@@ -4,15 +4,15 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
-#include <index.h>
+#include <Helpers.h>
 #include <Sensors.h>
 #include <Update.h>
-#include <Helpers.h>
+#include <index.h>
 
 extern SensorRelayManager manager;
 extern JsonDocument doc;
 extern InternalTime internal_time;
-extern const char* localUrl;
+extern const char *localUrl;
 
 void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
   server.on("/wpad.dat",
@@ -55,6 +55,29 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
     int hour = doc["Hour"];
     internal_time.SetEpoch((Wrap(minute, 0, 59) * 60) +
                            (Wrap(hour, 0, 23) * 3600));
+  });
+
+  server.on("/submit-time", HTTP_POST, [](AsyncWebServerRequest *request) {
+    int newEpoch = request->getParam(0)->value().toInt();
+    Serial.println(newEpoch);
+
+    internal_time.ResetRTC();
+    internal_time.SetEpoch(newEpoch);
+
+    request->send(200, "plaintext/text", ("successfully got time at " + request->getParam(0)->value()));
+    // if (request->hasParam("body", true)) {
+    //   String jsonStr = request->getParam("body", true)->value();
+    //   JsonDocument doc;
+    //   DeserializationError error = deserializeJson(doc, jsonStr);
+    //
+    //   if (error) {
+    //     Serial.println("Invalid JSON received: " + String(error.c_str()));
+    //     request->send(400, "text/plain", "Invalid JSON");
+    //     return;
+    //   }
+    //
+    //   Serial.println(jsonStr);
+    // }
   });
 
   server.on("/readValues", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -111,7 +134,8 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
         relayObj["id"] = relay->GetId();
         relayObj["name"] = relay->GetName();
         relayObj["pin"] = relay->GetPin();
-        JsonArray conditionsArray = relayObj["conditions"].to<JsonArray>(); // Updated
+        JsonArray conditionsArray =
+            relayObj["conditions"].to<JsonArray>(); // Updated
         for (int j = 0; j < MAX_CONDITIONS; j++) {
           Condition *condition = relay->GetCondition(j);
           if (condition) {
