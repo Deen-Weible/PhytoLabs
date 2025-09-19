@@ -24,9 +24,9 @@
 #include <Screens.h>        // Screen management classes
 #include <Sensors.h>        // Sensor and relay data structs
 #include <UiKit.h>          // UI toolkit for display
-#include <WiFiInfo.h>       // WiFi information class
 #include <WebServer.h>      // All webserver logic, to keep this file "tidy"
-#include "WifiSettings.h"   // WiFi management functions
+#include <WiFiInfo.h>       // WiFi information class
+#include <WifiSettings.h>   // WiFi management functions
 
 /**
  * --- Global Variables ---
@@ -68,6 +68,7 @@ DebounceButton selectButton(BUTTON_SELECT_PIN);
  */
 int selected_menu_item = 0; // Index of the currently selected menu item
 JsonDocument doc;           // JSON document for processing form data
+bool isAPMode = false;
 
 /**
  * @brief Detects button input and returns the type
@@ -95,9 +96,10 @@ SettingsList settings_menu(1, 8, menuItems, &nav_info);
  */
 void setup() {
   // Assuming WIFI_SSID and WIFI_PASSWORD are defined in WiFiInfo.h
-  StartWiFi(WIFI_STA, WIFI_SSID, WIFI_PASSWORD);
-
+  isAPMode = StartWiFi(WIFI_AP, "Some ap", "Hello World");
+  SetupCaptivePortal(dnsServer, localIP);
   SetupServer(server, localIP);
+
   server.begin();
 
   u8g2.begin();
@@ -171,6 +173,11 @@ void loop() {
   static unsigned long lastUpdate = 0;
   const unsigned long updateInterval = 1000; // 1 second
   static bool displayDirty = false; // Flag to track if display needs updating
+
+  // Process DNS requests for captive portal if in AP mode
+  if (isAPMode) {
+    dnsServer.processNextRequest();
+  }
 
   input = getInput();
 
