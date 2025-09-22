@@ -88,7 +88,7 @@ uint8_t getInput() {
  * --- UI Initialization ---
  */
 char title_buf[] = "title";
-char desc_buf[]  = "desc";
+char desc_buf[] = "desc";
 
 BaseUi base_ui(title_buf, desc_buf, &internal_time);
 
@@ -99,9 +99,13 @@ SettingsList settings_menu(1, 8, menuItems, &nav_info);
  */
 void setup() {
   Serial.begin(115200);
-  const char* ssid = preferences.getChar("ssid");
-  // isAPMode = StartWiFi(preferences.getBool("wifimode"), preferences.getChar("ssid"), preferences.getChar("wifipass"));
-  Serial.println("dingus");
+  
+  // Read wifi deets from flash
+  const char *ssid = (const char *)preferences.getChar("ssid");
+  const char *pass = (const char *)preferences.getChar("wifipass");
+
+  // connect/start network and start ap
+  isAPMode = StartWiFi(preferences.getBool("wifimode"), ssid, pass);
   SetupCaptivePortal(dnsServer, localIP);
   SetupServer(server, localIP);
 

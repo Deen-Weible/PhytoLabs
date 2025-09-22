@@ -1,8 +1,9 @@
-#ifndef SERVER_SETUP_H
+#ifndef SERVER_SETUP_
 #define SERVER_SETUP_H
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <Preferences.h>
 #include <ESPAsyncWebServer.h>
 #include <Helpers.h>
 #include <Sensors.h>

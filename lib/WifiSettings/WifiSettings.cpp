@@ -4,8 +4,6 @@ bool StartWiFi(const bool initialMode, const char *ssid, const char *password,
                const IPAddress &localIP, const IPAddress &gatewayIP) {
   Serial.println("Bingus");
   wifi_mode_t mode = (initialMode == 0) ? WIFI_AP : WIFI_STA;
-  String modeStr = (initialMode == 0) ? "WIFI_AP" : "WIFI_STA";
-  Serial.println("The mode string is: " + modeStr);
   WiFi.mode(mode);
 
   // If ssid is blank, fallback to Configuration
