@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <DNSServer.h>
 
-bool StartWiFi(const wifi_mode_t mode, const char *ssid, const char *password,
+bool StartWiFi(const bool initialMode, const char *ssid, const char *password,
                const IPAddress &localIP = IPAddress(1, 2, 3, 4), 
                const IPAddress &gatewayIP = IPAddress(1, 2, 3, 4));
 

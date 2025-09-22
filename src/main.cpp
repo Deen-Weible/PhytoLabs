@@ -87,23 +87,27 @@ uint8_t getInput() {
 /**
  * --- UI Initialization ---
  */
-BaseUi base_ui("title", "desc",
-               &internal_time); // No clue what the warning is about..
+char title_buf[] = "title";
+char desc_buf[]  = "desc";
+
+BaseUi base_ui(title_buf, desc_buf, &internal_time);
+
 SettingsList settings_menu(1, 8, menuItems, &nav_info);
 
 /**
  * @brief Setup function for the Arduino sketch
  */
 void setup() {
-  // Assuming WIFI_SSID and WIFI_PASSWORD are defined in WiFiInfo.h
-  isAPMode = StartWiFi(WIFI_AP, "Some ap", "Hello World");
+  Serial.begin(115200);
+  const char* ssid = preferences.getChar("ssid");
+  // isAPMode = StartWiFi(preferences.getBool("wifimode"), preferences.getChar("ssid"), preferences.getChar("wifipass"));
+  Serial.println("dingus");
   SetupCaptivePortal(dnsServer, localIP);
   SetupServer(server, localIP);
 
   server.begin();
 
   u8g2.begin();
-  Serial.begin(115200);
   SPI.setClockDivider(CLOCK_SPEED);
   Serial.println(esp_reset_reason());
   u8g2.setBusClock(CLOCK_SPEED);
