@@ -1,0 +1,1349 @@
+const char MAIN_page[] PROGMEM = R"=====(<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhytoLabs Dashboard</title>
+  <style>
+    /* CSS Variables */
+    :root {
+      --primary-color: #2e4d3b;
+      --secondary-color: #3a604a;
+      --accent-color: #b3dfc7;
+      --text-color: #cdddd4;
+      --bg-color: #f4f6f9;
+      --gray: #6d8577;
+      --gray-contrast: #414d46;
+      --header-height: 60px;
+      --sidebar-width: 240px;
+      --transition-speed: 0.3s;
+    }
+
+    /* Reset & Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    /* Layout */
+    .page-container {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      grid-template-rows: var(--header-height) 1fr;
+      height: 100vh;
+    }
+
+    /* Header */
+    .main-header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      background-color: var(--primary-color);
+      color: var(--text-color);
+      z-index: 1000;
+    }
+
+    .main-header> :first-child {
+      margin-right: auto;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    /* Loading & Error States */
+    .floater {
+      width: 60px;
+      height: 60px;
+      background-color: var(--secondary-color);
+      position: absolute;
+      top: 70px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hidden {
+      visibility: hidden;
+    }
+
+    .grid {
+      display: grid !important;
+    }
+
+    .loader {
+      border: 4px solid var(--bg-color);
+      border-top: 4px solid var(--gray);
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .error-icon {
+      color: yellow;
+      display: none;
+      animation: flashYellowAndRed 2s infinite;
+      font-size: xx-large;
+      border: 2px solid var(--accent-color);
+      padding-inline: 12px;
+    }
+
+    .error-icon.visible {
+      display: block;
+    }
+
+    @keyframes flashYellowAndRed {
+
+      0%,
+      100% {
+        color: yellow;
+      }
+
+      50% {
+        color: red;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .error-icon {
+        animation: none;
+        color: red;
+      }
+    }
+
+    /* Hamburger Menu */
+    .hamburger-menu {
+      display: none;
+      cursor: pointer;
+      width: 30px;
+      height: 22px;
+      position: relative;
+      z-index: 1002;
+      margin-left: 12px;
+    }
+
+    .hamburger-menu .bar {
+      display: block;
+      width: 100%;
+      height: 3px;
+      background-color: var(--text-color);
+      position: absolute;
+      left: 0;
+      transition: all var(--transition-speed) ease-in-out;
+    }
+
+    .hamburger-menu .bar1 {
+      top: 0;
+    }
+
+    .hamburger-menu .bar2 {
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .hamburger-menu .bar3 {
+      bottom: 0;
+    }
+
+    .sidebar-open .hamburger-menu .bar1 {
+      top: 50%;
+      transform: translateY(-50%) rotate(45deg);
+    }
+
+    .sidebar-open .hamburger-menu .bar2 {
+      opacity: 0;
+    }
+
+    .sidebar-open .hamburger-menu .bar3 {
+      bottom: 50%;
+      transform: translateY(50%) rotate(-45deg);
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      grid-column: 1 / 2;
+      grid-row: 2 / 3;
+      background-color: var(--secondary-color);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--transition-speed) ease-in-out;
+    }
+
+    .tab-button {
+      width: 100%;
+      padding: 15px 20px;
+      background-color: transparent;
+      border: none;
+      color: var(--text-color);
+      font-size: 1rem;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color var(--transition-speed), color var(--transition-speed);
+      border-left: 4px solid transparent;
+    }
+
+    .tab-button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .tab-button.active {
+      background: linear-gradient(to right, rgba(0, 0, 0, 0) 0%, var(--primary-color) 100%);
+      color: var(--accent-color);
+      border-left-color: var(--accent-color);
+      font-weight: bold;
+    }
+
+    /* Mobile Overlay */
+    .mobile-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1;
+    }
+
+    .sidebar-open .mobile-overlay {
+      display: block;
+    }
+
+    /* Content Area */
+    .content-area {
+      grid-column: 2 / 3;
+      grid-row: 2 / 3;
+      padding: 30px;
+      overflow-y: auto;
+    }
+
+    .content-panel {
+      display: none;
+    }
+
+    .content-panel.active {
+      display: block;
+    }
+
+    .content-panel h2 {
+      color: var(--primary-color);
+      margin-bottom: 20px;
+    }
+
+    .content-panel p {
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    /* Form Elements */
+    button {
+      padding: 5px;
+      background-color: transparent;
+      border: none;
+      transition: all 0.05s ease-in-out;
+    }
+
+    button:hover {
+      background-color: rgba(242, 199, 199, 0.1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active {
+      transform: translateY(2px) scale(0.95);
+    }
+
+    .solid-button {
+      border: 4px solid gray;
+    }
+
+    input,
+    select {
+      padding: 8px;
+      border-right: 2px solid var(--gray);
+      color: var(--gray);
+      border-radius: 8px;
+      margin-right: 5px;
+      min-width: 60px;
+      outline: none;
+      background: var(--bg-color);
+      font-size: 11pt;
+      border: none;
+      width: 100%;
+    }
+
+    input:focus-within,
+    select:focus-within {
+      outline: 2px solid var(--gray);
+    }
+
+    /* Settings Widgets */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
+      grid-column-gap: 20px;
+    }
+
+    .settings-widget {
+      border-radius: 12px;
+      padding: 20px;
+      margin: 10px;
+      background-color: var(--accent-color);
+      display: grid;
+      grid-auto-rows: min-content;
+      max-width: 100%;
+    }
+
+    .settings-widget>span {
+      color: var(--gray);
+      font-size: 10pt;
+      margin-bottom: 8px;
+    }
+
+    .settings-widget>span:first-child {
+      color: var(--primary-color);
+      font-size: 14pt;
+    }
+
+
+    .input {
+      display: flex;
+      width: fit-content;
+      color: var(--text-color);
+      align-items: center;
+    }
+
+    .input label {
+      width: min-content;
+      margin-right: 12px;
+      min-width: 50px;
+      text-align: right;
+    }
+
+    /* Sensor & Relay Components */
+    .sensor {
+      background: var(--gray);
+      color: var(--text-color);
+      margin-top: 12px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+    }
+
+    .sensor>div:not(:first-child) {
+      margin-right: 8px;
+    }
+
+    .sensor>div:first-child {
+      border-right: solid 2px var(--accent-color);
+      width: min-content;
+      padding: 10px;
+      margin-right: 12px;
+      color: var(--accent-color);
+    }
+
+    .sensor span {
+      color: var(--text-color);
+      font-weight: bold;
+    }
+
+    .sensor button:first-of-type {
+      margin-left: auto;
+    }
+
+    .sensor button {
+      margin-right: 8px;
+    }
+
+    .sensor-settings {
+      margin-top: 12px;
+      display: none;
+      background: var(--gray-contrast);
+      padding: 14px;
+      border-radius: 8px;
+      gap: 18px;
+    }
+
+    .sensor-settings * {
+      width: 100%;
+    }
+
+    .relay-settings {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto auto;
+    }
+
+    .operator {
+      background: var(--gray-contrast);
+      font-size: large;
+      border: 2px solid var(--gray);
+      color: var(--text-color);
+      text-align: center;
+    }
+
+    .relay-settings .input {
+      padding: 0 4px;
+    }
+
+    .arrow-container {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .arrow-container button {
+      padding: 2px;
+    }
+
+    .add-selector {
+      margin-top: 12px;
+      border: 2px solid var(--gray);
+    }
+
+    span {
+      color: var(--text-color);
+      text-align: center;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1000px) {
+      .page-container {
+        grid-template-columns: 1fr;
+      }
+
+      .main-header .logo {
+        font-size: 1.2rem;
+      }
+
+      .hamburger-menu {
+        display: block;
+      }
+
+      .sidebar {
+        grid-column: 1 / -1;
+        position: fixed;
+        top: var(--header-height);
+        left: 0;
+        width: var(--sidebar-width);
+        height: calc(100vh - var(--header-height));
+        z-index: 2;
+        transform: translateX(-100%);
+        padding-top: 0;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        background-color: var(--secondary-color);
+      }
+
+      .sidebar-open .sidebar {
+        transform: translateX(0);
+      }
+
+      .tab-button {
+        text-align: center;
+        border-left: none;
+        border-bottom: 2px solid transparent;
+        padding: 20px 10px;
+      }
+
+      .tab-button.active {
+        border-bottom-color: var(--accent-color);
+      }
+
+      .content-area {
+        grid-column: 1 / -1;
+        padding-top: 30px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .settings-grid {
+        grid-template-columns: repeat(1, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .tab-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Loading Indicator -->
+  <div class="floater hidden">
+    <div class="loader"></div>
+  </div>
+
+  <div class="page-container">
+    <!-- Header -->
+    <header class="main-header">
+      <div class="logo">PhytoLabs</div>
+      <div class="error-icon" id="error-icon" title="Duplicates detected - double check your sensors/relays" aria-label="Error indicator">!
+      </div>
+      <div class="hamburger-menu" aria-label="Toggle navigation" aria-expanded="false">
+        <span class="bar bar1"></span>
+        <span class="bar bar2"></span>
+        <span class="bar bar3"></span>
+      </div>
+    </header>
+
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay"></div>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" role="tablist">
+      <button id="tab-dashboard" class="tab-button active" data-tab="dashboard" role="tab"
+        aria-selected="true">Dashboard</button>
+      <button id="tab-sensor-relations" class="tab-button" data-tab="sensor-relations" role="tab"
+        aria-selected="false">Sensor Relations</button>
+      <button id="tab-system-settings" class="tab-button" data-tab="system-settings" role="tab"
+        aria-selected="false">System Settings</button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+      <!-- Dashboard Panel -->
+      <section id="dashboard" class="content-panel" role="tabpanel" aria-labelledby="tab-dashboard">
+        <h2>Dashboard</h2>
+        <p id="DataUpdates">Welcome to your dashboard. Here you can see an overview of your account activity and
+          recent notifications.</p>
+      </section>
+
+      <!-- Sensor Relations Panel -->
+      <section id="sensor-relations" class="content-panel" role="tabpanel" aria-labelledby="tab-sensor-relations">
+        <h2>Sensor Relations</h2>
+        <section class="settings-grid">
+          <!-- Sensors Widget -->
+          <div class="settings-widget">
+            <span>Sensors</span>
+            <span>Add/Remove/Configure sensors (inputs)</span>
+            <div id="sensor-container">No sensors added (or loaded yet)</div>
+            <select class="add-selector" onchange="addSensor(this.value, this)">
+              <option value="0">Add Sensor</option>
+              <option value="Soil">Soil Moisture</option>
+            </select>
+          </div>
+
+          <!-- Relays Widget -->
+          <div class="settings-widget">
+            <span>Relays</span>
+            <span>Add/Remove/Configure relays (outputs)</span>
+            <div id="relay-container">No relays added (or loaded yet)</div>
+            <select class="add-selector" onchange="addRelay(this.value, this)">
+              <option value="0">Add Relay</option>
+              <option value="Relay">Standard Relay</option>
+            </select>
+          </div>
+
+          <!-- Submit Button -->
+          <button onclick="submitSensors()" class="solid-button" id="submit-button">Submit</button>
+        </section>
+      </section>
+
+      <!-- System Settings Panel -->
+      <section id="system-settings" class="content-panel active" role="tabpanel" aria-labelledby="tab-system-settings">
+        <h2>System Settings</h2>
+        <section class="settings-grid">
+          <div class="settings-widget">
+            <span>Time</span>
+            <span>Set the current system time (not reflected)</span>
+            <div class="sensor-settings grid">
+              <form name="TimeSettings" id="TimeForm">
+                <div class="input">
+                  <label for="time-input">Time:</label>
+                  <input type="time" id="time-input" name="time" value="12:34">
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="settings-widget">
+            <span>OTA Update</span>
+            <span id="firmware-status">WARNING: Updates aren't verified</span>
+            <div class="sensor-settings grid">
+              <span id="firmupdate-btn">Select .BIN file to begin</span>
+              <form id="uploadForm" enctype="multipart/form-data">
+                <div class="input">
+                  <label for="file">File :</label>
+                  <input type="file" name="file" accept=".bin" required>
+                </div> <br>
+                <input type="submit" value="Update Firmware" class="button">
+              </form>
+            </div>
+          </div>
+          <div class="settings-widget">
+            <span>Network</span>
+            <span>Manage connected network or hotspot security</span>
+            <span>If connection fails, a hotspot with the same password will be used </span>
+            <form name="WifiSettings" id="WifiForm">
+              <div class="sensor-settings grid">
+                <div class="input">
+                  <span>Wi-Fi</span>
+                  <input type="radio" name="connection" id="wifi" value="wifi" checked>
+                </div>
+
+                <div class="input">
+                  <span>HotSpot</span>
+                  <input type="radio" name="connection" id="hotspot" value="hotspot">
+                </div>
+
+                <!-- Wi-Fi Configuration Inputs -->
+                <div class="input wifi-config">
+                  <label for="ssid">Ssid:</label>
+                  <input type="text" id="ssid" name="ssid" placeholder="Enter your WiFi SSID (Name)">
+                </div>
+                <div class="input wifi-config">
+                  <label for="password">Pass:</label>
+                  <input type="password" id="password" name="password" placeholder="Enter your WiFi password">
+                </div> <br>
+                <input type="submit" value="Update Network" class="button">
+            </form>
+          </div>
+  </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    // ===== DATA STORAGE =====
+    let sensorList = [];
+    let relayList = [];
+
+    // ===== CLASS DEFINITIONS =====
+    class Sensor {
+      constructor(id, name, pin, value, folded = true) {
+        this.id = id;
+        this.name = name;
+        this.pin = pin;
+        this.value = value;
+        this.folded = folded;
+      }
+
+      setValue(value) {
+        this.value = value;
+      }
+    }
+
+    class Condition {
+      constructor(sensor, operator, value, id, type) {
+        this.sensor = sensor;
+        this.operator = operator;
+        this.value = value;
+        this.id = id;
+        this.type = type;
+      }
+    }
+
+    class Relay {
+      constructor(id, name, pin, conditions = [], status = false, folded = true) {
+        this.id = id;
+        this.name = name;
+        this.pin = pin;
+        this.conditions = conditions;
+        this.status = status;
+        this.folded = folded;
+      }
+
+      toggleStatus() {
+        this.status = !this.status;
+      }
+
+      isOn() {
+        return this.status;
+      }
+
+      moveCondition(conditionId, direction) {
+        const currentIndex = this.conditions.findIndex(c => c.id === conditionId);
+        if (currentIndex === -1) return;
+
+        const canMoveUp = direction === 'up' && currentIndex > 0;
+        const canMoveDown = direction === 'down' && currentIndex < this.conditions.length - 1;
+
+        if (canMoveUp) {
+          this._swapConditions(currentIndex, currentIndex - 1);
+        } else if (canMoveDown) {
+          this._swapConditions(currentIndex, currentIndex + 1);
+        }
+
+        if (canMoveUp || canMoveDown) {
+          reloadConditions(this.id);
+        }
+      }
+
+      _swapConditions(index1, index2) {
+        [this.conditions[index1], this.conditions[index2]] = [this.conditions[index2], this.conditions[index1]];
+      }
+    }
+
+    // ===== UTILITY FUNCTIONS =====
+    const getRelay = (id) => relayList.find(r => r.id === id);
+    const getSensor = (id) => sensorList.find(s => s.id === id);
+    const resetDropdown = (dropdown) => {dropdown.value = 0;};
+
+    // ===== INITIALIZATION =====
+    const initializeApp = () => {
+      getData();
+      // setInterval(getData, 4000);
+      setInterval(checkForDuplicates, 2000);
+    };
+
+    // ===== ADD FUNCTIONS =====
+    const addSensor = (sensorType, dropdown) => {
+      resetDropdown(dropdown);
+      const sensor = new Sensor(sensorList.length + 1, "Sensor Name", 1, 0);
+      sensorList.push(sensor);
+      renderSensors();
+      updateConditionDropdowns();
+    };
+
+    const addRelay = (relayType, dropdown) => {
+      resetDropdown(dropdown);
+      const relay = new Relay(relayList.length + 1, "Relay Name", 1);
+      relayList.push(relay);
+      renderRelays();
+    };
+
+    const addCondition = (conditionReceiver, dropdown) => {
+      const relay = getRelay(conditionReceiver);
+      if (!relay) return;
+
+      const condition = new Condition(1, ">", 1, relay.conditions.length + 1, dropdown.value);
+      condition.sensorId = 1; // Compatibility
+      relay.conditions.push(condition);
+      renderConditions(relay.id);
+      resetDropdown(dropdown);
+    };
+
+    // ===== DATA EXPORT/IMPORT =====
+    const getAllData = () => {
+      const exportData = {
+        sensors: sensorList.map(sensor => ({
+          id: sensor.id,
+          name: sensor.name,
+          pin: sensor.pin,
+        })),
+        relays: relayList.map(relay => ({
+          id: relay.id,
+          name: relay.name,
+          pin: relay.pin,
+          conditions: relay.conditions.map(condition => ({
+            id: condition.id,
+            sensor: condition.sensor,
+            sensorId: condition.sensorId,
+            operator: condition.operator,
+            value: condition.value,
+            type: condition.type
+          }))
+        }))
+      };
+      return JSON.stringify(exportData, null, 2);
+    };
+
+    const importFromJSON = (jsonString) => {
+      try {
+        const data = JSON.parse(jsonString);
+        if (!data.sensors || !data.relays || !Array.isArray(data.sensors) || !Array.isArray(data.relays)) {
+          throw new Error('Invalid JSON structure: missing sensors or relays arrays');
+        }
+
+        // Clear existing data
+        sensorList.length = 0;
+        relayList.length = 0;
+
+        // Import sensors
+        data.sensors.forEach(sensorData => {
+          const sensor = new Sensor(
+            sensorData.id || sensorList.length + 1,
+            sensorData.name || 'Unnamed Sensor',
+            sensorData.pin || 1,
+            sensorData.value || 0,
+          );
+          sensorList.push(sensor);
+        });
+
+        // Import relays
+        data.relays.forEach(relayData => {
+          const relay = new Relay(
+            relayData.id || relayList.length + 1,
+            relayData.name || 'Unnamed Relay',
+            relayData.pin || 1,
+            [],
+            relayData.status || false,
+          );
+
+          // Import conditions for this relay
+          if (relayData.conditions && Array.isArray(relayData.conditions)) {
+            relayData.conditions.forEach(conditionData => {
+              const condition = new Condition(
+                conditionData.sensor || conditionData.sensorId || 1,
+                conditionData.operator || '>',
+                conditionData.value || 1,
+                conditionData.id || relay.conditions.length + 1,
+                conditionData.type || 'sensor'
+              );
+              condition.sensorId = conditionData.sensorId || conditionData.sensor || 1;
+              relay.conditions.push(condition);
+            });
+          }
+          relayList.push(relay);
+        });
+
+        renderSensors();
+        renderRelays();
+        updateConditionDropdowns();
+
+        relayList.forEach(relay => {
+          renderConditions(relay.id);
+        });
+
+        console.log(`Import completed: ${sensorList.length} sensors, ${relayList.length} relays`);
+        return {
+          success: true,
+          message: `Successfully imported ${sensorList.length} sensors and ${relayList.length} relays`,
+          sensorsCount: sensorList.length,
+          relaysCount: relayList.length
+        };
+      } catch (error) {
+        console.error('Import failed:', error);
+        return {
+          success: false,
+          message: `Import failed: ${error.message}`,
+          error: error
+        };
+      }
+    };
+
+    // ===== VALIDATION =====
+    const checkForDuplicates = () => {
+      const duplicates = {names: [], pins: [], hasConflicts: false};
+
+      // Check sensor names
+      const sensorNames = {};
+      sensorList.forEach(sensor => {
+        if (sensorNames[sensor.name]) {
+          duplicates.names.push({
+            type: 'sensor',
+            name: sensor.name,
+            ids: [...sensorNames[sensor.name], sensor.id]
+          });
+        } else {
+          sensorNames[sensor.name] = [sensor.id];
+        }
+      });
+
+      // Check relay names
+      const relayNames = {};
+      relayList.forEach(relay => {
+        if (relayNames[relay.name]) {
+          duplicates.names.push({
+            type: 'relay',
+            name: relay.name,
+            ids: [...relayNames[relay.name], relay.id]
+          });
+        } else {
+          relayNames[relay.name] = [relay.id];
+        }
+      });
+
+      // Check cross-type name conflicts
+      Object.keys(sensorNames).forEach(name => {
+        if (relayNames[name]) {
+          duplicates.names.push({
+            type: 'cross-type',
+            name: name,
+            sensorIds: sensorNames[name],
+            relayIds: relayNames[name]
+          });
+        }
+      });
+
+      // Check sensor pins
+      const sensorPins = {};
+      sensorList.forEach(sensor => {
+        if (sensorPins[sensor.pin]) {
+          duplicates.pins.push({
+            type: 'sensor',
+            pin: sensor.pin,
+            ids: [...sensorPins[sensor.pin], sensor.id]
+          });
+        } else {
+          sensorPins[sensor.pin] = [sensor.id];
+        }
+      });
+
+      // Check relay pins
+      const relayPins = {};
+      relayList.forEach(relay => {
+        if (relayPins[relay.pin]) {
+          duplicates.pins.push({
+            type: 'relay',
+            pin: relay.pin,
+            ids: [...relayPins[relay.pin], relay.id]
+          });
+        } else {
+          relayPins[relay.pin] = [relay.id];
+        }
+      });
+
+      // Check cross-type pin conflicts
+      Object.keys(sensorPins).forEach(pin => {
+        if (relayPins[pin]) {
+          duplicates.pins.push({
+            type: 'cross-type',
+            pin: parseInt(pin),
+            sensorIds: sensorPins[pin],
+            relayIds: relayPins[pin]
+          });
+        }
+      });
+
+      duplicates.hasConflicts = duplicates.names.length > 0 || duplicates.pins.length > 0;
+
+      const errorIcon = document.getElementById('error-icon');
+      errorIcon.classList.toggle('visible', duplicates.hasConflicts);
+
+      return duplicates.hasConflicts;
+    };
+
+    // ===== UPDATE FUNCTIONS =====
+    const updateRelayName = (id, newName) => {
+      const relay = getRelay(id);
+      if (!relay) return;
+
+      relay.name = newName;
+      const nameDisplay = document.querySelector(`[data-relay-name="${id}"]`);
+      const initialDisplay = document.querySelector(`[data-relay-initial="${id}"]`);
+
+      if (nameDisplay) nameDisplay.textContent = newName;
+      if (initialDisplay) initialDisplay.textContent = newName.charAt(0);
+      updateConditionDropdowns();
+    };
+
+    const updateRelayPin = (id, pinInput) => {
+      const relay = getRelay(id);
+      if (relay) relay.pin = parseInt(pinInput.value) || 1;
+    };
+
+    const updateSensorName = (id, newName) => {
+      const sensor = getSensor(id);
+      if (!sensor) return;
+
+      sensor.name = newName;
+      const nameElement = document.querySelector(`[data-sensor-name="${id}"]`);
+      const initialDisplay = document.querySelector(`[data-sensor-initial="${id}"]`);
+
+      if (nameElement) nameElement.textContent = newName;
+      if (initialDisplay) initialDisplay.textContent = newName.charAt(0);
+      updateConditionDropdowns();
+    };
+
+    const updateSensorPin = (id, pin) => {
+      const sensor = getSensor(id);
+      if (sensor) sensor.pin = parseInt(pin) || 1;
+    };
+
+    const updateConditionSensor = (relayId, conditionId, sensorId) => {
+      const relay = getRelay(relayId);
+      if (!relay) return;
+
+      const condition = relay.conditions.find(c => c.id === conditionId);
+      if (condition) {
+        condition.sensor = parseInt(sensorId);
+        condition.sensorId = parseInt(sensorId);
+      }
+    };
+
+    const updateConditionOperator = (relayId, conditionId, operator) => {
+      const relay = getRelay(relayId);
+      if (!relay) return;
+
+      const condition = relay.conditions.find(c => c.id === conditionId);
+      if (condition) condition.operator = operator;
+    };
+
+    const updateConditionValue = (relayId, conditionId, value) => {
+      const relay = getRelay(relayId);
+      if (!relay) return;
+
+      const condition = relay.conditions.find(c => c.id === conditionId);
+      if (condition) condition.value = parseFloat(value) || 0;
+    };
+
+    const updateConditionDropdowns = () => {
+      const sensorSelects = document.querySelectorAll('.sensor-select');
+      sensorSelects.forEach(select => {
+        const currentValue = select.value;
+        select.innerHTML = sensorList
+          .map(sensor => `<option value="${sensor.id}" ${sensor.id == currentValue ? 'selected' : ''}>${sensor.name}</option>`)
+          .join('');
+      });
+    };
+
+    // ===== REMOVE FUNCTIONS =====
+    const removeSensor = (id) => {
+      const sensor = getSensor(id);
+      if (!sensor) return;
+
+      const index = sensorList.indexOf(sensor);
+      if (index !== -1) {
+        sensorList.splice(index, 1);
+        renderSensors();
+        updateConditionDropdowns();
+      }
+    };
+
+    const removeRelay = (id) => {
+      const relay = getRelay(id);
+      if (!relay) return;
+
+      const index = relayList.indexOf(relay);
+      if (index !== -1) {
+        relayList.splice(index, 1);
+        renderRelays();
+      }
+    };
+
+    const removeCondition = (relayId, conditionId) => {
+      const relay = getRelay(relayId);
+      if (!relay) return;
+
+      const index = relay.conditions.findIndex(c => c.id === conditionId);
+      if (index !== -1) {
+        relay.conditions.splice(index, 1);
+        renderConditions(relayId);
+      }
+    };
+
+    // ===== RENDER FUNCTIONS =====
+    const renderSensors = () => {
+      const container = document.getElementById('sensor-container');
+      if (container) container.innerHTML = sensorList.map(createSensorHTML).join('');
+    };
+
+    const renderRelays = () => {
+      const container = document.getElementById('relay-container');
+      if (container) container.innerHTML = relayList.map(createRelayHTML).join('');
+    };
+
+    const renderConditions = (relayId) => {
+      const relay = getRelay(relayId);
+      if (!relay) return;
+
+      const container = document.querySelector(`[data-relay-id="${relayId}"]`);
+      if (container) {
+        container.innerHTML = relay.conditions
+          .map(condition => createConditionHTML(condition, relayId))
+          .join('');
+      }
+    };
+
+    const reloadConditions = (relayId) => renderConditions(relayId);
+
+    // ===== SETTINGS TOGGLE FUNCTIONS =====
+    const toggleSensorSettings = (sensorId) => {
+      const sensor = getSensor(sensorId);
+      const settingsPanel = document.querySelector(`[data-sensor-container="${sensorId}"]`);
+
+      if (sensor && settingsPanel) {
+        sensor.folded = !sensor.folded;
+        settingsPanel.classList.toggle('grid', !sensor.folded);
+      }
+    };
+
+    const toggleRelaySettings = (relayId) => {
+      const relay = getRelay(relayId);
+      const settingsPanel = document.querySelector(`[data-relay-container="${relayId}"]`);
+
+      if (relay && settingsPanel) {
+        relay.folded = !relay.folded;
+        settingsPanel.classList.toggle('grid', !relay.folded);
+      }
+    };
+
+    // ===== HTML GENERATION FUNCTIONS =====
+    const createSensorHTML = (sensor) => `
+      <div id="${sensor.id}">
+        <div class="sensor">
+          <div data-sensor-initial="${sensor.id}">${sensor.name.charAt(0)}</div>
+          <div>
+            <span data-sensor-name="${sensor.id}">${sensor.name}</span>:
+            <span data-sensor-value="${sensor.id}">${sensor.value}</span>
+          </div>
+          <button onclick="toggleSensorSettings(${sensor.id})" aria-label="Toggle sensor">⚙️</button>
+          <button onclick="removeSensor(${sensor.id})" aria-label="Remove sensor">❌</button>
+        </div>
+        <div class="sensor-settings ${sensor.folded ? '' : 'grid'}" data-sensor-container="${sensor.id}">
+          <div class="input">
+            <label for="sensor-name">Name: </label>
+            <input type="text" id="sensor-name" placeholder="Jeff maybe?" value="${sensor.name}" onchange="updateSensorName(${sensor.id}, this.value)">
+          </div>
+          <div class="input">
+            <label for="sensor-pin">Pin: </label>
+            <input type="number" id="sensor-pin" placeholder="Devboard pin number" value="${sensor.pin}" onchange="updateSensorPin(${sensor.id}, this.value)">
+          </div>
+        </div>
+      </div>
+    `;
+
+    const createRelayHTML = (relay) => `
+      <div id="${relay.id}">
+        <div class="sensor">
+          <div data-relay-initial="${relay.id}">${relay.name.charAt(0)}</div>
+          <div>
+            <span data-relay-name="${relay.id}">${relay.name}</span>:
+            <span data-relay-status="${relay.id}">${relay.status ? '🟢' : '🟥'}</span>
+          </div>
+          <button onclick="toggleRelaySettings(${relay.id})">⚙️</button>
+          <button onclick="removeRelay(${relay.id})" aria-label="Remove relay">❌</button>
+        </div>
+        <div class="sensor-settings ${relay.folded ? '' : 'grid'}" data-relay-container="${relay.id}">
+          <div class="input">
+            <label for="relay-name">Name:</label>
+            <input type="text" name="relay-name" id="relay-name" placeholder="*ahem* jeff?" value="${relay.name}" onchange="updateRelayName(${relay.id}, this.value)">
+          </div>
+          <div class="input">
+            <label for="relay-pin">Pin: </label>
+            <input type="number" id="relay-pin" placeholder="Devboard output pin" value="${relay.pin}" onchange="updateRelayPin(${relay.id}, this)">
+          </div>
+          <span>Conditions</span>
+          <div data-relay-id="${relay.id}"></div>
+          <select onchange="addCondition(${relay.id}, this)">
+            <option value="0">Add Condition</option>
+            <option value="sensor">Sensor Condition</option>
+          </select>
+        </div>
+      </div>
+    `;
+
+    const createConditionHTML = (condition, relayId) => {
+      if (condition.type !== 'sensor') return '';
+
+      const sensorOptions = sensorList
+        .map(sensor => `<option value="${sensor.id}" ${sensor.id === condition.sensorId ? 'selected' : ''}>${sensor.name}</option>`)
+        .join('');
+
+      return `
+        <div class="relay-settings" data-condition-id="${condition.id}">
+          <div class="input">
+            <select class="sensor-select" data-condition-sensors="${relayId}" onchange="updateConditionSensor(${relayId}, ${condition.id}, this.value)">
+              ${sensorOptions}
+            </select>
+          </div>
+          <div class="input">
+            <select class="operator-select operator" onchange="updateConditionOperator(${relayId}, ${condition.id}, this.value)">
+              <option value=">" ${condition.operator === '>' ? 'selected' : ''}>&gt;</option>
+              <option value="<" ${condition.operator === '<' ? 'selected' : ''}>&lt;</option>
+              <option value=">=" ${condition.operator === '>=' ? 'selected' : ''}>&ge;</option>
+              <option value="<=" ${condition.operator === '<=' ? 'selected' : ''}>&le;</option>
+              <option value="=" ${condition.operator === '=' ? 'selected' : ''}>=</option>
+              <option value="!=" ${condition.operator === '!=' ? 'selected' : ''}>&ne;</option>
+            </select>
+          </div>
+          <div class="input">
+            <input type="number" class="condition-value" value="${condition.value}" placeholder="Value" onchange="updateConditionValue(${relayId}, ${condition.id}, this.value)">
+          </div>
+          <div class="arrow-container">
+            <button class="move-up" onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'up')">⬆️</button>
+            <button class="move-down" onclick="getRelay(${relayId}).moveCondition(${condition.id}, 'down')">⬇️</button>
+          </div>
+          <button class="remove-condition" onclick="removeCondition(${relayId}, ${condition.id})">❌</button>
+        </div>
+      `;
+    };
+
+    // ===== DATA FETCHING =====
+    const getData = () => {
+      fetch('readADC')
+        .then(response => response.text())
+        .then(data => {
+          const element = document.getElementById("DataUpdates");
+          if (element) element.innerHTML = data;
+          importFromJSON(data);
+        })
+        .catch(error => console.error('Error:', error));
+    };
+
+    // ===== SUBMISSION FUNCTIONS =====
+    const submitSensors = async () => {
+      const data = getAllData();
+      const formData = new FormData();
+      formData.append('body', typeof data === 'object' ? JSON.stringify(data) : data);
+
+      try {
+        const response = await fetch('/submit-sensors', {
+          method: 'POST',
+          body: formData
+        });
+        const text = await response.text();
+        console.log(response.ok ? "Data sent successfully" : "Failed to send data");
+        console.log(text);
+      } catch (error) {
+        console.error("Error sending data:", error);
+      }
+    };
+
+    // ===== UI EVENT HANDLERS =====
+    document.addEventListener('DOMContentLoaded', () => {
+      const body = document.body;
+      const hamburgerMenu = document.querySelector('.hamburger-menu');
+      const mobileOverlay = document.querySelector('.mobile-overlay');
+      const sidebar = document.querySelector('.sidebar');
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const contentPanels = document.querySelectorAll('.content-panel');
+
+      const toggleMobileMenu = () => {
+        const isOpen = body.classList.toggle('sidebar-open');
+        hamburgerMenu.setAttribute('aria-expanded', isOpen);
+      };
+
+      hamburgerMenu.addEventListener('click', toggleMobileMenu);
+      mobileOverlay.addEventListener('click', toggleMobileMenu);
+
+      sidebar.addEventListener('click', (e) => {
+        if (e.target && e.target.classList.contains('tab-button')) {
+          const tabButton = e.target;
+          const targetTabId = tabButton.dataset.tab;
+
+          tabButtons.forEach(btn => {
+            btn.classList.remove('active');
+            btn.setAttribute('aria-selected', 'false');
+          });
+          contentPanels.forEach(panel => panel.classList.remove('active'));
+
+          tabButton.classList.add('active');
+          tabButton.setAttribute('aria-selected', 'true');
+          const targetPanel = document.getElementById(targetTabId);
+          if (targetPanel) {
+            targetPanel.classList.add('active');
+          }
+
+          if (window.innerWidth <= 768 && body.classList.contains('sidebar-open')) {
+            toggleMobileMenu();
+          }
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && body.classList.contains('sidebar-open')) {
+          toggleMobileMenu();
+        }
+      });
+
+      // Form upload handlersi
+      document.getElementById("TimeForm").onchange = async function (e) {
+        e.preventDefault();
+
+        const form = document.forms["TimeSettings"];
+        const formData = new FormData();
+
+        // ----- AM/PM handling -----
+        const rawTime = form["time"].value.trim();               // e.g. "2:30 PM" or "14:30"
+       console.log(rawTime);
+        let [hours, minutes] = rawTime.split(':').map(Number);
+
+        // ----- Store as milliseconds -----
+        const ms = (hours * 3600) + (minutes * 60);
+        console.log(hours);
+        console.log(minutes);
+        console.log(ms);
+        formData.append("time", ms); // time in milliseconds
+
+
+        try {
+          const response = await fetch('/submit-time', {
+            method: 'POST',
+            body: formData
+          });
+
+          const text = await response.text();
+          console.log(response.ok ? "Data sent successfully" : "Failed to send data");
+          console.log(text);
+        } catch (error) {
+          console.error("Error sending data:", error);
+        }
+      };
+
+      document.getElementById("WifiForm").onsubmit = async function (e) {
+        e.preventDefault();
+
+        const form = document.forms["WifiSettings"];
+        const formData = new FormData(form);
+        try {
+          const response = await fetch('/submit-wifi', {
+            method: 'POST',
+            body: formData
+          });
+
+          const text = await response.text();
+          console.log(response.ok ? "Data sent successfully" : "Failed to send data");
+          console.log(text);
+        } catch (error) {
+          console.error("Error sending data:", error);
+        }
+      };
+
+      // Upload form handler
+      document.getElementById('uploadForm').onsubmit = async function (e) {
+        e.preventDefault();
+        const fileInput = document.querySelector('input[type="file"]');
+        const file = fileInput.files[0];
+        if (!file) {
+          alert('Please select a firmware file!');
+          return;
+        }
+
+        const status = document.getElementById('firmware-status');
+        status.textContent = 'Uploading...';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          const response = await fetch('/update', {
+            method: 'POST',
+            body: formData
+          });
+          const text = await response.text();
+          status.textContent = text;
+          if (response.ok) {
+            status.style.color = '#28a745';
+            setTimeout(() => {status.textContent += ' Device is rebooting...';}, 1000);
+          } else {
+            status.style.color = '#dc3545';
+          }
+        } catch (error) {
+          status.textContent = 'Upload failed: ' + error.message;
+          status.style.color = '#dc3545';
+        }
+      };
+
+      initializeApp();
+    });
+  </script>
+</body>
+
+</html>
+)=====";

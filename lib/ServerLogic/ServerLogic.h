@@ -3,9 +3,9 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <Preferences.h>
 #include <ESPAsyncWebServer.h>
 #include <Helpers.h>
+#include <Preferences.h>
 #include <Sensors.h>
 #include <Update.h>
 #include <index.h>
@@ -59,26 +59,21 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
   });
 
   server.on("/submit-time", HTTP_POST, [](AsyncWebServerRequest *request) {
-    int newEpoch = request->getParam(0)->value().toInt();
-    Serial.println(newEpoch);
+    if (request->hasParam(0)) {
+      int newEpoch = request->getParam(0)->value().toInt();
+      if (newEpoch != 0) {
+        internal_time.ResetRTC();
+        internal_time.SetEpoch(newEpoch);
 
-    internal_time.ResetRTC();
-    internal_time.SetEpoch(newEpoch);
-
-    request->send(200, "plaintext/text", ("successfully got time at " + request->getParam(0)->value()));
-    // if (request->hasParam("body", true)) {
-    //   String jsonStr = request->getParam("body", true)->value();
-    //   JsonDocument doc;
-    //   DeserializationError error = deserializeJson(doc, jsonStr);
-    //
-    //   if (error) {
-    //     Serial.println("Invalid JSON received: " + String(error.c_str()));
-    //     request->send(400, "text/plain", "Invalid JSON");
-    //     return;
-    //   }
-    //
-    //   Serial.println(jsonStr);
-    // }
+        request->send(
+            200, "plaintext/text",
+            ("successfully got time at " + request->getParam(0)->value()));
+      } else {
+        request->send(200, "plaintext/text", "Invalid time, try again");
+      }
+    } else {
+      request->send(200, "plaintext/text", "Invalid time, try again");
+    }
   });
 
   server.on("/readValues", HTTP_GET, [](AsyncWebServerRequest *request) {

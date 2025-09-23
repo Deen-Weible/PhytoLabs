@@ -24,7 +24,8 @@
 #include <Screens.h>        // Screen management classes
 #include <Sensors.h>        // Sensor and relay data structs
 #include <UiKit.h>          // UI toolkit for display
-#include <WebServer.h>      // All webserver logic, to keep this file "tidy"
+// #include <WebServer.h>      // All webserver logic, to keep this file "tidy"
+#include "ServerLogic.h"
 #include <WiFiInfo.h>       // WiFi information class
 #include <WifiSettings.h>   // WiFi management functions
 
