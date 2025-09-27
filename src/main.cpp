@@ -26,8 +26,8 @@
 #include <UiKit.h>          // UI toolkit for display
 // #include <WebServer.h>      // All webserver logic, to keep this file "tidy"
 #include "ServerLogic.h"
-#include <WiFiInfo.h>       // WiFi information class
-#include <WifiSettings.h>   // WiFi management functions
+#include <WiFiInfo.h>     // WiFi information class
+#include <WifiSettings.h> // WiFi management functions
 
 /**
  * --- Global Variables ---
@@ -100,15 +100,32 @@ SettingsList settings_menu(1, 8, menuItems, &nav_info);
  */
 void setup() {
   Serial.begin(115200);
-  
+
   // Read wifi deets from flash
-  const char *ssid = (const char *)preferences.getChar("ssid");
-  const char *pass = (const char *)preferences.getChar("wifipass");
+  Preferences prefs;
+  prefs.begin("wifi", true);
+  const char *ssid = (const char *)prefs.getChar("ssid", 0);
+  const char *pass = (const char *)prefs.getChar("wifipass", 0);
+  const bool wifimode = prefs.getBool("wifimode", 0);
+  prefs.end();
+
+  if (ssid == NULL) {
+    Serial.println("yeah, it's null");
+  }
+  if (prefs.isKey("ssid")) {
+    Serial.println("Yarp, it exists"); }
+  else {
+    Serial.println("It doesn't exist");
+  }
+
+  Serial.println(ssid);
+  Serial.println(pass);
+  Serial.println(wifimode);
 
   // connect/start network and start ap
-  isAPMode = StartWiFi(preferences.getBool("wifimode"), ssid, pass);
+  isAPMode = StartWiFi(wifimode, ssid, pass);
   SetupCaptivePortal(dnsServer, localIP);
-  SetupServer(server, localIP);
+  SetupServer(server, WiFi.localIP());
 
   server.begin();
 

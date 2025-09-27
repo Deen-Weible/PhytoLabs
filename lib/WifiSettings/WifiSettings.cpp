@@ -4,6 +4,8 @@ bool StartWiFi(const bool initialMode, const char *ssid, const char *password,
                const IPAddress &localIP, const IPAddress &gatewayIP) {
   Serial.println("Bingus");
   wifi_mode_t mode = (initialMode == 0) ? WIFI_AP : WIFI_STA;
+  String modeStr = (initialMode == 0) ? "WIFI_AP" : "WIFI_STA";
+  Serial.println("The mode string is: " + modeStr);
   WiFi.mode(mode);
 
   // If ssid is blank, fallback to Configuration
@@ -12,7 +14,7 @@ bool StartWiFi(const bool initialMode, const char *ssid, const char *password,
   const char *effectivePass =
       (ssid == nullptr || strlen(ssid) == 0) ? "" : password;
 
-  if (mode) {
+  if (initialMode == false) {
     WiFi.softAPConfig(localIP, gatewayIP, IPAddress(255, 255, 255, 0));
     WiFi.softAP(effectiveSSID, effectivePass, 6, 0, 4);
     vTaskDelay(100 / portTICK_PERIOD_MS);
