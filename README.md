@@ -1,22 +1,7 @@
 # PhytoLabs
 ## An automated farming system for ESP32 — Made with grant funding and love :3
 ## Built with support from my local school
-## ⚠️ Important Note: This project is currently unfinished and requires manual intervention to compile
-
-### How to get it working:
-1. Create a new file named `WiFiInfo.h` in the `/include/` directory.
-2. Add the following content (replace placeholders with your actual Wi-Fi details):
-```cpp
-#ifndef WIFIINFO_H
-#define WIFIINFO_H
-
-const char WIFI_SSID[] PROGMEM = "YourSSIDHere";
-const char WIFI_PASSWORD[] PROGMEM = "YourPasswordHere";
-
-#endif // WIFIINFO_H
-```
-
-> 💡 *Note: This file is intentionally excluded from version control (via `.gitignore`) so I don't need to use a dev network. Always update it with your own network details before compiling.*
+## ⚠️ Important Note: This project is currently unfinished 
 
 ## 📚 Project Overview
 PhytoLabs is an open-source automated farming system built for ESP32 microcontrollers. It's designed for easy, flexible control and configuration of sensors and relays.
