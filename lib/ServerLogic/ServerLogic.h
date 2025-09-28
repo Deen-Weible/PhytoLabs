@@ -167,48 +167,49 @@ void SetupServer(AsyncWebServer &server, const IPAddress &localIP) {
   //   // }
   // });
 
-server.on("/submit-wifi", HTTP_POST, [](AsyncWebServerRequest *request) {
-  bool wifiMode = false;
-  String ssid = "";
-  String password = "";
+  server.on("/submit-wifi", HTTP_POST, [](AsyncWebServerRequest *request) {
+    bool wifiMode = false;
+    String ssid = "";
+    String password = "";
 
-  if (request->params() >= 3) {
-    Serial.println("got wifi");
-    for (size_t i = 0; i < request->params(); i++) {
-      Serial.println(i);
-      Serial.println(request->getParam(i)->value());
+    if (request->params() >= 3) {
+      Serial.println("got wifi");
+      for (size_t i = 0; i < request->params(); i++) {
+        Serial.println(i);
+        Serial.println(request->getParam(i)->value());
+      }
+
+      // Wifi mode (wifi/hotspot)
+      AsyncWebParameter *modeParam = request->getParam(0);
+      if (modeParam != nullptr) {
+        wifiMode = (modeParam->value() == "hotspot") ? 0 : 1;
+      }
+
+      // Ssid
+      AsyncWebParameter *ssidParam = request->getParam(1);
+      if (ssidParam != nullptr) {
+        ssid = ssidParam->value();
+      }
+
+      // Password
+      AsyncWebParameter *passParam = request->getParam(2);
+      if (passParam != nullptr) {
+        password = passParam->value();
+      }
+
+      Preferences prefs;
+      prefs.begin("wifi", false);
+      Serial.println("Wifi mode: " + wifiMode);
+      prefs.putBool("wifimode", wifiMode);
+      prefs.putString("wifissid", ssid);
+      prefs.putString("wifipass", password);
+      prefs.end();
+
+      request->send(200, "text/plain", "Got wifi");
+    } else {
+      request->send(200, "text/plain", "Failed to get wifi, blank request");
     }
-
-    // Wifi mode (wifi/hotspot)
-    AsyncWebParameter* modeParam = request->getParam(0);
-    if (modeParam != nullptr) {
-      wifiMode = modeParam->value().toInt() != 0;
-    }
-
-    // Ssid
-    AsyncWebParameter* ssidParam = request->getParam(1);
-    if (ssidParam != nullptr) {
-      ssid = ssidParam->value();
-    }
-
-    // Password
-    AsyncWebParameter* passParam = request->getParam(2);
-    if (passParam != nullptr) {
-      password = passParam->value();
-    }
-
-    Preferences prefs;
-    prefs.begin("wifi", false);
-    prefs.putBool("wifimode", wifiMode);
-    prefs.putString("ssid", ssid);
-    prefs.putString("wifipass", password);
-    prefs.end();
-
-    request->send(200, "text/plain", "Got wifi");
-  } else {
-    request->send(200, "text/plain", "Failed to get wifi, blank request");
-  }
-});
+  });
 
   server.on(
       "/update", HTTP_POST,

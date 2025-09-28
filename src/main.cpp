@@ -23,9 +23,8 @@
 #include <Icons.h>          // Icon definitions for UI
 #include <Screens.h>        // Screen management classes
 #include <Sensors.h>        // Sensor and relay data structs
-#include <UiKit.h>          // UI toolkit for display
-// #include <WebServer.h>      // All webserver logic, to keep this file "tidy"
-#include "ServerLogic.h"
+#include <ServerLogic.h>
+#include <UiKit.h>        // UI toolkit for display
 #include <WiFiInfo.h>     // WiFi information class
 #include <WifiSettings.h> // WiFi management functions
 
@@ -101,34 +100,6 @@ SettingsList settings_menu(1, 8, menuItems, &nav_info);
 void setup() {
   Serial.begin(115200);
 
-  // Read wifi deets from flash
-  Preferences prefs;
-  prefs.begin("wifi", true);
-  const char *ssid = (const char *)prefs.getChar("ssid", 0);
-  const char *pass = (const char *)prefs.getChar("wifipass", 0);
-  const bool wifimode = prefs.getBool("wifimode", 0);
-  prefs.end();
-
-  if (ssid == NULL) {
-    Serial.println("yeah, it's null");
-  }
-  if (prefs.isKey("ssid")) {
-    Serial.println("Yarp, it exists"); }
-  else {
-    Serial.println("It doesn't exist");
-  }
-
-  Serial.println(ssid);
-  Serial.println(pass);
-  Serial.println(wifimode);
-
-  // connect/start network and start ap
-  isAPMode = StartWiFi(wifimode, ssid, pass);
-  SetupCaptivePortal(dnsServer, localIP);
-  SetupServer(server, WiFi.localIP());
-
-  server.begin();
-
   u8g2.begin();
   SPI.setClockDivider(CLOCK_SPEED);
   Serial.println(esp_reset_reason());
@@ -139,6 +110,25 @@ void setup() {
   nav_info.RegisterScreen(&time_menu);
   nav_info.RegisterScreen(&slider_menu);
   nav_info.SetCurrentScreen(&settings_menu);
+
+  // -- Setup WIfi --
+  Preferences wifiPrefs;
+  wifiPrefs.begin("wifi");
+  String ssidString = wifiPrefs.getString("wifissid", "");
+  String passString = wifiPrefs.getString("wifipass", "");
+
+  // Now get the const char* pointer from the String object
+  const char *ssid = ssidString.c_str();
+  const char *pass = passString.c_str();
+  const bool wifimode = wifiPrefs.getBool("wifimode", 0);
+  wifiPrefs.end();
+
+  // connect/start network and start ap
+  isAPMode = StartWiFi(wifimode, ssid, pass);
+  SetupCaptivePortal(dnsServer, localIP);
+  SetupServer(server, WiFi.localIP());
+
+  server.begin();
 
   manager.LoadFromPreferences();
   for (int i = 0; i < manager.GetNumSensors(); i++) {
@@ -151,6 +141,9 @@ void setup() {
       float value = sensor->GetValue();
       Serial.print(", Value: ");
       Serial.println(value);
+      Serial.print(" Pin: ");
+      Serial.println(sensor->GetPin());
+      pinMode(sensor->GetPin(), INPUT);
     }
   }
 
@@ -161,6 +154,9 @@ void setup() {
       Serial.print(relay->GetId());
       Serial.println(" Relay Name: ");
       Serial.println(relay->GetName());
+      Serial.print(" Pin: ");
+      Serial.println(relay->GetPin());
+      pinMode(relay->GetPin(), OUTPUT);
     }
   }
 

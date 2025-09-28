@@ -2,8 +2,8 @@
 #define SENSORS_H
 
 #include <Arduino.h>
-#include <Preferences.h> // Ensure Preferences.h is included for SaveToPreferences
 #include <ArduinoJson.h> // Ensure ArduinoJson.h is included
+#include <Preferences.h> // Ensure Preferences.h is included for SaveToPreferences
 
 /**
  * @brief Maximum number of sensors, relays, and conditions
@@ -45,7 +45,8 @@ class Sensor {
 public:
   Sensor(uint8_t id, const char *name, uint8_t pin, float value,
          bool folded = true)
-      : id(id), name(name ? name : ""), pin(pin), value(value), folded(folded) {}
+      : id(id), name(name ? name : ""), pin(pin), value(value), folded(folded) {
+  }
 
   void SetValue(float newValue) { value = newValue; }
   uint8_t GetId() const { return id; }
@@ -126,6 +127,7 @@ public:
   }
 
   Condition *conditions[MAX_CONDITIONS];
+
 private:
   uint8_t id;
   String name;
@@ -139,97 +141,93 @@ private:
  */
 class SensorRelayManager {
 public:
-    SensorRelayManager() : num_sensors(0), num_relays(0) {
-        for (int i = 0; i < MAX_SENSORS; i++) {
-            sensors[i] = nullptr;
+  SensorRelayManager() : num_sensors(0), num_relays(0) {
+    for (int i = 0; i < MAX_SENSORS; i++) {
+      sensors[i] = nullptr;
+    }
+    for (int i = 0; i < MAX_RELAYS; i++) {
+      relays[i] = nullptr;
+    }
+  }
+
+  ~SensorRelayManager() { Clear(); }
+
+  void Clear() {
+    for (int i = 0; i < MAX_SENSORS; i++) {
+      delete sensors[i];
+      sensors[i] = nullptr;
+    }
+    num_sensors = 0;
+
+    for (int i = 0; i < MAX_RELAYS; i++) {
+      if (relays[i]) {
+        for (int j = 0; j < MAX_CONDITIONS; j++) {
+          delete relays[i]->GetCondition(j);
         }
-        for (int i = 0; i < MAX_RELAYS; i++) {
-            relays[i] = nullptr;
-        }
+        delete relays[i];
+        relays[i] = nullptr;
+      }
     }
+    num_relays = 0;
+  }
 
-    ~SensorRelayManager() {
-        Clear();
+  void RegisterSensor(Sensor *sensor) {
+    if (num_sensors < MAX_SENSORS) {
+      sensors[num_sensors] = sensor;
+      pinMode(sensor->GetPin(), INPUT);
+      num_sensors++;
     }
+  }
 
-    void Clear() {
-        for (int i = 0; i < MAX_SENSORS; i++) {
-            delete sensors[i];
-            sensors[i] = nullptr;
-        }
-        num_sensors = 0;
-
-        for (int i = 0; i < MAX_RELAYS; i++) {
-            if (relays[i]) {
-                for (int j = 0; j < MAX_CONDITIONS; j++) {
-                    delete relays[i]->GetCondition(j);
-                }
-                delete relays[i];
-                relays[i] = nullptr;
-            }
-        }
-        num_relays = 0;
+  void RegisterRelay(Relay *relay) {
+    if (num_relays < MAX_RELAYS) {
+      relays[num_relays] = relay;
+      pinMode(relay->GetPin(), OUTPUT);
+      num_relays++;
     }
+  }
 
-    void RegisterSensor(Sensor* sensor) {
-        if (num_sensors < MAX_SENSORS) {
-            sensors[num_sensors] = sensor;
-            num_sensors++;
-        }
+  Sensor *GetSensorById(uint8_t id) const {
+    for (int i = 0; i < num_sensors; i++) {
+      if (sensors[i] && sensors[i]->GetId() == id) {
+        return sensors[i];
+      }
     }
+    return nullptr;
+  }
 
-    void RegisterRelay(Relay* relay) {
-        if (num_relays < MAX_RELAYS) {
-            relays[num_relays] = relay;
-            num_relays++;
-        }
+  Relay *GetRelayById(uint8_t id) const {
+    for (int i = 0; i < num_relays; i++) {
+      if (relays[i] && relays[i]->GetId() == id) {
+        return relays[i];
+      }
     }
+    return nullptr;
+  }
 
-    Sensor* GetSensorById(uint8_t id) const {
-        for (int i = 0; i < num_sensors; i++) {
-            if (sensors[i] && sensors[i]->GetId() == id) {
-                return sensors[i];
-            }
-        }
-        return nullptr;
-    }
+  Relay *GetRelayArray() const { return *relays; }
 
-    Relay* GetRelayById(uint8_t id) const {
-        for (int i = 0; i < num_relays; i++) {
-            if (relays[i] && relays[i]->GetId() == id) {
-                return relays[i];
-            }
-        }
-        return nullptr;
-    }
+  Sensor *GetSensorArray() const { return *sensors; }
 
-    Relay* GetRelayArray() const {
-        return *relays;
-    }
+  uint8_t GetNumSensors() const { return num_sensors; }
+  uint8_t GetNumRelays() const { return num_relays; }
 
-    Sensor* GetSensorArray() const {
-        return *sensors;
-    }
+  void SaveToPreferences();
+  void LoadFromPreferences();
 
-    uint8_t GetNumSensors() const { return num_sensors; }
-    uint8_t GetNumRelays() const { return num_relays; }
-
-    void SaveToPreferences();
-    void LoadFromPreferences();
-
-    Sensor* sensors[MAX_SENSORS];
-    Relay* relays[MAX_RELAYS];
+  Sensor *sensors[MAX_SENSORS];
+  Relay *relays[MAX_RELAYS];
 
 private:
-    uint8_t num_sensors;
-    uint8_t num_relays;
+  uint8_t num_sensors;
+  uint8_t num_relays;
 };
 
 void SensorRelayManager::SaveToPreferences() {
   Preferences prefs;
   prefs.begin("sensor_relay", false);
 
- JsonDocument doc;
+  JsonDocument doc;
 
   JsonArray sensorsArray = doc["sensors"].to<JsonArray>(); // Updated
   for (int i = 0; i < num_sensors; i++) {
@@ -381,9 +379,9 @@ bool evaluateCondition(const char *op, float sensorValue,
     // Serial.println("Sensor Value: " + String(sensorValue));
     // Serial.println("Condition Threshold: " + String(conditionValue));
     return sensorValue <= conditionValue;
-  // } else if (strcmp(op, "!=") == 0) {
-  //   Serial.println("Sensor Value: " + String(sensorValue));
-  //   Serial.println("Condition Threshold: " + String(conditionValue));
+    // } else if (strcmp(op, "!=") == 0) {
+    //   Serial.println("Sensor Value: " + String(sensorValue));
+    //   Serial.println("Condition Threshold: " + String(conditionValue));
     return sensorValue != conditionValue;
   } else {
     Serial.println("Invalid operator");
